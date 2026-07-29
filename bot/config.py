@@ -64,6 +64,23 @@ SECTIONS = {
     },
 }
 
+# ---------------------------------------------------------------------------
+# API / SAYT
+# ---------------------------------------------------------------------------
+# Sessiya tokenlarini imzolash uchun maxfiy kalit. Ishlab chiqarishda .env'ga
+# uzun tasodifiy qiymat yozing - o'zgartirilsa hamma sessiya bekor bo'ladi.
+API_SECRET = os.getenv("API_SECRET", "") or (BOT_TOKEN + "-cs3-api")
+
+# Saytga qaysi manzillardan murojaat qilinishi mumkin (CORS).
+# Vergul bilan: https://cryptospot3.uz,https://www.cryptospot3.uz
+CORS_ORIGINS = [x.strip() for x in os.getenv("CORS_ORIGINS", "*").split(",") if x.strip()]
+
+# Telegram bergan kirish ma'lumoti shuncha soniyadan keyin eskiradi.
+AUTH_TTL_SECONDS = int(os.getenv("AUTH_TTL_SECONDS", str(24 * 3600)))
+
+# Saytdagi sessiya shuncha soniya amal qiladi (standart: 30 kun).
+TOKEN_TTL_SECONDS = int(os.getenv("TOKEN_TTL_SECONDS", str(30 * 24 * 3600)))
+
 # Binance spot narx oqimi uchun bazaviy manzil
 BINANCE_WS_BASE = "wss://stream.binance.com:9443/stream?streams="
 
