@@ -12,19 +12,22 @@ class SignalStates(StatesGroup):
     tp1 = State()
     tp2 = State()
     comment = State()
+    photo = State()
     confirm = State()
 
 
 class ContentStates(StatesGroup):
-    choosing_type = State()
     title = State()
     file = State()
     caption = State()
-    tariff = State()
 
 
 class PriceEditStates(StatesGroup):
     waiting_value = State()
+
+
+class PaymentInfoStates(StatesGroup):
+    waiting_info = State()
 
 
 class BroadcastStates(StatesGroup):
@@ -34,3 +37,15 @@ class BroadcastStates(StatesGroup):
 class ViolationStates(StatesGroup):
     waiting_user_id = State()
     waiting_note = State()
+
+
+class NewSectionStates(StatesGroup):
+    """Admin /yangi_bolim buyrug'i orqali yangi bo'lim yaratishi."""
+    title = State()
+    tariff = State()
+
+
+class GrantSubStates(StatesGroup):
+    """Admin qo'lda obuna berishi / muddatini uzaytirishi."""
+    waiting_user_id = State()
+    waiting_tariff = State()

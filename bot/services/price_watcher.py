@@ -27,6 +27,7 @@ import websockets
 from aiogram import Bot
 
 from bot import database as db
+from bot import sections as sec
 from bot.config import BINANCE_WS_BASE
 
 logger = logging.getLogger(__name__)
@@ -39,12 +40,20 @@ STATUS_TEXT = {
 }
 
 
-async def notify_all(bot: Bot, coin: str, status_key: str):
-    text = f"💠 <b>{coin}</b>\n{STATUS_TEXT[status_key]}"
-    user_ids = await db.get_all_user_telegram_ids()
-    for tid in user_ids:
+async def notify_all(bot: Bot, signal, status_key: str):
+    """Signal holati o'zgarganda xabar beradi.
+
+    Coin nomi va holat faqat o'sha bo'limga kirish huquqi borlarga yuboriladi -
+    obunasi yo'q foydalanuvchiga signalning tafsilotlari ko'rinmasligi kerak.
+    """
+    meta = await sec.by_code(signal["section"]) or {"min_tariff": "lite", "title": "Signallar"}
+    text = f"💠 <b>{signal['coin']}</b>\n{STATUS_TEXT[status_key]}"
+
+    for telegram_id, tariff in await db.get_users_with_tariff():
+        if not sec.has_access(tariff, meta["min_tariff"]):
+            continue
         try:
-            await bot.send_message(tid, text, parse_mode="HTML", protect_content=True)
+            await bot.send_message(telegram_id, text, parse_mode="HTML", protect_content=True)
         except Exception:
             pass
 
@@ -62,7 +71,7 @@ async def evaluate_signal(bot: Bot, signal, current_price: float):
             if current_price == entry:
                 # narx aynan entry darajasida - darhol faollashtiramiz
                 await db.update_signal_status(sid, "active")
-                await notify_all(bot, signal["coin"], "active")
+                await notify_all(bot, signal, "active")
                 return
             side = "above" if current_price > entry else "below"
             await db.set_signal_entry_side(sid, side)
@@ -71,24 +80,24 @@ async def evaluate_signal(bot: Bot, signal, current_price: float):
         reached = current_price <= entry if side == "above" else current_price >= entry
         if reached:
             await db.update_signal_status(sid, "active")
-            await notify_all(bot, signal["coin"], "active")
+            await notify_all(bot, signal, "active")
         return
 
     if status in ("active", "tp1_hit"):
         # avval stopni tekshiramiz (xavfsizlik ustuvor)
         if current_price <= signal["stop"]:
             await db.update_signal_status(sid, "stopped")
-            await notify_all(bot, signal["coin"], "stopped")
+            await notify_all(bot, signal, "stopped")
             return
 
         if status == "active" and current_price >= signal["tp1"]:
             await db.update_signal_status(sid, "tp1_hit")
-            await notify_all(bot, signal["coin"], "tp1_hit")
+            await notify_all(bot, signal, "tp1_hit")
             status = "tp1_hit"
 
         if status == "tp1_hit" and current_price >= signal["tp2"]:
             await db.update_signal_status(sid, "tp2_hit")
-            await notify_all(bot, signal["coin"], "tp2_hit")
+            await notify_all(bot, signal, "tp2_hit")
 
 
 async def run_price_watcher(bot: Bot):

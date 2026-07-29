@@ -1,3 +1,5 @@
+import time
+
 from aiogram import Router, F, Bot
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery
@@ -5,41 +7,95 @@ from aiogram.fsm.context import FSMContext
 
 from bot import database as db
 from bot import keyboards as kb
+from bot import sections as sec
 from bot.states import (
-    SignalStates, ContentStates, PriceEditStates, BroadcastStates, ViolationStates,
+    SignalStates, ContentStates, PriceEditStates, PaymentInfoStates,
+    BroadcastStates, ViolationStates, NewSectionStates, GrantSubStates,
 )
 from bot.config import ADMIN_IDS, TARIFF_NAMES, PERIOD_NAMES
 
 router = Router()
 
 # Ushbu routerdagi BARCHA handlerlar faqat ADMIN_IDS ichidagi foydalanuvchilar uchun ishlaydi.
-# Bu aiogram'ning o'zining rasmiy filtr mexanizmi - har bir handlerni alohida
-# himoyalash shart emas, chunki filtr butun routerga bir marta qo'llaniladi.
 router.message.filter(F.from_user.id.in_(ADMIN_IDS))
 router.callback_query.filter(F.from_user.id.in_(ADMIN_IDS))
 
 
-@router.message(Command("panel"))
-async def cmd_panel(message: Message):
-    await message.answer("⚙️ Admin panel:", reply_markup=kb.admin_panel_keyboard())
+# =====================================================================
+# UCHTA ASOSIY BO'LIM
+# =====================================================================
 
-
-@router.message(F.text == "⚙️ Admin panel")
-async def open_panel(message: Message):
-    await message.answer("⚙️ Admin panel:", reply_markup=kb.admin_panel_keyboard())
-
-
-# ================= SIGNAL YARATISH =================
-
-@router.callback_query(F.data == "admin:new_signal")
-async def new_signal_start(callback: CallbackQuery, state: FSMContext):
-    await state.set_state(SignalStates.coin)
-    await callback.message.answer(
-        "🟢 Yangi signal yaratish.\n\nCoin nomini kiriting (masalan: <code>BTCUSDT</code>):",
+async def _show_post_menu(target):
+    await target.answer(
+        "📤 <b>Bo'limlarga joylash</b>\n\nQaysi bo'limga joylaysiz?",
+        reply_markup=kb.admin_post_sections_keyboard(await db.get_custom_sections()),
         parse_mode="HTML",
     )
+
+
+@router.message(F.text == kb.ADMIN_POST)
+@router.message(Command("joylash"))
+async def open_post_menu(message: Message, state: FSMContext):
+    await state.clear()
+    await _show_post_menu(message)
+
+
+@router.message(F.text == kb.ADMIN_PAYMENT)
+@router.message(Command("tolov"))
+async def open_payment_menu(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer(
+        "💳 <b>To'lov tizimi</b>\n\nNimani o'zgartiramiz?",
+        reply_markup=kb.admin_payment_keyboard(),
+        parse_mode="HTML",
+    )
+
+
+@router.message(F.text == kb.ADMIN_SUBS)
+@router.message(Command("obunalar"))
+async def open_subs_menu(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer(
+        "🎫 <b>Obunalar</b>\n\nNima qilamiz?",
+        reply_markup=kb.admin_subs_keyboard(),
+        parse_mode="HTML",
+    )
+
+
+@router.message(Command("bekor"))
+async def cancel_any(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer("Bekor qilindi.", reply_markup=kb.admin_main_menu())
+
+
+# =====================================================================
+# 1-BO'LIM: BO'LIMLARGA JOYLASH
+# =====================================================================
+
+@router.callback_query(F.data.startswith("post:"))
+async def post_to_section(callback: CallbackQuery, state: FSMContext):
+    code = callback.data.split(":")[1]
+    meta = await sec.by_code(code)
+    if not meta:
+        await callback.answer("Bo'lim topilmadi.", show_alert=True)
+        return
+
+    await state.update_data(section=code)
+
+    if meta["kind"] == "signal":
+        await state.set_state(SignalStates.coin)
+        await callback.message.answer(
+            f"{meta['title']} — yangi signal.\n\n"
+            f"Coin nomini kiriting (masalan: <code>BTCUSDT</code>):",
+            parse_mode="HTML",
+        )
+    else:
+        await state.set_state(ContentStates.title)
+        await callback.message.answer(f"{meta['title']} — sarlavhani kiriting:")
     await callback.answer()
 
+
+# ---------- signal yaratish ----------
 
 @router.message(SignalStates.coin)
 async def signal_get_coin(message: Message, state: FSMContext):
@@ -119,77 +175,245 @@ async def signal_get_tp2(message: Message, state: FSMContext):
 async def signal_get_comment(message: Message, state: FSMContext):
     comment = "" if message.text.strip() == "-" else message.text.strip()
     await state.update_data(comment=comment)
-    data = await state.get_data()
+    await state.set_state(SignalStates.photo)
+    await message.answer(
+        "📷 Signal uchun rasm (grafik skrinshoti) yuboring.\n"
+        "Rasm kerak bo'lmasa \"-\" deb yozing."
+    )
 
+
+async def _signal_preview(message: Message, state: FSMContext):
+    data = await state.get_data()
+    meta = await sec.by_code(data["section"])
     preview = (
-        f"📋 <b>Signal ko'rinishi (preview):</b>\n\n"
+        f"📋 <b>Ko'rinishi ({meta['title']}):</b>\n\n"
         f"💠 <b>{data['coin']}</b>\n"
         f"🎯 Entry: {data['entry']}\n"
         f"🛑 Stop: {data['stop']}\n"
         f"🥇 TP1: {data['tp1']}\n"
-        f"🥈 TP2: {data['tp2']}\n"
+        f"🥈 TP2: {data['tp2']}"
     )
-    if comment:
-        preview += f"\n📝 {comment}"
+    if data.get("comment"):
+        preview += f"\n\n📝 {data['comment']}"
 
     await state.set_state(SignalStates.confirm)
-    await message.answer(preview, reply_markup=kb.signal_preview_keyboard(), parse_mode="HTML")
+    if data.get("photo_id"):
+        await message.answer_photo(
+            data["photo_id"], caption=preview,
+            reply_markup=kb.signal_preview_keyboard(), parse_mode="HTML",
+        )
+    else:
+        await message.answer(
+            preview, reply_markup=kb.signal_preview_keyboard(), parse_mode="HTML"
+        )
+
+
+@router.message(SignalStates.photo, F.photo)
+async def signal_get_photo(message: Message, state: FSMContext):
+    await state.update_data(photo_id=message.photo[-1].file_id)
+    await _signal_preview(message, state)
+
+
+@router.message(SignalStates.photo)
+async def signal_skip_photo(message: Message, state: FSMContext):
+    if message.text and message.text.strip() == "-":
+        await state.update_data(photo_id=None)
+        await _signal_preview(message, state)
+    else:
+        await message.answer("Rasm yuboring yoki \"-\" deb yozing.")
 
 
 @router.callback_query(SignalStates.confirm, F.data == "signal_confirm")
 async def signal_confirm(callback: CallbackQuery, state: FSMContext, bot: Bot):
     data = await state.get_data()
+    code = data["section"]
+    meta = await sec.by_code(code)
+
     await db.create_signal(
-        data["coin"], data["entry"], data["stop"], data["tp1"], data["tp2"], data.get("comment", "")
+        data["coin"], data["entry"], data["stop"], data["tp1"], data["tp2"],
+        data.get("comment", ""), section=code, photo_id=data.get("photo_id"),
     )
     await state.clear()
-    await callback.message.edit_text("✅ Signal muvaffaqiyatli joylandi va kuzatuv boshlandi.")
+    await callback.message.answer("✅ Joylandi va narx kuzatuvi boshlandi.")
     await callback.answer()
 
-    # Barcha faol obunachilarga signal haqida xabar (signalga kirish huquqi bo'lganlarga)
-    text = (
-        f"🆕 <b>Yangi signal joylandi!</b>\n\n"
-        f"💠 {data['coin']}\n"
-        f"Holat: ⏳ Kutilmoqda (narx entry nuqtasiga yetganda faollashadi)\n\n"
-        f"\"📈 Signallar\" bo'limidan to'liq ma'lumotni ko'ring."
+    await notify_new_item(
+        bot,
+        min_tariff=meta["min_tariff"],
+        full_text=(
+            f"🆕 <b>Yangi signal: {meta['title']}</b>\n\n"
+            f"💠 {data['coin']}\n"
+            f"Holat: ⏳ Kutilmoqda (narx entry nuqtasiga yetganda faollashadi)\n\n"
+            f"To'liq ma'lumot uchun \"{meta['title']}\" bo'limiga kiring."
+        ),
+        teaser_text=(
+            f"🔔 <b>{meta['title']}</b> bo'limiga yangi signal qo'shildi.\n\n"
+            f"Signal tafsilotlari (coin, kirish narxi, stop va profit darajalari) "
+            f"faqat obunachilarga ko'rinadi."
+        ),
     )
-    user_ids = await db.get_all_user_telegram_ids()
-    for tid in user_ids:
-        try:
-            await bot.send_message(tid, text, parse_mode="HTML", protect_content=True)
-        except Exception:
-            pass
 
 
 @router.callback_query(SignalStates.confirm, F.data == "signal_cancel")
 async def signal_cancel(callback: CallbackQuery, state: FSMContext):
     await state.clear()
-    await callback.message.edit_text("❌ Signal bekor qilindi.")
+    await callback.message.answer("❌ Bekor qilindi.")
     await callback.answer()
 
 
-@router.callback_query(F.data == "admin:list_signals")
-async def list_signals(callback: CallbackQuery):
-    from bot.handlers.user import STATUS_LABELS
-    signals = await db.get_recent_signals(limit=10)
-    if not signals:
-        await callback.message.answer("Hozircha signal yo'q.")
-        await callback.answer()
-        return
-    for s in signals:
-        await callback.message.answer(
-            f"💠 {s['coin']} — {STATUS_LABELS.get(s['status'], s['status'])}\n"
-            f"Entry: {s['entry']} | Stop: {s['stop']} | TP1: {s['tp1']} | TP2: {s['tp2']}"
+# ---------- kontent qo'shish ----------
+
+@router.message(ContentStates.title)
+async def content_get_title(message: Message, state: FSMContext):
+    await state.update_data(title=message.text.strip())
+    await state.set_state(ContentStates.file)
+    data = await state.get_data()
+    if data["section"] == "videos":
+        await message.answer("Video faylni yuboring:")
+    else:
+        await message.answer(
+            "Fayl (PDF/dokument), video yoki oddiy matn yuboring:"
         )
+
+
+@router.message(ContentStates.file, F.video)
+async def content_get_video(message: Message, state: FSMContext):
+    await state.update_data(file_id=message.video.file_id)
+    await state.set_state(ContentStates.caption)
+    await message.answer("Qisqacha tavsif kiriting (bo'lmasa \"-\" yuboring):")
+
+
+@router.message(ContentStates.file, F.document)
+async def content_get_document(message: Message, state: FSMContext):
+    await state.update_data(file_id=message.document.file_id)
+    await state.set_state(ContentStates.caption)
+    await message.answer("Qisqacha tavsif kiriting (bo'lmasa \"-\" yuboring):")
+
+
+@router.message(ContentStates.file)
+async def content_get_text(message: Message, state: FSMContext):
+    await state.update_data(file_id=None, body_text=message.text or "")
+    await state.set_state(ContentStates.caption)
+    await message.answer("Qisqacha tavsif kiriting (bo'lmasa \"-\" yuboring):")
+
+
+@router.message(ContentStates.caption)
+async def content_finish(message: Message, state: FSMContext, bot: Bot):
+    caption = "" if message.text.strip() == "-" else message.text.strip()
+    data = await state.get_data()
+    if data.get("file_id") is None and data.get("body_text"):
+        caption = data["body_text"] + ("\n\n" + caption if caption else "")
+
+    code = data["section"]
+    meta = await sec.by_code(code)
+    await db.add_content(code, data["title"], data.get("file_id"), caption, meta["min_tariff"])
+    await state.clear()
+    await message.answer("✅ Qo'shildi.", reply_markup=kb.admin_main_menu())
+
+    await notify_new_item(
+        bot,
+        min_tariff=meta["min_tariff"],
+        full_text=(
+            f"🆕 <b>{meta['title']}</b> bo'limiga yangi material qo'shildi:\n\n"
+            f"<b>{data['title']}</b>\n\n"
+            f"Ko'rish uchun \"{meta['title']}\" bo'limiga kiring."
+        ),
+        teaser_text=(
+            f"🔔 <b>{meta['title']}</b> bo'limiga yangi material qo'shildi:\n\n"
+            f"<b>{data['title']}</b>\n\n"
+            f"Materialning o'zi faqat obunachilarga ochiladi."
+        ),
+    )
+
+
+async def notify_new_item(bot: Bot, min_tariff: str, full_text: str, teaser_text: str):
+    """Kirish huquqi borlarga to'liq xabar, qolganlarga faqat qisqa eslatma.
+
+    Obunasi yo'q foydalanuvchi ham botda nima bo'layotganini bilib turadi,
+    lekin materialning o'zi va signal raqamlari unga ko'rinmaydi.
+    """
+    for telegram_id, tariff in await db.get_users_with_tariff():
+        text = full_text if sec.has_access(tariff, min_tariff) else teaser_text
+        try:
+            await bot.send_message(telegram_id, text, parse_mode="HTML", protect_content=True)
+        except Exception:
+            pass
+
+
+# =====================================================================
+# 2-BO'LIM: TO'LOV TIZIMI
+# =====================================================================
+
+@router.callback_query(F.data == "pay:prices")
+async def show_prices_menu(callback: CallbackQuery):
+    rows = await db.get_all_prices()
+    current = "\n".join(
+        f"• {TARIFF_NAMES.get(r['tariff_code'], r['tariff_code'])} "
+        f"{PERIOD_NAMES.get(r['period'], r['period'])}: {r['price']:.0f} {r['currency']}"
+        for r in rows
+    )
+    await callback.message.answer(
+        f"Hozirgi narxlar:\n{current}\n\nO'zgartirmoqchi bo'lganingizni tanlang:",
+        reply_markup=kb.prices_edit_keyboard(),
+    )
     await callback.answer()
 
 
-# ================= TO'LOVLARNI TASDIQLASH =================
+@router.callback_query(F.data.startswith("editprice:"))
+async def edit_price_start(callback: CallbackQuery, state: FSMContext):
+    _, tariff_code, period = callback.data.split(":")
+    await state.update_data(tariff_code=tariff_code, period=period)
+    await state.set_state(PriceEditStates.waiting_value)
+    await callback.message.answer(
+        f"{TARIFF_NAMES[tariff_code]} — {PERIOD_NAMES[period]} uchun yangi narxni kiriting "
+        f"(faqat raqam, masalan 150000):"
+    )
+    await callback.answer()
 
-@router.callback_query(F.data == "admin:pending_payments")
+
+@router.message(PriceEditStates.waiting_value)
+async def edit_price_save(message: Message, state: FSMContext):
+    try:
+        price = float(message.text.strip().replace(" ", "").replace(",", "."))
+    except ValueError:
+        await message.answer("Narxni raqam ko'rinishida kiriting. Masalan: 150000")
+        return
+    data = await state.get_data()
+    await db.set_price(data["tariff_code"], data["period"], price)
+    await state.clear()
+    await message.answer("✅ Narx yangilandi.", reply_markup=kb.admin_main_menu())
+
+
+@router.callback_query(F.data == "pay:info")
+async def payment_info_start(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(PaymentInfoStates.waiting_info)
+    await callback.message.answer(
+        "To'lov usulini yozing — foydalanuvchi to'lov paytida aynan shuni ko'radi.\n\n"
+        "Masalan:\n<code>Karta: 8600 1234 5678 9012\nEgasi: Diyorbek D.</code>",
+        parse_mode="HTML",
+    )
+    await callback.answer()
+
+
+@router.message(PaymentInfoStates.waiting_info)
+async def payment_info_save(message: Message, state: FSMContext):
+    info = message.text.strip()
+    for row in await db.get_all_prices():
+        await db.set_price(row["tariff_code"], row["period"], row["price"], info)
+    await state.clear()
+    await message.answer(
+        "✅ To'lov usuli barcha tariflar uchun saqlandi.", reply_markup=kb.admin_main_menu()
+    )
+
+
+# =====================================================================
+# 3-BO'LIM: OBUNALAR
+# =====================================================================
+
+@router.callback_query(F.data == "sub:pending")
 async def pending_payments(callback: CallbackQuery):
     await callback.message.answer(
-        "Yangi to'lovlar kelganda avtomatik shu yerga xabar va tugmalar bilan yuboriladi."
+        "Yangi to'lov cheki kelganda avtomatik shu yerga tasdiqlash tugmalari bilan tushadi."
     )
     await callback.answer()
 
@@ -203,13 +427,12 @@ async def approve_payment(callback: CallbackQuery, bot: Bot):
         return
 
     await db.update_payment_status(payment_id, "approved")
-    await db.create_or_extend_subscription(payment["user_id"], payment["tariff_code"], payment["period"])
-
+    await db.create_or_extend_subscription(
+        payment["user_id"], payment["tariff_code"], payment["period"]
+    )
     telegram_id = await db.get_telegram_id_by_user_id(payment["user_id"])
 
-    await callback.message.edit_caption(
-        caption=callback.message.caption + "\n\n✅ TASDIQLANDI",
-    )
+    await callback.message.edit_caption(caption=callback.message.caption + "\n\n✅ TASDIQLANDI")
     await callback.answer("Tasdiqlandi ✅")
 
     if telegram_id:
@@ -217,8 +440,9 @@ async def approve_payment(callback: CallbackQuery, bot: Bot):
             await bot.send_message(
                 telegram_id,
                 f"✅ To'lovingiz tasdiqlandi!\n"
-                f"Tarif: {TARIFF_NAMES[payment['tariff_code']]} — {PERIOD_NAMES[payment['period']]}\n"
-                f"Obunangiz faollashtirildi."
+                f"Tarif: {TARIFF_NAMES[payment['tariff_code']]} — "
+                f"{PERIOD_NAMES[payment['period']]}\n"
+                f"Obunangiz faollashtirildi. /obunam"
             )
         except Exception:
             pass
@@ -233,7 +457,6 @@ async def reject_payment(callback: CallbackQuery, bot: Bot):
         return
 
     await db.update_payment_status(payment_id, "rejected")
-
     telegram_id = await db.get_telegram_id_by_user_id(payment["user_id"])
 
     await callback.message.edit_caption(caption=callback.message.caption + "\n\n❌ RAD ETILDI")
@@ -249,153 +472,99 @@ async def reject_payment(callback: CallbackQuery, bot: Bot):
             pass
 
 
-# ================= NARXLARNI SOZLASH =================
+# ---------- qo'lda obuna berish ----------
 
-@router.callback_query(F.data == "admin:prices")
-async def show_prices_menu(callback: CallbackQuery):
-    await callback.message.answer(
-        "O'zgartirmoqchi bo'lgan tarif/muddatni tanlang:", reply_markup=kb.prices_edit_keyboard()
-    )
+@router.callback_query(F.data == "sub:grant")
+async def grant_start(callback: CallbackQuery, state: FSMContext):
+    await state.update_data(mode="grant")
+    await state.set_state(GrantSubStates.waiting_user_id)
+    await callback.message.answer("Foydalanuvchining Telegram ID raqamini kiriting:")
     await callback.answer()
 
 
-@router.callback_query(F.data.startswith("editprice:"))
-async def edit_price_start(callback: CallbackQuery, state: FSMContext):
-    _, tariff_code, period = callback.data.split(":")
-    await state.update_data(tariff_code=tariff_code, period=period)
-    await state.set_state(PriceEditStates.waiting_value)
-    await callback.message.answer(
-        f"{TARIFF_NAMES[tariff_code]} — {PERIOD_NAMES[period]} uchun yangi narxni kiriting "
-        f"(faqat raqam, masalan 150000). Xohlasangiz to'lov usuli tavsifini ham qo'shimcha "
-        f"qatorda yozing (masalan karta raqami)."
-    )
+@router.callback_query(F.data == "sub:check")
+async def check_start(callback: CallbackQuery, state: FSMContext):
+    await state.update_data(mode="check")
+    await state.set_state(GrantSubStates.waiting_user_id)
+    await callback.message.answer("Tekshiriladigan foydalanuvchining Telegram ID raqamini kiriting:")
     await callback.answer()
 
 
-@router.message(PriceEditStates.waiting_value)
-async def edit_price_save(message: Message, state: FSMContext):
-    lines = message.text.strip().split("\n", 1)
+@router.message(GrantSubStates.waiting_user_id)
+async def grant_get_user(message: Message, state: FSMContext):
     try:
-        price = float(lines[0].replace(",", "."))
+        telegram_id = int(message.text.strip())
     except ValueError:
-        await message.answer("Narxni raqam ko'rinishida kiriting. Masalan: 150000")
+        await message.answer("ID faqat raqamlardan iborat bo'lishi kerak.")
         return
-    payment_info = lines[1].strip() if len(lines) > 1 else None
+    user = await db.get_user_by_telegram_id(telegram_id)
+    if not user:
+        await message.answer("Bunday foydalanuvchi topilmadi (u hali /start bosmagan).")
+        return
 
     data = await state.get_data()
-    await db.set_price(data["tariff_code"], data["period"], price, payment_info)
-    await state.clear()
-    await message.answer("✅ Narx yangilandi.")
+    if data.get("mode") == "check":
+        sub = await db.get_active_subscription(user["id"])
+        await state.clear()
+        if not sub:
+            await message.answer(
+                f"👤 {user['full_name']}\nObuna: yo'q", reply_markup=kb.admin_main_menu()
+            )
+        else:
+            await message.answer(
+                f"👤 {user['full_name']}\n"
+                f"📦 Tarif: {TARIFF_NAMES.get(sub['tariff_code'], sub['tariff_code'])}\n"
+                f"⏳ Tugash: {sub['end_date'][:16].replace('T', ' ')}\n"
+                f"Holat: {sub['status']}",
+                reply_markup=kb.admin_main_menu(),
+            )
+        return
 
-
-# ================= KONTENT QO'SHISH =================
-
-@router.callback_query(F.data == "admin:add_content")
-async def add_content_start(callback: CallbackQuery, state: FSMContext):
-    await state.set_state(ContentStates.choosing_type)
-    await callback.message.answer("Kontent turini tanlang:", reply_markup=kb.content_type_keyboard())
-    await callback.answer()
-
-
-@router.callback_query(ContentStates.choosing_type, F.data.startswith("content_type:"))
-async def add_content_type_chosen(callback: CallbackQuery, state: FSMContext):
-    content_type = callback.data.split(":")[1]
-    await state.update_data(content_type=content_type)
-    await state.set_state(ContentStates.title)
-    await callback.message.answer("Sarlavha (nomi)ni kiriting:")
-    await callback.answer()
-
-
-@router.message(ContentStates.title)
-async def add_content_title(message: Message, state: FSMContext):
-    await state.update_data(title=message.text.strip())
-    await state.set_state(ContentStates.file)
-    data = await state.get_data()
-    if data["content_type"] == "video":
-        await message.answer("Video faylni yuboring:")
-    else:
-        await message.answer("Fayl yuboring (PDF/dokument) yoki matn ko'rinishida yozib yuboring:")
-
-
-@router.message(ContentStates.file, F.video)
-async def add_content_video(message: Message, state: FSMContext):
-    await state.update_data(file_id=message.video.file_id)
-    await state.set_state(ContentStates.caption)
-    await message.answer("Qisqacha tavsif (caption) kiriting (bo'lmasa \"-\" yuboring):")
-
-
-@router.message(ContentStates.file, F.document)
-async def add_content_document(message: Message, state: FSMContext):
-    await state.update_data(file_id=message.document.file_id)
-    await state.set_state(ContentStates.caption)
-    await message.answer("Qisqacha tavsif (caption) kiriting (bo'lmasa \"-\" yuboring):")
-
-
-@router.message(ContentStates.file)
-async def add_content_text(message: Message, state: FSMContext):
-    # strategiya matn ko'rinishida ham bo'lishi mumkin
-    await state.update_data(file_id=None, caption_text=message.text)
-    await state.set_state(ContentStates.caption)
-    await message.answer("Qisqacha tavsif (caption) kiriting (bo'lmasa \"-\" yuboring):")
-
-
-@router.message(ContentStates.caption)
-async def add_content_caption(message: Message, state: FSMContext):
-    caption = "" if message.text.strip() == "-" else message.text.strip()
-    data = await state.get_data()
-    if data.get("file_id") is None and data.get("caption_text"):
-        caption = data["caption_text"] + ("\n\n" + caption if caption else "")
-    await state.update_data(caption=caption)
-    await state.set_state(ContentStates.tariff)
+    await state.update_data(user_id=user["id"], telegram_id=telegram_id)
+    await state.set_state(GrantSubStates.waiting_tariff)
     await message.answer(
-        "Bu kontentga kirish uchun minimal talab qilinadigan tarifni tanlang:",
-        reply_markup=kb.content_tariff_keyboard(),
+        f"👤 {user['full_name']}\n\nQaysi tarifni beramiz?",
+        reply_markup=kb.tariff_pick_keyboard("granttariff", "Tarif"),
     )
 
 
-@router.callback_query(ContentStates.tariff, F.data.startswith("content_tariff:"))
-async def add_content_finish(callback: CallbackQuery, state: FSMContext):
+@router.callback_query(GrantSubStates.waiting_tariff, F.data.startswith("granttariff:"))
+async def grant_pick_period(callback: CallbackQuery, state: FSMContext):
     tariff_code = callback.data.split(":")[1]
-    data = await state.get_data()
-    await db.add_content(
-        data["content_type"], data["title"], data.get("file_id"), data.get("caption", ""), tariff_code
+    await callback.message.edit_text(
+        f"{TARIFF_NAMES[tariff_code]} — muddatni tanlang:",
+        reply_markup=kb.grant_period_keyboard(tariff_code),
     )
-    await state.clear()
-    await callback.message.edit_text("✅ Kontent muvaffaqiyatli qo'shildi.")
     await callback.answer()
 
 
-# ================= BROADCAST =================
-
-@router.callback_query(F.data == "admin:broadcast")
-async def broadcast_start(callback: CallbackQuery, state: FSMContext):
-    await state.set_state(BroadcastStates.waiting_message)
-    await callback.message.answer("Barcha foydalanuvchilarga yuboriladigan xabar matnini kiriting:")
-    await callback.answer()
-
-
-@router.message(BroadcastStates.waiting_message)
-async def broadcast_send(message: Message, state: FSMContext, bot: Bot):
+@router.callback_query(GrantSubStates.waiting_tariff, F.data.startswith("grantperiod:"))
+async def grant_finish(callback: CallbackQuery, state: FSMContext, bot: Bot):
+    _, tariff_code, period = callback.data.split(":")
+    data = await state.get_data()
+    await db.create_or_extend_subscription(data["user_id"], tariff_code, period)
     await state.clear()
-    user_ids = await db.get_all_user_telegram_ids()
-    sent, failed = 0, 0
-    for tid in user_ids:
-        try:
-            await bot.send_message(tid, message.text)
-            sent += 1
-        except Exception:
-            failed += 1
-    await message.answer(f"📢 Xabar yuborildi.\n✅ Yetkazildi: {sent}\n❌ Xato: {failed}")
+
+    await callback.message.edit_text(
+        f"✅ Obuna berildi: {TARIFF_NAMES[tariff_code]} — {PERIOD_NAMES[period]}"
+    )
+    await callback.answer()
+    try:
+        await bot.send_message(
+            data["telegram_id"],
+            f"🎁 Sizga obuna faollashtirildi!\n"
+            f"Tarif: {TARIFF_NAMES[tariff_code]} — {PERIOD_NAMES[period]}\n/obunam"
+        )
+    except Exception:
+        pass
 
 
-# ================= QOIDABUZARLIK =================
+# ---------- qoidabuzarlik ----------
 
-@router.callback_query(F.data == "admin:violation")
+@router.callback_query(F.data == "sub:violation")
 async def violation_start(callback: CallbackQuery, state: FSMContext):
     await state.set_state(ViolationStates.waiting_user_id)
-    await callback.message.answer(
-        "Qoidabuzar foydalanuvchining Telegram ID raqamini kiriting:"
-    )
+    await callback.message.answer("Qoidabuzar foydalanuvchining Telegram ID raqamini kiriting:")
     await callback.answer()
 
 
@@ -422,8 +591,10 @@ async def violation_finish(message: Message, state: FSMContext, bot: Bot):
     await db.pause_subscription(data["user_id"])
     await state.clear()
 
-    await message.answer("✅ Qoidabuzarlik qayd etildi va tarif vaqtincha to'xtatildi.")
-
+    await message.answer(
+        "✅ Qoidabuzarlik qayd etildi va obuna vaqtincha to'xtatildi.",
+        reply_markup=kb.admin_main_menu(),
+    )
     try:
         await bot.send_message(
             data["telegram_id"],
@@ -434,3 +605,83 @@ async def violation_finish(message: Message, state: FSMContext, bot: Bot):
         )
     except Exception:
         pass
+
+
+# =====================================================================
+# FAQAT BUYRUQ ORQALI: YANGI BO'LIM QO'SHISH
+# (ataylab tugma qilinmagan — kundalik ish emas)
+# =====================================================================
+
+@router.message(Command("yangi_bolim"))
+async def new_section_start(message: Message, state: FSMContext):
+    await state.clear()
+    await state.set_state(NewSectionStates.title)
+    await message.answer(
+        "🆕 Foydalanuvchilarga yangi bo'lim qo'shamiz.\n\n"
+        "Bo'lim nomini kiriting — u foydalanuvchida tugma bo'lib chiqadi.\n"
+        "Masalan: <code>📊 Bozor tahlili</code>\n\n"
+        "Bekor qilish: /bekor",
+        parse_mode="HTML",
+    )
+
+
+@router.message(NewSectionStates.title)
+async def new_section_title(message: Message, state: FSMContext):
+    title = message.text.strip()
+    existing = await sec.all_sections()
+    if any(m["title"] == title for m in existing.values()):
+        await message.answer("Bunday nomli bo'lim allaqachon bor. Boshqa nom kiriting:")
+        return
+    await state.update_data(title=title)
+    await state.set_state(NewSectionStates.tariff)
+    await message.answer(
+        f"«{title}» bo'limi qaysi tarifdan boshlab ochilsin?",
+        reply_markup=kb.tariff_pick_keyboard("sectiontariff", "Minimal daraja"),
+    )
+
+
+@router.callback_query(NewSectionStates.tariff, F.data.startswith("sectiontariff:"))
+async def new_section_finish(callback: CallbackQuery, state: FSMContext):
+    min_tariff = callback.data.split(":")[1]
+    data = await state.get_data()
+
+    code = f"custom{int(time.time())}"
+    await db.add_section(code, data["title"], min_tariff)
+    await state.clear()
+
+    await callback.message.edit_text(
+        f"✅ «{data['title']}» bo'limi qo'shildi.\n"
+        f"Minimal daraja: {TARIFF_NAMES[min_tariff]}\n\n"
+        f"Endi u foydalanuvchilarda tugma bo'lib chiqadi. Unga narsa joylash uchun "
+        f"«{kb.ADMIN_POST}» bo'limiga kiring."
+    )
+    await callback.answer()
+
+
+# =====================================================================
+# FAQAT BUYRUQ ORQALI: UMUMIY XABAR
+# =====================================================================
+
+@router.message(Command("xabar"))
+async def broadcast_start(message: Message, state: FSMContext):
+    await state.clear()
+    await state.set_state(BroadcastStates.waiting_message)
+    await message.answer(
+        "Barcha foydalanuvchilarga yuboriladigan xabarni yozing.\nBekor qilish: /bekor"
+    )
+
+
+@router.message(BroadcastStates.waiting_message)
+async def broadcast_send(message: Message, state: FSMContext, bot: Bot):
+    await state.clear()
+    sent, failed = 0, 0
+    for tid in await db.get_all_user_telegram_ids():
+        try:
+            await bot.send_message(tid, message.text)
+            sent += 1
+        except Exception:
+            failed += 1
+    await message.answer(
+        f"📢 Yuborildi.\n✅ Yetkazildi: {sent}\n❌ Xato: {failed}",
+        reply_markup=kb.admin_main_menu(),
+    )

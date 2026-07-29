@@ -38,6 +38,52 @@ yoniq turganda ishlaydi, kompyuterni o'chirsangiz bot ham to'xtaydi.
 
 ---
 
+## BOT TUZILMASI
+
+### Foydalanuvchi ko'radigan narsa
+
+Pastda doim turadigan 4 ta tugma (`bot/config.py` → `SECTIONS`):
+
+| Bo'lim | Minimal tarif | Turi |
+|---|---|---|
+| 📈 Savdo signallari | Lite | signal (narx kuzatiladi) |
+| ⚡️ Skalping | Pro | signal (narx kuzatiladi) |
+| 🎓 Video darsliklar | Pro | kontent |
+| 🧠 Strategiyalar | Premium | kontent |
+
+Yuqori tarif pastki darajalarning hamma bo'limini ochadi (Premium → hammasi).
+
+Menyuda ataylab "obuna sotib olish" tugmasi yo'q — bot pullik ekani faqat
+yopiq bo'lim bosilganda ma'lum bo'ladi va o'sha yerda qaysi tarif kerakligi
+aytiladi. Bo'lim ochiq bo'lsa, ichidagi ro'yxat tugmalar bo'lib chiqadi;
+to'liq ma'lumot tugma bosilgandagina ochiladi.
+
+**Obunasizlar ham xabardor bo'ladi:** yangi signal yoki material qo'shilganda
+ularga ham xabar boradi, lekin signal raqamlari va materialning o'zi
+ko'rinmaydi — faqat "bo'limga yangi narsa qo'shildi" deb turadi.
+
+☰ menyudagi buyruqlar: `/start`, `/obuna`, `/obunam`
+
+### Admin ko'radigan narsa
+
+Pastda 3 ta tugma:
+
+1. **📤 Bo'limlarga joylash** — yuqoridagi bo'limlarning istalganiga signal
+   yoki material joylash (signalga rasm ham biriktirish mumkin)
+2. **💳 To'lov tizimi** — tarif narxlari va to'lov usuli (karta raqami)
+3. **🎫 Obunalar** — kutilayotgan to'lovlar, qo'lda obuna berish,
+   foydalanuvchi obunasini tekshirish, qoidabuzarlik
+
+☰ menyudagi buyruqlar: `/joylash`, `/tolov`, `/obunalar`, `/yangi_bolim`,
+`/xabar`, `/bekor`
+
+`/yangi_bolim` ataylab tugma qilinmagan — kundalik ish emas. U orqali
+foydalanuvchilarga butunlay yangi bo'lim (5-, 6-tugma) qo'shiladi: nomi va
+minimal tarifi so'raladi, bo'lim bazada saqlanadi va darhol menyuda paydo
+bo'ladi.
+
+---
+
 ## SERVERDA ISHGA TUSHIRISH (24/7 uchun)
 
 ## 1. Loyihani serverga joylash

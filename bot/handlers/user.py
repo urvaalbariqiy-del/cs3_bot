@@ -1,13 +1,14 @@
 from aiogram import Router, F, Bot
-from aiogram.filters import CommandStart, Command
+from aiogram.filters import CommandStart, Command, StateFilter
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from datetime import datetime
 
 from bot import database as db
 from bot import keyboards as kb
+from bot import sections as sec
 from bot.states import PaymentStates
-from bot.config import ADMIN_IDS, TARIFF_ACCESS, TARIFF_NAMES, PERIOD_NAMES
+from bot.config import ADMIN_IDS, TARIFF_NAMES, PERIOD_NAMES
 
 router = Router()
 
@@ -27,21 +28,34 @@ async def _ensure_user(message: Message) -> int:
     )
 
 
+async def _user_tariff(user_id: int):
+    sub = await db.get_active_subscription(user_id)
+    return sub["tariff_code"] if sub else None
+
+
+async def user_menu():
+    return kb.user_main_menu(await db.get_custom_sections())
+
+
+# ---------- START / MENU ----------
+
 @router.message(CommandStart())
 async def cmd_start(message: Message):
     await _ensure_user(message)
     if is_admin(message.from_user.id):
         await message.answer(
-            "Salom, Admin! Boshqaruv uchun pastdagi tugmadan yoki /panel buyrug'idan foydalaning.",
+            "Salom, Admin! 👋\n\n"
+            "Pastdagi uchta tugma orqali boshqarasiz. Tezkor buyruqlar esa "
+            "yozish maydonidagi ☰ menyuda.",
             reply_markup=kb.admin_main_menu(),
         )
     else:
         await message.answer(
             "Assalomu alaykum! 👋\n\n"
-            "Bu bot orqali kripto-spot yo'nalishidagi savdo signallari, video darsliklar "
-            "va strategiyalarga obuna bo'lishingiz mumkin.\n\n"
-            "Quyidagi menyudan foydalaning:",
-            reply_markup=kb.user_main_menu(),
+            "Bu yerda kripto bozori bo'yicha savdo signallari, skalping, "
+            "video darsliklar va strategiyalar jamlangan.\n\n"
+            "Qiziqqan bo'limingizni tanlang:",
+            reply_markup=await user_menu(),
         )
 
 
@@ -50,13 +64,150 @@ async def cmd_menu(message: Message):
     if is_admin(message.from_user.id):
         await message.answer("Admin menyu:", reply_markup=kb.admin_main_menu())
     else:
-        await message.answer("Asosiy menyu:", reply_markup=kb.user_main_menu())
+        await message.answer("Asosiy menyu:", reply_markup=await user_menu())
 
 
-# ---------- OBUNA SOTIB OLISH ----------
+# ---------- BO'LIMLAR ----------
 
-@router.message(F.text == "💳 Obuna sotib olish")
-async def buy_subscription(message: Message):
+STATUS_LABELS = {
+    "pending": "⏳ Kutilmoqda",
+    "active": "✅ Faol",
+    "tp1_hit": "🎯 TP1 olindi (faol davom etmoqda)",
+    "tp2_hit": "🎯 TP2 olindi — Yopiq",
+    "stopped": "🛑 Stop bo'ldi — Yopiq",
+    "closed": "❌ Yopiq",
+}
+CLOSED_STATUSES = {"tp2_hit", "stopped", "closed"}
+
+
+def signal_text(s) -> str:
+    active_note = "❌ Signal faol emas" if s["status"] in CLOSED_STATUSES else "✅ Signal faol"
+    text = (
+        f"💠 <b>{s['coin']}</b>\n"
+        f"Holat: {STATUS_LABELS.get(s['status'], s['status'])}\n"
+        f"({active_note})\n\n"
+        f"🎯 Entry: {s['entry']}\n"
+        f"🛑 Stop: {s['stop']}\n"
+        f"🥇 TP1: {s['tp1']}\n"
+        f"🥈 TP2: {s['tp2']}"
+    )
+    if s["comment"]:
+        text += f"\n\n📝 {s['comment']}"
+    return text
+
+
+# StateFilter(None) muhim: foydalanuvchi biror jarayon o'rtasida bo'lsa
+# (masalan to'lov cheki kutilayotgan bo'lsa) bu handler aralashmasligi kerak.
+@router.message(StateFilter(None), F.text.func(lambda t: t and not t.startswith("/")))
+async def open_section(message: Message):
+    """Asosiy tugmalardan biri bosilganda ishlaydi.
+
+    Bo'lim ochiq bo'lsa — ichidagi ro'yxat tugmalar ko'rinishida chiqadi;
+    yopiq bo'lsa — qaysi obuna kerakligi aytiladi.
+    """
+    code, meta = await sec.by_title(message.text)
+    if not code:
+        return  # boshqa matnlarga aralashmaymiz
+
+    user_id = await _ensure_user(message)
+    tariff = await _user_tariff(user_id)
+
+    if not sec.has_access(tariff, meta["min_tariff"]):
+        await message.answer(
+            f"🔒 <b>{meta['title']}</b> bo'limi "
+            f"<b>{sec.tariff_label(meta['min_tariff'])}</b> obunasi uchun.\n\n"
+            f"Obuna ochsangiz, bu bo'lim va undan pastki darajadagi barcha "
+            f"bo'limlar siz uchun ochiladi.",
+            parse_mode="HTML",
+            reply_markup=kb.subscribe_prompt_keyboard(),
+        )
+        return
+
+    if meta["kind"] == "signal":
+        items = await db.get_recent_signals(limit=10, section=code)
+        if not items:
+            await message.answer(f"{meta['title']} — hozircha bo'sh.")
+            return
+        await message.answer(
+            f"{meta['title']}\n\nKo'rmoqchi bo'lganingizni tanlang:",
+            reply_markup=kb.section_items_keyboard(code, items, is_signal=True),
+        )
+    else:
+        items = await db.get_content_by_type(code)
+        if not items:
+            await message.answer(f"{meta['title']} — hozircha bo'sh.")
+            return
+        await message.answer(
+            f"{meta['title']}\n\nKo'rmoqchi bo'lganingizni tanlang:",
+            reply_markup=kb.section_items_keyboard(code, items, is_signal=False),
+        )
+
+
+@router.callback_query(F.data.startswith("open:"))
+async def open_item(callback: CallbackQuery):
+    _, code, item_id = callback.data.split(":")
+    meta = await sec.by_code(code)
+    if not meta:
+        await callback.answer("Bo'lim topilmadi.", show_alert=True)
+        return
+
+    user_id = await db.get_or_create_user(
+        callback.from_user.id, callback.from_user.username, callback.from_user.full_name
+    )
+    tariff = await _user_tariff(user_id)
+    if not sec.has_access(tariff, meta["min_tariff"]):
+        await callback.answer("Bu bo'lim sizning tarifingizda ochilmagan.", show_alert=True)
+        return
+
+    if meta["kind"] == "signal":
+        s = await db.get_signal(int(item_id))
+        if not s:
+            await callback.answer("Topilmadi.", show_alert=True)
+            return
+        if s["photo_id"]:
+            await callback.message.answer_photo(
+                s["photo_id"], caption=signal_text(s), parse_mode="HTML", protect_content=True
+            )
+        else:
+            await callback.message.answer(
+                signal_text(s), parse_mode="HTML", protect_content=True
+            )
+    else:
+        item = await db.get_content(int(item_id))
+        if not item:
+            await callback.answer("Topilmadi.", show_alert=True)
+            return
+        caption = f"<b>{item['title']}</b>"
+        if item["caption"]:
+            caption += f"\n\n{item['caption']}"
+        if item["file_id"] and code == "videos":
+            await callback.message.answer_video(
+                item["file_id"], caption=caption, parse_mode="HTML", protect_content=True
+            )
+        elif item["file_id"]:
+            await callback.message.answer_document(
+                item["file_id"], caption=caption, parse_mode="HTML", protect_content=True
+            )
+        else:
+            await callback.message.answer(
+                caption, parse_mode="HTML", protect_content=True
+            )
+    await callback.answer()
+
+
+# ---------- OBUNA ----------
+
+@router.callback_query(F.data == "buy:open")
+async def buy_from_lock(callback: CallbackQuery):
+    await callback.message.answer(
+        "Kerakli tarifni tanlang:", reply_markup=kb.tariff_choice_keyboard()
+    )
+    await callback.answer()
+
+
+@router.message(Command("obuna"))
+async def cmd_buy(message: Message):
+    await _ensure_user(message)
     await message.answer("Kerakli tarifni tanlang:", reply_markup=kb.tariff_choice_keyboard())
 
 
@@ -73,7 +224,9 @@ async def choose_tariff(callback: CallbackQuery):
 
 @router.callback_query(F.data == "back_to_tariffs")
 async def back_to_tariffs(callback: CallbackQuery):
-    await callback.message.edit_text("Kerakli tarifni tanlang:", reply_markup=kb.tariff_choice_keyboard())
+    await callback.message.edit_text(
+        "Kerakli tarifni tanlang:", reply_markup=kb.tariff_choice_keyboard()
+    )
     await callback.answer()
 
 
@@ -142,119 +295,48 @@ async def receive_receipt(message: Message, state: FSMContext, bot: Bot):
             pass
 
 
-@router.message(PaymentStates.waiting_screenshot)
+# Buyruqlarni bu handler ushlamasligi kerak: chek kutilayotganda ham
+# /obunam, /obuna kabi buyruqlar ishlashi lozim.
+@router.message(PaymentStates.waiting_screenshot,
+                F.text.func(lambda t: not (t or "").startswith("/")))
 async def receipt_wrong_type(message: Message):
     await message.answer("Iltimos, to'lov chekini rasm (screenshot) ko'rinishida yuboring.")
 
 
+@router.message(Command("bekor"))
+async def cmd_cancel(message: Message, state: FSMContext):
+    if await state.get_state() is None:
+        await message.answer("Bekor qiladigan amal yo'q.")
+        return
+    await state.clear()
+    await message.answer("Bekor qilindi.", reply_markup=await user_menu())
+
+
 # ---------- MENING OBUNAM ----------
 
-@router.message(F.text == "📊 Mening obunam")
+@router.message(Command("obunam"))
 async def my_subscription(message: Message):
     user_id = await _ensure_user(message)
     sub = await db.get_active_subscription(user_id)
     if not sub:
         await message.answer(
-            "Sizda hozircha faol obuna yo'q.\n\"💳 Obuna sotib olish\" orqali tarif tanlashingiz mumkin."
+            "Sizda hozircha faol obuna yo'q.\n"
+            "/obuna buyrug'i orqali tarif tanlashingiz mumkin."
         )
         return
+
     end_date = datetime.fromisoformat(sub["end_date"])
+    left = end_date - datetime.utcnow()
+    days, hours = left.days, left.seconds // 3600
+
+    opened = [m["title"] for m in (await sec.all_sections()).values()
+              if sec.has_access(sub["tariff_code"], m["min_tariff"])]
+
     await message.answer(
         f"📦 Tarif: <b>{TARIFF_NAMES[sub['tariff_code']]}</b>\n"
-        f"⏳ Amal qilish muddati: {end_date.strftime('%d.%m.%Y %H:%M')} gacha\n"
-        f"✅ Holat: Faol",
+        f"⏳ Tugash sanasi: {end_date.strftime('%d.%m.%Y %H:%M')}\n"
+        f"🕒 Qolgan muddat: {days} kun {hours} soat\n"
+        f"✅ Holat: Faol\n\n"
+        f"🔓 Sizga ochiq bo'limlar:\n" + "\n".join(f"• {t}" for t in opened),
         parse_mode="HTML",
     )
-
-
-async def _check_access(message: Message, section: str) -> bool:
-    """section: 'signals' | 'videos' | 'strategies'"""
-    user_id = await _ensure_user(message)
-    sub = await db.get_active_subscription(user_id)
-    if not sub:
-        await message.answer(
-            "🔒 Bu bo'lim faqat obunachilar uchun.\n\"💳 Obuna sotib olish\" orqali tarif tanlang."
-        )
-        return False
-    if not TARIFF_ACCESS[sub["tariff_code"]][section]:
-        await message.answer(
-            "🔒 Sizning tarifingiz bu bo'limga kirish huquqini bermaydi.\n"
-            "Yuqoriroq tarifga o'tish uchun \"💳 Obuna sotib olish\" bo'limiga o'ting."
-        )
-        return False
-    return True
-
-
-# ---------- SIGNALLAR ----------
-
-STATUS_LABELS = {
-    "pending": "⏳ Kutilmoqda",
-    "active": "✅ Faol",
-    "tp1_hit": "🎯 TP1 olindi (faol davom etmoqda)",
-    "tp2_hit": "🎯 TP2 olindi — Yopiq",
-    "stopped": "🛑 Stop bo'ldi — Yopiq",
-    "closed": "❌ Yopiq",
-}
-CLOSED_STATUSES = {"tp2_hit", "stopped", "closed"}
-
-
-@router.message(F.text == "📈 Signallar")
-async def view_signals(message: Message):
-    if not await _check_access(message, "signals"):
-        return
-    signals = await db.get_recent_signals(limit=10)
-    if not signals:
-        await message.answer("Hozircha signal joylanmagan.")
-        return
-    for s in signals:
-        active_note = "❌ Signal faol emas" if s["status"] in CLOSED_STATUSES else "✅ Signal faol"
-        text = (
-            f"💠 <b>{s['coin']}</b>\n"
-            f"Holat: {STATUS_LABELS.get(s['status'], s['status'])}\n"
-            f"({active_note})\n\n"
-            f"🎯 Entry: {s['entry']}\n"
-            f"🛑 Stop: {s['stop']}\n"
-            f"🥇 TP1: {s['tp1']}\n"
-            f"🥈 TP2: {s['tp2']}"
-        )
-        if s["comment"]:
-            text += f"\n\n📝 {s['comment']}"
-        await message.answer(text, parse_mode="HTML", protect_content=True)
-
-
-# ---------- VIDEO / STRATEGIYA ----------
-
-@router.message(F.text == "🎓 Video darsliklar")
-async def view_videos(message: Message):
-    if not await _check_access(message, "videos"):
-        return
-    items = await db.get_content_by_type("video")
-    if not items:
-        await message.answer("Hozircha video darslik joylanmagan.")
-        return
-    for item in items:
-        await message.answer_video(
-            item["file_id"], caption=f"🎓 {item['title']}\n\n{item['caption'] or ''}",
-            protect_content=True,
-        )
-
-
-@router.message(F.text == "🧠 Strategiyalar")
-async def view_strategies(message: Message):
-    if not await _check_access(message, "strategies"):
-        return
-    items = await db.get_content_by_type("strategy")
-    if not items:
-        await message.answer("Hozircha strategiya joylanmagan.")
-        return
-    for item in items:
-        if item["file_id"]:
-            await message.answer_document(
-                item["file_id"], caption=f"🧠 {item['title']}\n\n{item['caption'] or ''}",
-                protect_content=True,
-            )
-        else:
-            await message.answer(
-                f"🧠 <b>{item['title']}</b>\n\n{item['caption'] or ''}",
-                parse_mode="HTML", protect_content=True,
-            )

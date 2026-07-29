@@ -2,20 +2,54 @@ from aiogram.types import (
     ReplyKeyboardMarkup, KeyboardButton,
     InlineKeyboardMarkup, InlineKeyboardButton,
 )
-from bot.config import TARIFF_NAMES, PERIOD_NAMES
+from bot.config import TARIFF_NAMES, PERIOD_NAMES, SECTIONS
+
+
+def _rows(buttons, per_row=2):
+    """Tugmalar ro'yxatini qatorlarga bo'ladi."""
+    return [buttons[i:i + per_row] for i in range(0, len(buttons), per_row)]
 
 
 # ---------- USER SIDE ----------
 
-def user_main_menu() -> ReplyKeyboardMarkup:
+def user_main_menu(custom_sections=()) -> ReplyKeyboardMarkup:
+    """Foydalanuvchining asosiy menyusi.
+
+    Bu yerda ataylab "obuna sotib olish" tugmasi yo'q — bot pullik ekani
+    faqat yopiq bo'lim bosilganda ma'lum bo'ladi. is_persistent tugmalarni
+    doim ko'rinib turadigan qiladi.
+    """
+    titles = [s["title"] for s in SECTIONS.values()]
+    titles += [row["title"] for row in custom_sections]
     return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="💳 Obuna sotib olish"), KeyboardButton(text="📊 Mening obunam")],
-            [KeyboardButton(text="📈 Signallar"), KeyboardButton(text="🎓 Video darsliklar")],
-            [KeyboardButton(text="🧠 Strategiyalar")],
-        ],
+        keyboard=_rows([KeyboardButton(text=t) for t in titles], per_row=2),
         resize_keyboard=True,
+        is_persistent=True,
     )
+
+
+def subscribe_prompt_keyboard() -> InlineKeyboardMarkup:
+    """Yopiq bo'lim bosilganda chiqadigan yagona tugma."""
+    return InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(text="💳 Obuna olish", callback_data="buy:open")
+    ]])
+
+
+def section_items_keyboard(section_code: str, items, is_signal: bool) -> InlineKeyboardMarkup:
+    """Bo'lim ichidagi ro'yxat — har bir element alohida tugma.
+
+    Foydalanuvchi tugmani bosgandagina to'liq ma'lumot ochiladi.
+    """
+    rows = []
+    for it in items:
+        if is_signal:
+            label = f"💠 {it['coin']}"
+        else:
+            label = it["title"]
+        rows.append([InlineKeyboardButton(
+            text=label[:60], callback_data=f"open:{section_code}:{it['id']}"
+        )])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def tariff_choice_keyboard() -> InlineKeyboardMarkup:
@@ -46,24 +80,47 @@ def confirm_payment_keyboard(tariff_code: str, period: str) -> InlineKeyboardMar
 
 # ---------- ADMIN SIDE ----------
 
+# Admin pastki menyusi — uchta bo'lim, boshqa hech narsa.
+ADMIN_POST = "📤 Bo'limlarga joylash"
+ADMIN_PAYMENT = "💳 To'lov tizimi"
+ADMIN_SUBS = "🎫 Obunalar"
+
+
 def admin_main_menu() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="⚙️ Admin panel")],
+            [KeyboardButton(text=ADMIN_POST)],
+            [KeyboardButton(text=ADMIN_PAYMENT), KeyboardButton(text=ADMIN_SUBS)],
         ],
         resize_keyboard=True,
+        is_persistent=True,
     )
 
 
-def admin_panel_keyboard() -> InlineKeyboardMarkup:
+def admin_post_sections_keyboard(custom_sections=()) -> InlineKeyboardMarkup:
+    """1-bo'lim: qaysi foydalanuvchi bo'limiga narsa joylash."""
+    rows = [[InlineKeyboardButton(text=s["title"], callback_data=f"post:{code}")]
+            for code, s in SECTIONS.items()]
+    rows += [[InlineKeyboardButton(text=row["title"], callback_data=f"post:{row['code']}")]
+             for row in custom_sections]
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def admin_payment_keyboard() -> InlineKeyboardMarkup:
+    """2-bo'lim: narx va to'lov usuli."""
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🟢 Yangi signal", callback_data="admin:new_signal")],
-        [InlineKeyboardButton(text="📋 So'nggi signallar", callback_data="admin:list_signals")],
-        [InlineKeyboardButton(text="💰 Narxlarni sozlash", callback_data="admin:prices")],
-        [InlineKeyboardButton(text="🎓 Kontent qo'shish", callback_data="admin:add_content")],
-        [InlineKeyboardButton(text="⏳ Kutilayotgan to'lovlar", callback_data="admin:pending_payments")],
-        [InlineKeyboardButton(text="📢 Umumiy xabar (broadcast)", callback_data="admin:broadcast")],
-        [InlineKeyboardButton(text="🚫 Qoidabuzarlik / ogohlantirish", callback_data="admin:violation")],
+        [InlineKeyboardButton(text="💵 Narxlarni o'zgartirish", callback_data="pay:prices")],
+        [InlineKeyboardButton(text="💳 To'lov usulini kiritish", callback_data="pay:info")],
+    ])
+
+
+def admin_subs_keyboard() -> InlineKeyboardMarkup:
+    """3-bo'lim: obuna darajasi va muddati."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="⏳ Kutilayotgan to'lovlar", callback_data="sub:pending")],
+        [InlineKeyboardButton(text="➕ Qo'lda obuna berish", callback_data="sub:grant")],
+        [InlineKeyboardButton(text="🔍 Foydalanuvchi obunasi", callback_data="sub:check")],
+        [InlineKeyboardButton(text="🚫 Qoidabuzarlik", callback_data="sub:violation")],
     ])
 
 
@@ -81,19 +138,19 @@ def signal_preview_keyboard() -> InlineKeyboardMarkup:
     ]])
 
 
-def content_type_keyboard() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🎓 Video darslik", callback_data="content_type:video")],
-        [InlineKeyboardButton(text="🧠 Strategiya", callback_data="content_type:strategy")],
-    ])
-
-
-def content_tariff_keyboard() -> InlineKeyboardMarkup:
+def tariff_pick_keyboard(prefix: str, label: str = "Minimal daraja") -> InlineKeyboardMarkup:
+    """Tarif tanlash. prefix callback'ni ajratib turadi (content_tariff / section_tariff / grant)."""
     rows = []
     for code, name in TARIFF_NAMES.items():
         rows.append([InlineKeyboardButton(
-            text=f"Minimal daraja: {name}", callback_data=f"content_tariff:{code}"
+            text=f"{label}: {name}", callback_data=f"{prefix}:{code}"
         )])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def grant_period_keyboard(tariff_code: str) -> InlineKeyboardMarkup:
+    rows = [[InlineKeyboardButton(text=name, callback_data=f"grantperiod:{tariff_code}:{code}")]
+            for code, name in PERIOD_NAMES.items()]
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 

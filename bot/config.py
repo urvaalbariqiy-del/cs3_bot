@@ -13,11 +13,11 @@ DB_PATH = os.getenv("DB_PATH", "bot_database.db")
 
 REMINDER_HOURS_BEFORE = int(os.getenv("REMINDER_HOURS_BEFORE", "24"))
 
-# Tariflarning ichki kodlari va ular kirish huquqiga ega bo'limlar
-TARIFF_ACCESS = {
-    "lite": {"signals": True, "videos": False, "strategies": False},
-    "pro": {"signals": True, "videos": True, "strategies": False},
-    "premium": {"signals": True, "videos": True, "strategies": True},
+# Tarif darajalari. Yuqori daraja pastki darajalarning hamma bo'limini ochadi.
+TARIFF_LEVEL = {
+    "lite": 1,
+    "pro": 2,
+    "premium": 3,
 }
 
 TARIFF_NAMES = {
@@ -29,6 +29,39 @@ TARIFF_NAMES = {
 PERIOD_NAMES = {
     "daily": "Kunlik",
     "monthly": "Oylik",
+}
+
+# ---------------------------------------------------------------------------
+# BO'LIMLAR
+#
+# Har bir bo'lim foydalanuvchidagi bitta asosiy tugma.
+#   kind = "signal"   -> Entry/Stop/TP kiritiladi, bot narxni Binance'dan kuzatadi
+#   kind = "content"  -> video/fayl/matn joylanadi
+#
+# Admin /yangi_bolim buyrug'i orqali bularning ustiga yangi bo'lim qo'sha oladi;
+# ular bazadagi 'sections' jadvalida saqlanadi va kind="content" bo'ladi.
+# ---------------------------------------------------------------------------
+SECTIONS = {
+    "signals": {
+        "title": "📈 Savdo signallari",
+        "min_tariff": "lite",
+        "kind": "signal",
+    },
+    "scalping": {
+        "title": "⚡️ Skalping",
+        "min_tariff": "pro",
+        "kind": "signal",
+    },
+    "videos": {
+        "title": "🎓 Video darsliklar",
+        "min_tariff": "pro",
+        "kind": "content",
+    },
+    "strategies": {
+        "title": "🧠 Strategiyalar",
+        "min_tariff": "premium",
+        "kind": "content",
+    },
 }
 
 # Binance spot narx oqimi uchun bazaviy manzil

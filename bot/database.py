@@ -53,6 +53,8 @@ CREATE TABLE IF NOT EXISTS payments (
 
 CREATE TABLE IF NOT EXISTS signals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    section TEXT NOT NULL DEFAULT 'signals',  -- signals / scalping
+    photo_id TEXT,                    -- signalga biriktirilgan rasm (Telegram file_id)
     coin TEXT NOT NULL,               -- masalan BTCUSDT
     entry REAL NOT NULL,
     stop REAL NOT NULL,
@@ -75,6 +77,16 @@ CREATE TABLE IF NOT EXISTS content (
     file_id TEXT,
     caption TEXT,
     required_tariff TEXT NOT NULL,    -- lite/pro/premium - minimal talab qilinadigan daraja
+    created_at TEXT NOT NULL
+);
+
+-- Admin /yangi_bolim orqali qo'shgan qo'shimcha bo'limlar.
+-- Ularning kontenti 'content' jadvalida content_type = sections.code bilan saqlanadi.
+CREATE TABLE IF NOT EXISTS sections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT UNIQUE NOT NULL,
+    title TEXT NOT NULL,
+    min_tariff TEXT NOT NULL,
     created_at TEXT NOT NULL
 );
 
@@ -102,13 +114,18 @@ async def init_db():
         await db.executescript(SCHEMA)
         await db.commit()
 
-        # Migratsiya: eski bazalarda 'entry_side' ustuni bo'lmaydi, uni qo'shamiz.
+        # Migratsiya: eski bazalarda yangi ustunlar bo'lmaydi, ularni qo'shamiz.
         # (CREATE TABLE IF NOT EXISTS mavjud jadvalni yangilamaydi)
         cur = await db.execute("PRAGMA table_info(signals)")
         columns = {row[1] for row in await cur.fetchall()}
-        if "entry_side" not in columns:
-            await db.execute("ALTER TABLE signals ADD COLUMN entry_side TEXT")
-            await db.commit()
+        for name, ddl in (
+            ("entry_side", "ALTER TABLE signals ADD COLUMN entry_side TEXT"),
+            ("photo_id", "ALTER TABLE signals ADD COLUMN photo_id TEXT"),
+            ("section", "ALTER TABLE signals ADD COLUMN section TEXT NOT NULL DEFAULT 'signals'"),
+        ):
+            if name not in columns:
+                await db.execute(ddl)
+        await db.commit()
 
         # narxlarni faqat birinchi ishga tushirishda to'ldiramiz (admin keyin o'zgartiradi)
         cur = await db.execute("SELECT COUNT(*) FROM prices")
@@ -318,15 +335,23 @@ async def update_payment_status(payment_id: int, status: str):
 
 # ---------- SIGNALS ----------
 
-async def create_signal(coin: str, entry: float, stop: float, tp1: float, tp2: float, comment: str = ""):
+async def create_signal(coin: str, entry: float, stop: float, tp1: float, tp2: float,
+                        comment: str = "", section: str = "signals", photo_id: str = None):
     async with aiosqlite.connect(DB_PATH) as db:
         cur = await db.execute(
-            """INSERT INTO signals (coin, entry, stop, tp1, tp2, comment, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (coin.upper(), entry, stop, tp1, tp2, comment, now_str()),
+            """INSERT INTO signals (section, photo_id, coin, entry, stop, tp1, tp2, comment, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (section, photo_id, coin.upper(), entry, stop, tp1, tp2, comment, now_str()),
         )
         await db.commit()
         return cur.lastrowid
+
+
+async def get_signal(signal_id: int):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT * FROM signals WHERE id=?", (signal_id,))
+        return await cur.fetchone()
 
 
 async def get_watchable_signals():
@@ -367,12 +392,18 @@ async def update_signal_status(signal_id: int, status: str):
         await db.commit()
 
 
-async def get_recent_signals(limit: int = 15):
+async def get_recent_signals(limit: int = 15, section: str = None):
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
-        cur = await db.execute(
-            "SELECT * FROM signals ORDER BY created_at DESC LIMIT ?", (limit,)
-        )
+        if section:
+            cur = await db.execute(
+                "SELECT * FROM signals WHERE section=? ORDER BY created_at DESC LIMIT ?",
+                (section, limit),
+            )
+        else:
+            cur = await db.execute(
+                "SELECT * FROM signals ORDER BY created_at DESC LIMIT ?", (limit,)
+            )
         return await cur.fetchall()
 
 
@@ -395,6 +426,58 @@ async def get_content_by_type(content_type: str):
         cur = await db.execute(
             "SELECT * FROM content WHERE content_type=? ORDER BY created_at DESC",
             (content_type,),
+        )
+        return await cur.fetchall()
+
+
+async def get_content(content_id: int):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT * FROM content WHERE id=?", (content_id,))
+        return await cur.fetchone()
+
+
+# ---------- QO'SHIMCHA BO'LIMLAR ----------
+
+async def add_section(code: str, title: str, min_tariff: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            "INSERT INTO sections (code, title, min_tariff, created_at) VALUES (?, ?, ?, ?)",
+            (code, title, min_tariff, now_str()),
+        )
+        await db.commit()
+
+
+async def get_custom_sections():
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT * FROM sections ORDER BY id")
+        return await cur.fetchall()
+
+
+async def section_code_exists(code: str) -> bool:
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute("SELECT 1 FROM sections WHERE code=?", (code,))
+        return await cur.fetchone() is not None
+
+
+# ---------- KIRISH HUQUQI BO'YICHA AJRATISH ----------
+
+async def get_users_with_tariff():
+    """Har bir bloklanmagan foydalanuvchi uchun (telegram_id, faol tarif kodi yoki None).
+
+    Xabar yuborishda kimga to'liq ma'lumot, kimga faqat qisqa eslatma
+    yuborishni shu ro'yxat asosida hal qilamiz.
+    """
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute(
+            """SELECT u.telegram_id,
+                      (SELECT s.tariff_code FROM subscriptions s
+                        WHERE s.user_id = u.id AND s.status='active' AND s.end_date > ?
+                        ORDER BY s.end_date DESC LIMIT 1)
+               FROM users u
+               WHERE u.is_blocked = 0""",
+            (now_str(),),
         )
         return await cur.fetchall()
 
