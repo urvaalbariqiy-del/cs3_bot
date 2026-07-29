@@ -1,8 +1,10 @@
-from aiogram.types import (
-    ReplyKeyboardMarkup, KeyboardButton,
-    InlineKeyboardMarkup, InlineKeyboardButton,
-)
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from bot.config import TARIFF_NAMES, PERIOD_NAMES, SECTIONS
+
+# Barcha menyular inline — ya'ni xabarning o'ziga yopishgan holda chiqadi.
+# Yozish maydonining pastidagi klaviatura ishlatilmaydi.
+
+BACK_TO_MENU = "⬅️ Asosiy menyu"
 
 
 def _rows(buttons, per_row=2):
@@ -12,27 +14,25 @@ def _rows(buttons, per_row=2):
 
 # ---------- USER SIDE ----------
 
-def user_main_menu(custom_sections=()) -> ReplyKeyboardMarkup:
-    """Foydalanuvchining asosiy menyusi.
+def user_main_menu(custom_sections=()) -> InlineKeyboardMarkup:
+    """Foydalanuvchining asosiy menyusi — xabar ostidagi tugmalar.
 
-    Bu yerda ataylab "obuna sotib olish" tugmasi yo'q — bot pullik ekani
-    faqat yopiq bo'lim bosilganda ma'lum bo'ladi. is_persistent tugmalarni
-    doim ko'rinib turadigan qiladi.
+    Bu yerda ataylab "obuna sotib olish" tugmasi yo'q: bot pullik ekani
+    faqat yopiq bo'lim bosilganda ma'lum bo'ladi.
     """
-    titles = [s["title"] for s in SECTIONS.values()]
-    titles += [row["title"] for row in custom_sections]
-    return ReplyKeyboardMarkup(
-        keyboard=_rows([KeyboardButton(text=t) for t in titles], per_row=2),
-        resize_keyboard=True,
-        is_persistent=True,
-    )
+    items = [(code, meta["title"]) for code, meta in SECTIONS.items()]
+    items += [(row["code"], row["title"]) for row in custom_sections]
+    buttons = [InlineKeyboardButton(text=title, callback_data=f"sec:{code}")
+               for code, title in items]
+    return InlineKeyboardMarkup(inline_keyboard=_rows(buttons, per_row=2))
 
 
 def subscribe_prompt_keyboard() -> InlineKeyboardMarkup:
-    """Yopiq bo'lim bosilganda chiqadigan yagona tugma."""
-    return InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="💳 Obuna olish", callback_data="buy:open")
-    ]])
+    """Yopiq bo'lim bosilganda chiqadigan tugmalar."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="💳 Obuna olish", callback_data="buy:open")],
+        [InlineKeyboardButton(text=BACK_TO_MENU, callback_data="sec:menu")],
+    ])
 
 
 def section_items_keyboard(section_code: str, items, is_signal: bool) -> InlineKeyboardMarkup:
@@ -42,14 +42,18 @@ def section_items_keyboard(section_code: str, items, is_signal: bool) -> InlineK
     """
     rows = []
     for it in items:
-        if is_signal:
-            label = f"💠 {it['coin']}"
-        else:
-            label = it["title"]
+        label = f"💠 {it['coin']}" if is_signal else it["title"]
         rows.append([InlineKeyboardButton(
             text=label[:60], callback_data=f"open:{section_code}:{it['id']}"
         )])
+    rows.append([InlineKeyboardButton(text=BACK_TO_MENU, callback_data="sec:menu")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def back_to_menu_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(text=BACK_TO_MENU, callback_data="sec:menu")
+    ]])
 
 
 def tariff_choice_keyboard() -> InlineKeyboardMarkup:
@@ -89,20 +93,23 @@ def confirm_payment_keyboard(tariff_code: str, period: str, method_id: int) -> I
 
 # ---------- ADMIN SIDE ----------
 
-# Admin pastki menyusi — uchta bo'lim, boshqa hech narsa.
 ADMIN_POST = "📤 Bo'limlarga joylash"
 ADMIN_PAYMENT = "💳 To'lov tizimi"
 ADMIN_SUBS = "🎫 Obunalar"
+ADMIN_BACK = "⬅️ Admin menyu"
 
 
-def admin_main_menu() -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text=ADMIN_POST)],
-            [KeyboardButton(text=ADMIN_PAYMENT), KeyboardButton(text=ADMIN_SUBS)],
-        ],
-        resize_keyboard=True,
-        is_persistent=True,
+def admin_main_menu() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=ADMIN_POST, callback_data="adm:post")],
+        [InlineKeyboardButton(text=ADMIN_PAYMENT, callback_data="adm:pay"),
+         InlineKeyboardButton(text=ADMIN_SUBS, callback_data="adm:subs")],
+    ])
+
+
+def _with_admin_back(rows):
+    return InlineKeyboardMarkup(
+        inline_keyboard=rows + [[InlineKeyboardButton(text=ADMIN_BACK, callback_data="adm:menu")]]
     )
 
 
@@ -112,12 +119,12 @@ def admin_post_sections_keyboard(custom_sections=()) -> InlineKeyboardMarkup:
             for code, s in SECTIONS.items()]
     rows += [[InlineKeyboardButton(text=row["title"], callback_data=f"post:{row['code']}")]
              for row in custom_sections]
-    return InlineKeyboardMarkup(inline_keyboard=rows)
+    return _with_admin_back(rows)
 
 
 def admin_payment_keyboard() -> InlineKeyboardMarkup:
     """2-bo'lim: narx va to'lov usullari."""
-    return InlineKeyboardMarkup(inline_keyboard=[
+    return _with_admin_back([
         [InlineKeyboardButton(text="💵 Narxlarni o'zgartirish", callback_data="pay:prices")],
         [InlineKeyboardButton(text="💳 To'lov usullari", callback_data="pay:methods")],
     ])
@@ -132,12 +139,12 @@ def payment_methods_admin_keyboard(methods) -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="🗑", callback_data=f"paymdel:{m['id']}"),
         ])
     rows.append([InlineKeyboardButton(text="➕ Yangi usul qo'shish", callback_data="paymadd")])
-    return InlineKeyboardMarkup(inline_keyboard=rows)
+    return _with_admin_back(rows)
 
 
 def admin_subs_keyboard() -> InlineKeyboardMarkup:
     """3-bo'lim: obuna darajasi va muddati."""
-    return InlineKeyboardMarkup(inline_keyboard=[
+    return _with_admin_back([
         [InlineKeyboardButton(text="⏳ Kutilayotgan to'lovlar", callback_data="sub:pending")],
         [InlineKeyboardButton(text="➕ Qo'lda obuna berish", callback_data="sub:grant")],
         [InlineKeyboardButton(text="🔍 Foydalanuvchi obunasi", callback_data="sub:check")],

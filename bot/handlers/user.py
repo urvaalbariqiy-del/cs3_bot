@@ -1,6 +1,6 @@
 from aiogram import Router, F, Bot
 from aiogram.filters import CommandStart, Command, StateFilter
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 from datetime import datetime
 from html import escape
@@ -38,30 +38,48 @@ async def user_menu():
     return kb.user_main_menu(await db.get_custom_sections())
 
 
+WELCOME = (
+    "Assalomu alaykum! 👋\n\n"
+    "Bu yerda kripto bozori bo'yicha savdo signallari, skalping, "
+    "video darsliklar va strategiyalar jamlangan.\n\n"
+    "Qiziqqan bo'limingizni tanlang:"
+)
+
+
+async def _drop_old_keyboard(message: Message):
+    """Eskirgan pastki klaviaturani chatdan olib tashlaydi.
+
+    Ilgari menyu yozish maydonining pastida edi; endi tugmalar xabar bilan
+    birga chiqadi. Eski klaviatura foydalanuvchida osilib qolmasligi uchun
+    uni bir marta yo'q qilib, xizmatchi xabarni o'chirib yuboramiz.
+    """
+    try:
+        tmp = await message.answer("…", reply_markup=ReplyKeyboardRemove())
+        # message.bot ishlatamiz: qaytgan obyekt botga bog'langaniga tayanmaymiz
+        await message.bot.delete_message(chat_id=tmp.chat.id, message_id=tmp.message_id)
+    except Exception:
+        pass
+
+
 # ---------- START / MENU ----------
 
 @router.message(CommandStart())
 async def cmd_start(message: Message):
     await _ensure_user(message)
+    await _drop_old_keyboard(message)
     if is_admin(message.from_user.id):
         await message.answer(
-            "Salom, Admin! 👋\n\n"
-            "Pastdagi uchta tugma orqali boshqarasiz. Tezkor buyruqlar esa "
-            "yozish maydonidagi ☰ menyuda.",
+            "Salom, Admin! 👋\n\nQuyidagi bo'limlardan birini tanlang. "
+            "Tezkor buyruqlar esa yozish maydonidagi ☰ menyuda.",
             reply_markup=kb.admin_main_menu(),
         )
     else:
-        await message.answer(
-            "Assalomu alaykum! 👋\n\n"
-            "Bu yerda kripto bozori bo'yicha savdo signallari, skalping, "
-            "video darsliklar va strategiyalar jamlangan.\n\n"
-            "Qiziqqan bo'limingizni tanlang:",
-            reply_markup=await user_menu(),
-        )
+        await message.answer(WELCOME, reply_markup=await user_menu())
 
 
 @router.message(Command("menu"))
 async def cmd_menu(message: Message):
+    await _drop_old_keyboard(message)
     if is_admin(message.from_user.id):
         await message.answer("Admin menyu:", reply_markup=kb.admin_main_menu())
     else:
@@ -97,51 +115,63 @@ def signal_text(s) -> str:
     return text
 
 
-# StateFilter(None) muhim: foydalanuvchi biror jarayon o'rtasida bo'lsa
-# (masalan to'lov cheki kutilayotgan bo'lsa) bu handler aralashmasligi kerak.
-@router.message(StateFilter(None), F.text.func(lambda t: t and not t.startswith("/")))
-async def open_section(message: Message):
-    """Asosiy tugmalardan biri bosilganda ishlaydi.
+async def _edit(callback: CallbackQuery, text: str, markup=None):
+    """Xabarni joyida yangilaydi. Bir xil matn qayta yuborilsa Telegram
+    xato beradi — uni e'tiborsiz qoldiramiz."""
+    try:
+        await callback.message.edit_text(text, reply_markup=markup, parse_mode="HTML")
+    except Exception:
+        await callback.message.answer(text, reply_markup=markup, parse_mode="HTML")
 
-    Bo'lim ochiq bo'lsa — ichidagi ro'yxat tugmalar ko'rinishida chiqadi;
+
+@router.callback_query(F.data.startswith("sec:"))
+async def open_section(callback: CallbackQuery):
+    """Asosiy menyudagi bo'lim tugmasi bosilganda.
+
+    Bo'lim ochiq bo'lsa — ichidagi ro'yxat shu xabarning o'zida chiqadi;
     yopiq bo'lsa — qaysi obuna kerakligi aytiladi.
     """
-    code, meta = await sec.by_title(message.text)
-    if not code:
-        return  # boshqa matnlarga aralashmaymiz
+    code = callback.data.split(":")[1]
+    user_id = await db.get_or_create_user(
+        callback.from_user.id, callback.from_user.username, callback.from_user.full_name
+    )
 
-    user_id = await _ensure_user(message)
+    if code == "menu":
+        await _edit(callback, WELCOME, await user_menu())
+        await callback.answer()
+        return
+
+    meta = await sec.by_code(code)
+    if not meta:
+        await callback.answer("Bu bo'lim endi mavjud emas.", show_alert=True)
+        return
+
     tariff = await _user_tariff(user_id)
-
     if not sec.has_access(tariff, meta["min_tariff"]):
-        await message.answer(
+        await _edit(
+            callback,
             f"🔒 <b>{meta['title']}</b> bo'limi "
             f"<b>{sec.tariff_label(meta['min_tariff'])}</b> obunasi uchun.\n\n"
             f"Obuna ochsangiz, bu bo'lim va undan pastki darajadagi barcha "
             f"bo'limlar siz uchun ochiladi.",
-            parse_mode="HTML",
-            reply_markup=kb.subscribe_prompt_keyboard(),
+            kb.subscribe_prompt_keyboard(),
         )
+        await callback.answer()
         return
 
-    if meta["kind"] == "signal":
-        items = await db.get_recent_signals(limit=10, section=code)
-        if not items:
-            await message.answer(f"{meta['title']} — hozircha bo'sh.")
-            return
-        await message.answer(
-            f"{meta['title']}\n\nKo'rmoqchi bo'lganingizni tanlang:",
-            reply_markup=kb.section_items_keyboard(code, items, is_signal=True),
-        )
+    is_signal = meta["kind"] == "signal"
+    items = (await db.get_recent_signals(limit=10, section=code) if is_signal
+             else await db.get_content_by_type(code))
+
+    if not items:
+        await _edit(callback, f"{meta['title']}\n\nHozircha bo'sh.", kb.back_to_menu_keyboard())
     else:
-        items = await db.get_content_by_type(code)
-        if not items:
-            await message.answer(f"{meta['title']} — hozircha bo'sh.")
-            return
-        await message.answer(
-            f"{meta['title']}\n\nKo'rmoqchi bo'lganingizni tanlang:",
-            reply_markup=kb.section_items_keyboard(code, items, is_signal=False),
+        await _edit(
+            callback,
+            f"<b>{meta['title']}</b>\n\nKo'rmoqchi bo'lganingizni tanlang:",
+            kb.section_items_keyboard(code, items, is_signal),
         )
+    await callback.answer()
 
 
 @router.callback_query(F.data.startswith("open:"))
@@ -394,4 +424,19 @@ async def my_subscription(message: Message):
         f"✅ Holat: Faol\n\n"
         f"🔓 Sizga ochiq bo'limlar:\n" + "\n".join(f"• {t}" for t in opened),
         parse_mode="HTML",
+        reply_markup=await user_menu(),
     )
+
+
+# ---------- TANILMAGAN XABAR ----------
+# Pastda doimiy klaviatura yo'q, shuning uchun foydalanuvchi nima yozsa ham
+# menyuni qaytarib beramiz - u hech qachon "yo'qolib" qolmasin.
+# Eng oxirida ro'yxatdan o'tadi, ya'ni qolgan handlerlar birinchi navbatda ishlaydi.
+
+@router.message(StateFilter(None))
+async def fallback_to_menu(message: Message):
+    await _ensure_user(message)
+    if is_admin(message.from_user.id):
+        await message.answer("⚙️ Admin menyu:", reply_markup=kb.admin_main_menu())
+    else:
+        await message.answer("Quyidagi bo'limlardan tanlang:", reply_markup=await user_menu())

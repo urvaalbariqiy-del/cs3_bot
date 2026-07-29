@@ -42,7 +42,10 @@ yoniq turganda ishlaydi, kompyuterni o'chirsangiz bot ham to'xtaydi.
 
 ### Foydalanuvchi ko'radigan narsa
 
-Pastda doim turadigan 4 ta tugma (`bot/config.py` → `SECTIONS`):
+Xabar bilan birga chiqadigan 4 ta tugma (`bot/config.py` → `SECTIONS`).
+Yozish maydonining pastidagi klaviatura ishlatilmaydi — barcha menyular
+xabarning o'ziga yopishgan (inline) holda chiqadi va bosilganda o'sha
+xabarning ichida yangilanadi:
 
 | Bo'lim | Minimal tarif | Turi |
 |---|---|---|
@@ -66,7 +69,7 @@ ko'rinmaydi — faqat "bo'limga yangi narsa qo'shildi" deb turadi.
 
 ### Admin ko'radigan narsa
 
-Pastda 3 ta tugma:
+Xabar bilan birga 3 ta tugma:
 
 1. **📤 Bo'limlarga joylash** — yuqoridagi bo'limlarning istalganiga signal
    yoki material joylash (signalga rasm ham biriktirish mumkin)

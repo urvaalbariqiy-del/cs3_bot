@@ -26,41 +26,71 @@ router.callback_query.filter(F.from_user.id.in_(ADMIN_IDS))
 # UCHTA ASOSIY BO'LIM
 # =====================================================================
 
-async def _show_post_menu(target):
-    await target.answer(
-        "📤 <b>Bo'limlarga joylash</b>\n\nQaysi bo'limga joylaysiz?",
-        reply_markup=kb.admin_post_sections_keyboard(await db.get_custom_sections()),
-        parse_mode="HTML",
-    )
+POST_TEXT = "📤 <b>Bo'limlarga joylash</b>\n\nQaysi bo'limga joylaysiz?"
+PAY_TEXT = "💳 <b>To'lov tizimi</b>\n\nNimani o'zgartiramiz?"
+SUBS_TEXT = "🎫 <b>Obunalar</b>\n\nNima qilamiz?"
+MENU_TEXT = "⚙️ <b>Admin menyu</b>\n\nBo'limni tanlang:"
 
 
-@router.message(F.text == kb.ADMIN_POST)
+async def _post_markup():
+    return kb.admin_post_sections_keyboard(await db.get_custom_sections())
+
+
+async def _edit(callback: CallbackQuery, text: str, markup=None):
+    try:
+        await callback.message.edit_text(text, reply_markup=markup, parse_mode="HTML")
+    except Exception:
+        await callback.message.answer(text, reply_markup=markup, parse_mode="HTML")
+
+
+# --- buyruqlar (☰ menyu) ---
+
 @router.message(Command("joylash"))
-async def open_post_menu(message: Message, state: FSMContext):
+async def cmd_post(message: Message, state: FSMContext):
     await state.clear()
-    await _show_post_menu(message)
+    await message.answer(POST_TEXT, reply_markup=await _post_markup(), parse_mode="HTML")
 
 
-@router.message(F.text == kb.ADMIN_PAYMENT)
 @router.message(Command("tolov"))
-async def open_payment_menu(message: Message, state: FSMContext):
+async def cmd_pay(message: Message, state: FSMContext):
     await state.clear()
-    await message.answer(
-        "💳 <b>To'lov tizimi</b>\n\nNimani o'zgartiramiz?",
-        reply_markup=kb.admin_payment_keyboard(),
-        parse_mode="HTML",
-    )
+    await message.answer(PAY_TEXT, reply_markup=kb.admin_payment_keyboard(), parse_mode="HTML")
 
 
-@router.message(F.text == kb.ADMIN_SUBS)
 @router.message(Command("obunalar"))
-async def open_subs_menu(message: Message, state: FSMContext):
+async def cmd_subs(message: Message, state: FSMContext):
     await state.clear()
-    await message.answer(
-        "🎫 <b>Obunalar</b>\n\nNima qilamiz?",
-        reply_markup=kb.admin_subs_keyboard(),
-        parse_mode="HTML",
-    )
+    await message.answer(SUBS_TEXT, reply_markup=kb.admin_subs_keyboard(), parse_mode="HTML")
+
+
+# --- admin menyusidagi tugmalar ---
+
+@router.callback_query(F.data == "adm:menu")
+async def adm_menu(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await _edit(callback, MENU_TEXT, kb.admin_main_menu())
+    await callback.answer()
+
+
+@router.callback_query(F.data == "adm:post")
+async def adm_post(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await _edit(callback, POST_TEXT, await _post_markup())
+    await callback.answer()
+
+
+@router.callback_query(F.data == "adm:pay")
+async def adm_pay(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await _edit(callback, PAY_TEXT, kb.admin_payment_keyboard())
+    await callback.answer()
+
+
+@router.callback_query(F.data == "adm:subs")
+async def adm_subs(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await _edit(callback, SUBS_TEXT, kb.admin_subs_keyboard())
+    await callback.answer()
 
 
 @router.message(Command("bekor"))
