@@ -4,9 +4,14 @@ Binance'ning ochiq (public, kalitsiz) WebSocket oqimiga ulanadi va barcha
 faol/kutilayotgan signallar coinlarining narxini real vaqtda kuzatib boradi.
 
 Mantiq (faqat spot / long signal uchun):
-- pending -> active   : narx entry darajasiga yetganda (price <= entry, yuqoridan pastga tushib kelganda
-                         yoki price >= entry, pastdan yuqoriga chiqqanda - shu sababli ">=" shartidan foydalanamiz,
-                         chunki odatda entry joriy narxdan pastroq qo'yiladi)
+- pending -> active   : narx entry darajasini KESIB o'tganda. Signal uchun birinchi narx
+                         kelganda uning entry'dan qaysi tomonda ekanini aniqlab, bazaga
+                         yozib qo'yamiz ('above' yoki 'below'). Keyin faqat teskari
+                         tomonga o'tish faollashtiradi:
+                           above (narx entry'dan yuqorida boshlandi) -> price <= entry
+                           below (narx entry'dan pastda boshlandi)   -> price >= entry
+                         Shu sababli entry joriy narxdan pastga qo'yilganda signal
+                         darhol "faol" bo'lib qolmaydi.
 - active -> tp1_hit   : narx TP1 darajasiga yetganda (signal hali "faol" hisoblanadi, TP2 kutilmoqda)
 - tp1_hit -> tp2_hit  : narx TP2 darajasiga yetganda (signal to'liq yopiladi)
 - active/tp1_hit -> stopped : narx Stop darajasiga tushib ketganda (signal yopiladi)
@@ -49,7 +54,22 @@ async def evaluate_signal(bot: Bot, signal, current_price: float):
     status = signal["status"]
 
     if status == "pending":
-        if current_price >= signal["entry"]:
+        entry = signal["entry"]
+        side = signal["entry_side"]
+
+        if side is None:
+            # Bu signal uchun birinchi narx: entry'ga qaysi tomondan yaqinlashayotganini aniqlaymiz
+            if current_price == entry:
+                # narx aynan entry darajasida - darhol faollashtiramiz
+                await db.update_signal_status(sid, "active")
+                await notify_all(bot, signal["coin"], "active")
+                return
+            side = "above" if current_price > entry else "below"
+            await db.set_signal_entry_side(sid, side)
+            return
+
+        reached = current_price <= entry if side == "above" else current_price >= entry
+        if reached:
             await db.update_signal_status(sid, "active")
             await notify_all(bot, signal["coin"], "active")
         return

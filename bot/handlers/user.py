@@ -16,11 +16,20 @@ def is_admin(telegram_id: int) -> bool:
     return telegram_id in ADMIN_IDS
 
 
-@router.message(CommandStart())
-async def cmd_start(message: Message):
-    await db.get_or_create_user(
+async def _ensure_user(message: Message) -> int:
+    """Foydalanuvchi bazada borligini kafolatlaydi va uning ichki id'sini qaytaradi.
+
+    /start bosilmagan holatda (masalan eski chatdagi tugma orqali kelganda) ham
+    xato bermasligi uchun barcha bo'limlarda shu funksiyadan foydalanamiz.
+    """
+    return await db.get_or_create_user(
         message.from_user.id, message.from_user.username, message.from_user.full_name
     )
+
+
+@router.message(CommandStart())
+async def cmd_start(message: Message):
+    await _ensure_user(message)
     if is_admin(message.from_user.id):
         await message.answer(
             "Salom, Admin! Boshqaruv uchun pastdagi tugmadan yoki /panel buyrug'idan foydalaning.",
@@ -105,9 +114,9 @@ async def receive_receipt(message: Message, state: FSMContext, bot: Bot):
     tariff_code = data["tariff_code"]
     period = data["period"]
 
-    user = await db.get_user_by_telegram_id(message.from_user.id)
+    user_id = await _ensure_user(message)
     file_id = message.photo[-1].file_id
-    payment_id = await db.create_payment(user["id"], tariff_code, period, file_id)
+    payment_id = await db.create_payment(user_id, tariff_code, period, file_id)
 
     await message.answer(
         "✅ Chekingiz qabul qilindi va admin tekshiruvi uchun yuborildi. "
@@ -142,8 +151,8 @@ async def receipt_wrong_type(message: Message):
 
 @router.message(F.text == "📊 Mening obunam")
 async def my_subscription(message: Message):
-    user = await db.get_user_by_telegram_id(message.from_user.id)
-    sub = await db.get_active_subscription(user["id"])
+    user_id = await _ensure_user(message)
+    sub = await db.get_active_subscription(user_id)
     if not sub:
         await message.answer(
             "Sizda hozircha faol obuna yo'q.\n\"💳 Obuna sotib olish\" orqali tarif tanlashingiz mumkin."
@@ -160,8 +169,8 @@ async def my_subscription(message: Message):
 
 async def _check_access(message: Message, section: str) -> bool:
     """section: 'signals' | 'videos' | 'strategies'"""
-    user = await db.get_user_by_telegram_id(message.from_user.id)
-    sub = await db.get_active_subscription(user["id"])
+    user_id = await _ensure_user(message)
+    sub = await db.get_active_subscription(user_id)
     if not sub:
         await message.answer(
             "🔒 Bu bo'lim faqat obunachilar uchun.\n\"💳 Obuna sotib olish\" orqali tarif tanlang."

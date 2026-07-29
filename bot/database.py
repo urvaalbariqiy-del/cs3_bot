@@ -60,6 +60,9 @@ CREATE TABLE IF NOT EXISTS signals (
     tp2 REAL NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending',  -- pending/active/tp1_hit/tp2_hit/stopped/closed
     comment TEXT,
+    -- narx entry'ga qaysi tomondan yaqinlashayotgani: 'above' (yuqoridan tushmoqda)
+    -- yoki 'below' (pastdan ko'tarilmoqda). Birinchi narx tickida aniqlanadi.
+    entry_side TEXT,
     created_at TEXT NOT NULL,
     activated_at TEXT,
     closed_at TEXT
@@ -98,6 +101,15 @@ async def init_db():
     async with aiosqlite.connect(DB_PATH) as db:
         await db.executescript(SCHEMA)
         await db.commit()
+
+        # Migratsiya: eski bazalarda 'entry_side' ustuni bo'lmaydi, uni qo'shamiz.
+        # (CREATE TABLE IF NOT EXISTS mavjud jadvalni yangilamaydi)
+        cur = await db.execute("PRAGMA table_info(signals)")
+        columns = {row[1] for row in await cur.fetchall()}
+        if "entry_side" not in columns:
+            await db.execute("ALTER TABLE signals ADD COLUMN entry_side TEXT")
+            await db.commit()
+
         # narxlarni faqat birinchi ishga tushirishda to'ldiramiz (admin keyin o'zgartiradi)
         cur = await db.execute("SELECT COUNT(*) FROM prices")
         (count,) = await cur.fetchone()
@@ -327,9 +339,19 @@ async def get_watchable_signals():
         return await cur.fetchall()
 
 
+async def set_signal_entry_side(signal_id: int, side: str):
+    """Narx entry darajasiga qaysi tomondan yaqinlashayotganini yozib qo'yadi
+    ('above' — yuqoridan tushmoqda, 'below' — pastdan ko'tarilmoqda)."""
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            "UPDATE signals SET entry_side=? WHERE id=? AND entry_side IS NULL",
+            (side, signal_id),
+        )
+        await db.commit()
+
+
 async def update_signal_status(signal_id: int, status: str):
     async with aiosqlite.connect(DB_PATH) as db:
-        field = "activated_at" if status == "active" else None
         if status in ("tp2_hit", "stopped", "closed"):
             await db.execute(
                 "UPDATE signals SET status=?, closed_at=? WHERE id=?",

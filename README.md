@@ -106,6 +106,10 @@ cs3_bot/
 - **Narx kuzatish** — Binance'ning ochiq (kalitsiz) WebSocket xizmatidan foydalanadi. Agar Binance sizning server joylashgan mamlakatda cheklangan bo'lsa, Bybit yoki OKX'ning WebSocket manziliga almashtirish kerak bo'ladi (`bot/config.py` dagi `BINANCE_WS_BASE`).
 - **Kontentni himoyalash** — barcha signal/video/strategiya xabarlari `protect_content=True` bilan yuboriladi (forward va saqlashni cheklaydi). Lekin avvalgi suhbatimizda aytganimdek, ekran skrinshoti yoki video yozib olishning oldini 100% olib bo'lmaydi — bu OS darajasidagi cheklov.
 - **Signal mantig'i** — hozirgi holatda faqat spot/long signallar uchun mo'ljallangan (Stop < Entry < TP1 < TP2).
+  Signal `pending` holatidan `active` holatiga narx entry darajasini **kesib o'tganda** o'tadi: birinchi narx
+  kelganda uning entry'dan qaysi tomonda ekani aniqlanib (`entry_side` ustuni) bazaga yoziladi, keyin faqat
+  teskari tomonga o'tish faollashtiradi. Shu sababli entry joriy narxdan pastga qo'yilsa ham signal darhol
+  "faol" bo'lib qolmaydi.
 - **Qoidabuzarlik** — hozircha bu jarayon qo'lda ishlaydi (admin skrinshot/tarqatilgan kontentni ko'rgach, "🚫 Qoidabuzarlik" tugmasi orqali foydalanuvchi ID'sini kiritadi). Avtomatik aniqlash tizimi kelajakda watermark asosida qo'shilishi mumkin.
 
 ## Keyingi bosqichlar (tavsiya)
