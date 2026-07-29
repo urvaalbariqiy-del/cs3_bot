@@ -3,6 +3,7 @@ from aiogram.filters import CommandStart, Command, StateFilter
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from datetime import datetime
+from html import escape
 
 from bot import database as db
 from bot import keyboards as kb
@@ -271,9 +272,13 @@ async def choose_period(callback: CallbackQuery):
 async def _show_payment_details(callback: CallbackQuery, tariff_code: str, period: str,
                                 method, price_row=None):
     price_row = price_row or await db.get_price(tariff_code, period)
+    # Rekvizit <code> ichida beriladi: Telegram'da ustiga bosilsa nusxalanadi.
+    # Karta raqami va kripto hamyon manzilini qo'lda ko'chirishda xato bo'lmasligi uchun.
     text = (
         _price_header(tariff_code, period, price_row) +
-        f"\n💳 <b>{method['title']}</b>\n{method['details']}\n\n"
+        f"\n💳 <b>{escape(method['title'])}</b>\n"
+        f"<code>{escape(method['details'])}</code>\n\n"
+        f"👆 Rekvizit ustiga bossangiz nusxalanadi.\n\n"
         f"To'lovni amalga oshirgach, chekni (skrinshotni) shu yerga rasm sifatida yuboring."
     )
     await callback.message.edit_text(

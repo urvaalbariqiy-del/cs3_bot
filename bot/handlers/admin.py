@@ -1,4 +1,5 @@
 import time
+from html import escape
 
 from aiogram import Router, F, Bot
 from aiogram.filters import Command
@@ -413,7 +414,8 @@ async def payment_method_show(callback: CallbackQuery):
         await callback.answer("Topilmadi.", show_alert=True)
         return
     await callback.message.answer(
-        f"💳 <b>{m['title']}</b>\n\n{m['details']}", parse_mode="HTML"
+        f"💳 <b>{escape(m['title'])}</b>\n\n<code>{escape(m['details'])}</code>",
+        parse_mode="HTML",
     )
     await callback.answer()
 
@@ -436,7 +438,10 @@ async def payment_method_add(callback: CallbackQuery, state: FSMContext):
     await state.set_state(PaymentMethodStates.title)
     await callback.message.answer(
         "Usul nomini yozing — foydalanuvchi ro'yxatda shuni ko'radi.\n\n"
-        "Masalan: <code>Humo — Kapitalbank</code> yoki <code>Click</code>\n\n"
+        "Masalan:\n"
+        "• <code>Humo — Kapitalbank</code>\n"
+        "• <code>Click</code>\n"
+        "• <code>USDT (TRC20)</code>\n\n"
         "Bekor qilish: /bekor",
         parse_mode="HTML",
     )
@@ -448,8 +453,11 @@ async def payment_method_title(message: Message, state: FSMContext):
     await state.update_data(title=message.text.strip())
     await state.set_state(PaymentMethodStates.details)
     await message.answer(
-        "Endi rekvizitlarni yozing — foydalanuvchi to'lash uchun aynan shuni ko'radi.\n\n"
-        "Masalan:\n<code>8600 1234 5678 9012\nDiyorbek D.</code>",
+        "Endi rekvizitni yozing — foydalanuvchi to'lash uchun aynan shuni ko'radi "
+        "va ustiga bosib nusxalaydi.\n\n"
+        "Karta uchun:\n<code>8600 1234 5678 9012\nDiyorbek D.</code>\n\n"
+        "Kripto uchun faqat hamyon manzilini yozing:\n"
+        "<code>TXYZa1b2c3d4e5f6g7h8i9j0klmnopqrs</code>",
         parse_mode="HTML",
     )
 
