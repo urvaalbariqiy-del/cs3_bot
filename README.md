@@ -163,15 +163,17 @@ avtomatik qayta ishga tushishini ta'minlaydi.
 
 ## 5. Birinchi ishga tushirishdan keyin
 
-1. Botga @BotFather orqali `/setcommands` bilan buyruqlar menyusini o'rnating:
-   ```
-   start - Botni ishga tushirish
-   menu - Asosiy menyu
-   panel - Admin panel (faqat adminlar uchun)
-   ```
-2. Telegram'da botga `/start` yozing — agar sizning ID'ingiz `.env`dagi `ADMIN_IDS` ichida bo'lsa, admin menyu ochiladi.
-3. "⚙️ Admin panel" → "💰 Narxlarni sozlash" orqali tariflarning narxi va to'lov rekvizitlarini kiriting (boshlang'ich standart narxlar avtomatik qo'yilgan, ularni o'zgartirish shart).
-4. "🟢 Yangi signal" orqali birinchi signalni sinab ko'ring.
+1. Telegram'da botga `/start` yozing — agar sizning ID'ingiz `.env`dagi
+   `ADMIN_IDS` ichida bo'lsa, admin menyu ochiladi.
+   (☰ menyudagi buyruqlar bot ishga tushganda avtomatik o'rnatiladi —
+   @BotFather'da `/setcommands` qilish shart emas.)
+2. **💳 To'lov tizimi → 💵 Narxlarni o'zgartirish** — tariflar narxini qo'ying
+   (boshlang'ich standart narxlar avtomatik qo'yilgan, ularni o'zgartirish shart).
+3. **💳 To'lov tizimi → 💳 To'lov usullari** — kamida bitta usul qo'shing
+   (karta, Click, USDT va h.k.). Aks holda foydalanuvchi to'lov qila olmaydi.
+4. **📤 Bo'limlarga joylash → 📈 Savdo signallari** orqali birinchi signalni
+   sinab ko'ring. Signal darhol faollashishini ko'rish uchun Entry'ni coin'ning
+   hozirgi narxiga juda yaqin qo'ying.
 
 ## Loyiha tuzilmasi
 
