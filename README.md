@@ -70,7 +70,11 @@ Pastda 3 ta tugma:
 
 1. **📤 Bo'limlarga joylash** — yuqoridagi bo'limlarning istalganiga signal
    yoki material joylash (signalga rasm ham biriktirish mumkin)
-2. **💳 To'lov tizimi** — tarif narxlari va to'lov usuli (karta raqami)
+2. **💳 To'lov tizimi** — tarif narxlari va to'lov usullari. Usullarni
+   xohlagancha qo'shish mumkin (Humo, Uzcard, Click, Payme...): har biriga nom
+   va rekvizit yoziladi. Foydalanuvchi to'lov paytida qaysi biri bilan
+   to'lashni o'zi tanlaydi; usul bitta bo'lsa tanlash bosqichi o'tkazib
+   yuboriladi. Adminga keladigan chek xabarida qaysi usul ishlatilgani ko'rinadi.
 3. **🎫 Obunalar** — kutilayotgan to'lovlar, qo'lda obuna berish,
    foydalanuvchi obunasini tekshirish, qoidabuzarlik
 

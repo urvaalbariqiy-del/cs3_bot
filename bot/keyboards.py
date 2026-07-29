@@ -69,11 +69,20 @@ def period_choice_keyboard(tariff_code: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
-def confirm_payment_keyboard(tariff_code: str, period: str) -> InlineKeyboardMarkup:
+def payment_method_choice_keyboard(tariff_code: str, period: str, methods) -> InlineKeyboardMarkup:
+    """Foydalanuvchi qaysi usul bilan to'lashini tanlaydi."""
+    rows = [[InlineKeyboardButton(
+        text=m["title"][:60], callback_data=f"paymethod:{tariff_code}:{period}:{m['id']}"
+    )] for m in methods]
+    rows.append([InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back_to_tariffs")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def confirm_payment_keyboard(tariff_code: str, period: str, method_id: int) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[[
         InlineKeyboardButton(
             text="✅ To'lov chekini yuborish",
-            callback_data=f"send_receipt:{tariff_code}:{period}",
+            callback_data=f"send_receipt:{tariff_code}:{period}:{method_id}",
         )
     ]])
 
@@ -107,11 +116,23 @@ def admin_post_sections_keyboard(custom_sections=()) -> InlineKeyboardMarkup:
 
 
 def admin_payment_keyboard() -> InlineKeyboardMarkup:
-    """2-bo'lim: narx va to'lov usuli."""
+    """2-bo'lim: narx va to'lov usullari."""
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="💵 Narxlarni o'zgartirish", callback_data="pay:prices")],
-        [InlineKeyboardButton(text="💳 To'lov usulini kiritish", callback_data="pay:info")],
+        [InlineKeyboardButton(text="💳 To'lov usullari", callback_data="pay:methods")],
     ])
+
+
+def payment_methods_admin_keyboard(methods) -> InlineKeyboardMarkup:
+    """Mavjud usullar ro'yxati — har birining yonida o'chirish tugmasi."""
+    rows = []
+    for m in methods:
+        rows.append([
+            InlineKeyboardButton(text=m["title"][:40], callback_data=f"paymshow:{m['id']}"),
+            InlineKeyboardButton(text="🗑", callback_data=f"paymdel:{m['id']}"),
+        ])
+    rows.append([InlineKeyboardButton(text="➕ Yangi usul qo'shish", callback_data="paymadd")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def admin_subs_keyboard() -> InlineKeyboardMarkup:

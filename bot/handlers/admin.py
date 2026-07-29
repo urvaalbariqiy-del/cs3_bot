@@ -9,7 +9,7 @@ from bot import database as db
 from bot import keyboards as kb
 from bot import sections as sec
 from bot.states import (
-    SignalStates, ContentStates, PriceEditStates, PaymentInfoStates,
+    SignalStates, ContentStates, PriceEditStates, PaymentMethodStates,
     BroadcastStates, ViolationStates, NewSectionStates, GrantSubStates,
 )
 from bot.config import ADMIN_IDS, TARIFF_NAMES, PERIOD_NAMES
@@ -384,26 +384,83 @@ async def edit_price_save(message: Message, state: FSMContext):
     await message.answer("✅ Narx yangilandi.", reply_markup=kb.admin_main_menu())
 
 
-@router.callback_query(F.data == "pay:info")
-async def payment_info_start(callback: CallbackQuery, state: FSMContext):
-    await state.set_state(PaymentInfoStates.waiting_info)
+async def _show_methods(target):
+    methods = await db.get_payment_methods()
+    if methods:
+        text = "💳 <b>To'lov usullari</b>\n\nFoydalanuvchi to'lov paytida shulardan birini tanlaydi."
+    else:
+        text = (
+            "💳 <b>To'lov usullari</b>\n\n"
+            "Hozircha birorta usul qo'shilmagan. Kamida bittasini qo'shing — "
+            "aks holda foydalanuvchi to'lov qila olmaydi."
+        )
+    await target.answer(
+        text, reply_markup=kb.payment_methods_admin_keyboard(methods), parse_mode="HTML"
+    )
+
+
+@router.callback_query(F.data == "pay:methods")
+async def payment_methods_menu(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await _show_methods(callback.message)
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("paymshow:"))
+async def payment_method_show(callback: CallbackQuery):
+    m = await db.get_payment_method(int(callback.data.split(":")[1]))
+    if not m:
+        await callback.answer("Topilmadi.", show_alert=True)
+        return
     await callback.message.answer(
-        "To'lov usulini yozing — foydalanuvchi to'lov paytida aynan shuni ko'radi.\n\n"
-        "Masalan:\n<code>Karta: 8600 1234 5678 9012\nEgasi: Diyorbek D.</code>",
+        f"💳 <b>{m['title']}</b>\n\n{m['details']}", parse_mode="HTML"
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("paymdel:"))
+async def payment_method_delete(callback: CallbackQuery):
+    m = await db.get_payment_method(int(callback.data.split(":")[1]))
+    if not m:
+        await callback.answer("Allaqachon o'chirilgan.", show_alert=True)
+        return
+    await db.delete_payment_method(m["id"])
+    await callback.answer(f"«{m['title']}» o'chirildi")
+    await callback.message.edit_reply_markup(
+        reply_markup=kb.payment_methods_admin_keyboard(await db.get_payment_methods())
+    )
+
+
+@router.callback_query(F.data == "paymadd")
+async def payment_method_add(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(PaymentMethodStates.title)
+    await callback.message.answer(
+        "Usul nomini yozing — foydalanuvchi ro'yxatda shuni ko'radi.\n\n"
+        "Masalan: <code>Humo — Kapitalbank</code> yoki <code>Click</code>\n\n"
+        "Bekor qilish: /bekor",
         parse_mode="HTML",
     )
     await callback.answer()
 
 
-@router.message(PaymentInfoStates.waiting_info)
-async def payment_info_save(message: Message, state: FSMContext):
-    info = message.text.strip()
-    for row in await db.get_all_prices():
-        await db.set_price(row["tariff_code"], row["period"], row["price"], info)
-    await state.clear()
+@router.message(PaymentMethodStates.title)
+async def payment_method_title(message: Message, state: FSMContext):
+    await state.update_data(title=message.text.strip())
+    await state.set_state(PaymentMethodStates.details)
     await message.answer(
-        "✅ To'lov usuli barcha tariflar uchun saqlandi.", reply_markup=kb.admin_main_menu()
+        "Endi rekvizitlarni yozing — foydalanuvchi to'lash uchun aynan shuni ko'radi.\n\n"
+        "Masalan:\n<code>8600 1234 5678 9012\nDiyorbek D.</code>",
+        parse_mode="HTML",
     )
+
+
+@router.message(PaymentMethodStates.details)
+async def payment_method_details(message: Message, state: FSMContext):
+    data = await state.get_data()
+    await db.add_payment_method(data["title"], message.text.strip())
+    await state.clear()
+    await message.answer(f"✅ «{data['title']}» qo'shildi.")
+    await _show_methods(message)
 
 
 # =====================================================================

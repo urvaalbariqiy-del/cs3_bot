@@ -230,6 +230,13 @@ async def back_to_tariffs(callback: CallbackQuery):
     await callback.answer()
 
 
+def _price_header(tariff_code: str, period: str, price_row) -> str:
+    return (
+        f"<b>{TARIFF_NAMES[tariff_code]} — {PERIOD_NAMES[period]}</b>\n\n"
+        f"💵 Narx: {price_row['price']:.0f} {price_row['currency']}\n"
+    )
+
+
 @router.callback_query(F.data.startswith("period:"))
 async def choose_period(callback: CallbackQuery):
     _, tariff_code, period = callback.data.split(":")
@@ -238,24 +245,63 @@ async def choose_period(callback: CallbackQuery):
         await callback.answer("Narx topilmadi, admin bilan bog'laning.", show_alert=True)
         return
 
-    text = (
-        f"<b>{TARIFF_NAMES[tariff_code]} — {PERIOD_NAMES[period]}</b>\n\n"
-        f"💵 Narx: {price_row['price']:.0f} {price_row['currency']}\n"
-    )
-    if price_row["payment_info"]:
-        text += f"\n💳 To'lov usuli:\n{price_row['payment_info']}\n"
-    text += "\nTo'lovni amalga oshirgach, chekni (skrinshotni) shu yerga rasm sifatida yuboring."
+    methods = await db.get_payment_methods()
+    if not methods:
+        await callback.message.edit_text(
+            _price_header(tariff_code, period, price_row) +
+            "\n⚠️ To'lov usullari hali kiritilmagan. Iltimos, admin bilan bog'laning.",
+            parse_mode="HTML",
+        )
+        await callback.answer()
+        return
+
+    # Usul bitta bo'lsa ortiqcha qadam qilmaymiz - to'g'ridan-to'g'ri ko'rsatamiz.
+    if len(methods) == 1:
+        await _show_payment_details(callback, tariff_code, period, methods[0], price_row)
+        return
 
     await callback.message.edit_text(
-        text, reply_markup=kb.confirm_payment_keyboard(tariff_code, period), parse_mode="HTML"
+        _price_header(tariff_code, period, price_row) + "\nQaysi usul bilan to'laysiz?",
+        reply_markup=kb.payment_method_choice_keyboard(tariff_code, period, methods),
+        parse_mode="HTML",
     )
     await callback.answer()
 
 
+async def _show_payment_details(callback: CallbackQuery, tariff_code: str, period: str,
+                                method, price_row=None):
+    price_row = price_row or await db.get_price(tariff_code, period)
+    text = (
+        _price_header(tariff_code, period, price_row) +
+        f"\n💳 <b>{method['title']}</b>\n{method['details']}\n\n"
+        f"To'lovni amalga oshirgach, chekni (skrinshotni) shu yerga rasm sifatida yuboring."
+    )
+    await callback.message.edit_text(
+        text,
+        reply_markup=kb.confirm_payment_keyboard(tariff_code, period, method["id"]),
+        parse_mode="HTML",
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("paymethod:"))
+async def choose_payment_method(callback: CallbackQuery):
+    _, tariff_code, period, method_id = callback.data.split(":")
+    method = await db.get_payment_method(int(method_id))
+    if not method:
+        await callback.answer("Bu usul o'chirilgan. Boshqasini tanlang.", show_alert=True)
+        return
+    await _show_payment_details(callback, tariff_code, period, method)
+
+
 @router.callback_query(F.data.startswith("send_receipt:"))
 async def ask_for_receipt(callback: CallbackQuery, state: FSMContext):
-    _, tariff_code, period = callback.data.split(":")
-    await state.update_data(tariff_code=tariff_code, period=period)
+    # Eski xabarlardagi tugmalarda to'lov usuli ko'rsatilmagan bo'lishi mumkin -
+    # shuning uchun uzunligini qat'iy talab qilmaymiz.
+    parts = callback.data.split(":")
+    tariff_code, period = parts[1], parts[2]
+    method_id = int(parts[3]) if len(parts) > 3 else None
+    await state.update_data(tariff_code=tariff_code, period=period, method_id=method_id)
     await state.set_state(PaymentStates.waiting_screenshot)
     await callback.message.answer("📎 To'lov chekining skrinshotini rasm ko'rinishida yuboring.")
     await callback.answer()
@@ -285,6 +331,10 @@ async def receive_receipt(message: Message, state: FSMContext, bot: Bot):
         f"📦 Tarif: {TARIFF_NAMES[tariff_code]} — {PERIOD_NAMES[period]}\n"
         f"💵 Narx: {price_row['price']:.0f} {price_row['currency']}"
     )
+    if data.get("method_id"):
+        method = await db.get_payment_method(data["method_id"])
+        if method:
+            caption += f"\n💳 Usul: {method['title']}"
     for admin_id in ADMIN_IDS:
         try:
             await bot.send_photo(

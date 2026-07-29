@@ -80,6 +80,15 @@ CREATE TABLE IF NOT EXISTS content (
     created_at TEXT NOT NULL
 );
 
+-- To'lov usullari: karta, Click, Payme va h.k. Foydalanuvchi to'lov
+-- paytida shulardan birini tanlaydi.
+CREATE TABLE IF NOT EXISTS payment_methods (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,              -- ro'yxatda ko'rinadigan nom, masalan "Humo — Kapitalbank"
+    details TEXT NOT NULL,            -- karta raqami / rekvizitlar
+    created_at TEXT NOT NULL
+);
+
 -- Admin /yangi_bolim orqali qo'shgan qo'shimcha bo'limlar.
 -- Ularning kontenti 'content' jadvalida content_type = sections.code bilan saqlanadi.
 CREATE TABLE IF NOT EXISTS sections (
@@ -126,6 +135,23 @@ async def init_db():
             if name not in columns:
                 await db.execute(ddl)
         await db.commit()
+
+        # Migratsiya: ilgari to'lov usuli bitta bo'lib prices.payment_info'da turardi.
+        # Uni yo'qotmaslik uchun birinchi to'lov usuli qilib ko'chirib olamiz.
+        cur = await db.execute("SELECT COUNT(*) FROM payment_methods")
+        (methods_count,) = await cur.fetchone()
+        if methods_count == 0:
+            cur = await db.execute(
+                "SELECT payment_info FROM prices "
+                "WHERE payment_info IS NOT NULL AND TRIM(payment_info) != '' LIMIT 1"
+            )
+            row = await cur.fetchone()
+            if row:
+                await db.execute(
+                    "INSERT INTO payment_methods (title, details, created_at) VALUES (?, ?, ?)",
+                    ("To'lov ma'lumoti", row[0], now_str()),
+                )
+                await db.commit()
 
         # narxlarni faqat birinchi ishga tushirishda to'ldiramiz (admin keyin o'zgartiradi)
         cur = await db.execute("SELECT COUNT(*) FROM prices")
@@ -213,6 +239,38 @@ async def set_price(tariff_code: str, period: str, price: float, payment_info: s
                              payment_info=COALESCE(excluded.payment_info, prices.payment_info)""",
             (tariff_code, period, price, payment_info),
         )
+        await db.commit()
+
+
+# ---------- TO'LOV USULLARI ----------
+
+async def add_payment_method(title: str, details: str) -> int:
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute(
+            "INSERT INTO payment_methods (title, details, created_at) VALUES (?, ?, ?)",
+            (title, details, now_str()),
+        )
+        await db.commit()
+        return cur.lastrowid
+
+
+async def get_payment_methods():
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT * FROM payment_methods ORDER BY id")
+        return await cur.fetchall()
+
+
+async def get_payment_method(method_id: int):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT * FROM payment_methods WHERE id=?", (method_id,))
+        return await cur.fetchone()
+
+
+async def delete_payment_method(method_id: int):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("DELETE FROM payment_methods WHERE id=?", (method_id,))
         await db.commit()
 
 

@@ -26,8 +26,10 @@ class PriceEditStates(StatesGroup):
     waiting_value = State()
 
 
-class PaymentInfoStates(StatesGroup):
-    waiting_info = State()
+class PaymentMethodStates(StatesGroup):
+    """Admin yangi to'lov usuli qo'shishi (karta, Click, Payme va h.k.)."""
+    title = State()
+    details = State()
 
 
 class BroadcastStates(StatesGroup):
