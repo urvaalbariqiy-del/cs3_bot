@@ -1,4 +1,35 @@
-# Kripto Spot Savdo Signallari — Telegram Bot
+# Cryptospot 3% — bot, sayt va API
+
+Bitta loyiha, bitta baza. Uch qismdan iborat:
+
+```
+cs3_bot/
+├── bot/        Telegram bot (aiogram)
+├── api/        Sayt va ilova uchun API (FastAPI)
+├── web/        Landing sahifa + shaxsiy kabinet (statik HTML/CSS/JS)
+├── main.py     faqat botni ishga tushiradi
+└── run_all.py  bot + API birgalikda (server uchun)
+```
+
+**Asosiy tamoyil:** signal, obuna va tarif faqat bitta joyda — `bot_database.db`
+faylida — saqlanadi. Bot ham, sayt ham, kelajakdagi ilova ham o'shani o'qiydi.
+Ikkinchi baza ham, ikkinchi haqiqat ham yo'q.
+
+Foydalanuvchi saytga **Telegram orqali** kiradi (parol yo'q). Botdagi obunasi
+saytda ham darhol ishlaydi, chunki ikkalasi ham bir xil `telegram_id` ustiga
+qurilgan.
+
+### Ishga tushirish
+
+| Nima kerak | Buyruq |
+|---|---|
+| Faqat bot (kompyuterda sinash) | `start.bat` yoki `python3 main.py` |
+| Bot + sayt API (serverda) | `python3 run_all.py` |
+| Faqat API | `uvicorn api.main:app --port 8000` |
+
+Saytni ishlatish uchun `web/assets/js/config.js` ichidagi `apiBaseUrl` ni
+API manziliga moslang. Kabinetga kirish ishlashi uchun @BotFather'da
+`/setdomain` orqali sayt domenini ko'rsating.
 
 ---
 

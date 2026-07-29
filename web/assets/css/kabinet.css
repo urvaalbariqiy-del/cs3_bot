@@ -1,0 +1,268 @@
+/* Kabinet — landing dizayni ustiga qo'shimcha uslublar.
+   Ranglar va shriftlar main.css dagi o'zgaruvchilardan olinadi. */
+
+.hidden { display: none !important; }
+
+.kab { padding: 110px 20px 80px; }
+
+.kab-loading {
+  padding: 60px 0;
+  text-align: center;
+  color: var(--muted);
+}
+
+/* ---------- kirish ---------- */
+
+.kab-hero {
+  max-width: 560px;
+  margin: 40px auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.kab-hero h1 { font-size: clamp(30px, 5vw, 44px); margin: 0; }
+.kab-lead { margin: 0; line-height: 1.6; }
+/* width: 100% muhim — markazlashtirilgan flex ichida bo'sh element
+   kengligi 0 bo'lib, Telegram tugmasi joyi ko'rinmay qolardi. */
+.tg-login { min-height: 48px; width: 100%; display: flex; justify-content: center; }
+.kab-note { font-size: 13px; margin: 0; line-height: 1.6; }
+
+/* ---------- sarlavha ---------- */
+
+.kab-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 40px;
+}
+.kab-head h1 { font-size: clamp(26px, 4vw, 38px); margin: 10px 0 0; }
+
+.kab-sub {
+  padding: 18px 22px;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.kab-sub .row {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  font-size: 14px;
+}
+.kab-sub .row b { font-variant-numeric: tabular-nums; }
+.kab-sub .tariff-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px;
+  color: var(--gold);
+}
+
+.kab-h2 {
+  font-size: 22px;
+  margin: 46px 0 18px;
+}
+
+.notice {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gold);
+  background: var(--bg-alt);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+.notice.ok { border-left-color: var(--green-2); }
+.notice.err { border-left-color: var(--red); }
+
+/* ---------- bo'limlar ---------- */
+
+.grid-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+}
+
+.sec-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  transition: border-color .15s, transform .15s;
+}
+.sec-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+.sec-card:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.sec-card.locked { cursor: pointer; }
+.sec-card.locked:hover { border-color: var(--blue); }
+
+.sec-title { font-family: 'Space Grotesk', sans-serif; font-size: 17px; }
+.sec-meta { font-size: 13px; color: var(--muted); }
+.sec-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blue-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  align-self: flex-start;
+}
+
+/* ---------- ro'yxat ---------- */
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.btn-sm { padding: 8px 14px; font-size: 13px; }
+
+.items { display: flex; flex-direction: column; gap: 10px; }
+
+.item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+}
+.item:hover { border-color: var(--gold); }
+.item-name { font-weight: 600; }
+.status {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+.status.open { color: var(--green-2); }
+.status.closed { color: var(--muted); }
+
+.detail {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px 18px;
+  font-size: 14px;
+}
+.detail .k { color: var(--muted); font-size: 12px; display: block; }
+.detail .v { font-variant-numeric: tabular-nums; font-weight: 600; }
+.detail-note { grid-column: 1 / -1; color: var(--muted); line-height: 1.6; }
+
+/* ---------- tariflar ---------- */
+
+.grid-tariffs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+.tariff {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.tariff.current { border-color: var(--gold); }
+.tariff h3 { margin: 0; font-size: 20px; }
+.tariff ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 14px; line-height: 1.8; }
+.tariff .prices { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+.price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 14px;
+}
+.price-row b { font-variant-numeric: tabular-nums; }
+
+/* ---------- to'lov oynasi ---------- */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 50;
+}
+.modal-card {
+  width: min(460px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 22px;
+}
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.modal-head h3 { margin: 0; font-size: 20px; }
+
+.method {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--bg-alt);
+  color: inherit;
+  font: inherit;
+}
+.method:hover, .method.active { border-color: var(--gold); }
+.method .m-title { font-weight: 600; margin-bottom: 6px; }
+.method .m-details {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 13px;
+  color: var(--muted);
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
+.file-row { margin: 14px 0; font-size: 14px; }
+.file-row input { width: 100%; margin-top: 8px; color: var(--muted); }
+
+@media (max-width: 620px) {
+  .kab { padding: 96px 16px 60px; }
+  .kab-head { flex-direction: column; }
+  .kab-sub { width: 100%; }
+
+  /* Yuqoridagi panel tor ekranga sig'masdan chetga chiqib ketardi:
+     brend matnini yashirib, tugmalarni ixchamlashtiramiz. */
+  .nav-logo span { display: none; }
+  .nav-actions { gap: 6px; }
+  .nav-actions .btn { padding: 8px 12px; font-size: 13px; }
+}

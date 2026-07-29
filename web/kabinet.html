@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="uz" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Shaxsiy kabinet — Cryptospot 3%</title>
+<meta name="robots" content="noindex" />
+<link rel="icon" href="assets/img/logo-cs3.png" />
+<link rel="stylesheet" href="assets/css/main.css" />
+<link rel="stylesheet" href="assets/css/kabinet.css" />
+</head>
+<body>
+
+<nav class="nav" id="nav">
+  <div class="container nav-inner">
+    <a class="nav-logo" href="index.html">
+      <img src="assets/img/logo-cs3.png" alt="Cryptospot 3%" />
+      <span>Cryptospot&nbsp;3%</span>
+    </a>
+    <div class="nav-actions">
+      <button class="icon-btn" id="themeBtn" title="Tema" aria-label="Temani almashtirish">◐</button>
+      <a class="btn btn-outline" href="index.html">Bosh sahifa</a>
+      <button class="btn btn-outline hidden" id="logoutBtn">Chiqish</button>
+    </div>
+  </div>
+</nav>
+
+<main class="container kab">
+
+  <!-- ============ KIRISH ============ -->
+  <section id="loginView" class="hidden">
+    <div class="kab-hero">
+      <span class="eyebrow">Shaxsiy kabinet</span>
+      <h1 class="display">Kirish uchun <span class="grad-text">Telegram</span> yetarli</h1>
+      <p class="muted kab-lead">
+        Parol o'ylab topish, ro'yxatdan o'tish shart emas. Telegram hisobingiz
+        bilan kirasiz — botdagi obunangiz shu yerda ham ishlaydi.
+      </p>
+      <div id="tgLoginBox" class="tg-login"></div>
+      <p class="muted kab-note" id="loginHint"></p>
+    </div>
+  </section>
+
+  <!-- ============ KABINET ============ -->
+  <section id="appView" class="hidden">
+
+    <header class="kab-head">
+      <div>
+        <span class="eyebrow" id="greetEyebrow">Xush kelibsiz</span>
+        <h1 class="display" id="userName">—</h1>
+      </div>
+      <div class="kab-sub card" id="subCard"></div>
+    </header>
+
+    <div id="notice" class="notice hidden"></div>
+
+    <h2 class="kab-h2">Bo'limlar</h2>
+    <div class="grid-sections" id="sections"></div>
+
+    <div id="itemsPanel" class="hidden">
+      <div class="panel-head">
+        <h2 class="kab-h2" id="itemsTitle">—</h2>
+        <button class="btn btn-outline btn-sm" id="closeItems">Yopish</button>
+      </div>
+      <div id="items" class="items"></div>
+    </div>
+
+    <h2 class="kab-h2" id="tariffsHeading">Tariflar</h2>
+    <div class="grid-tariffs" id="tariffs"></div>
+  </section>
+
+  <div id="loading" class="kab-loading">Yuklanmoqda…</div>
+</main>
+
+<!-- ============ TO'LOV OYNASI ============ -->
+<div class="modal hidden" id="payModal">
+  <div class="modal-card card">
+    <div class="modal-head">
+      <h3 id="payTitle">To'lov</h3>
+      <button class="icon-btn" id="payClose" aria-label="Yopish">✕</button>
+    </div>
+    <div id="payBody"></div>
+  </div>
+</div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/kabinet.js"></script>
+</body>
+</html>
