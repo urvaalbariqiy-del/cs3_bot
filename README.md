@@ -1,5 +1,45 @@
 # Kripto Spot Savdo Signallari — Telegram Bot
 
+---
+
+## ENG SODDA YO'L — o'z kompyuteringizda (terminalsiz, bepul)
+
+Server ijaraga olmasdan, faqat sichqoncha bilan ishga tushirish. Bot kompyuteringiz
+yoniq turganda ishlaydi, kompyuterni o'chirsangiz bot ham to'xtaydi.
+
+**1-qadam. Python o'rnating** (bir marta)
+
+- https://www.python.org/downloads/ ga kiring, sariq **Download Python** tugmasini bosing
+- Yuklangan faylni oching
+- ⚠️ **"Add Python to PATH"** katagiga belgi qo'ying, keyin **Install Now** bosing
+
+**2-qadam. Kodni yuklab oling**
+
+- https://github.com/urvaalbariqiy-del/cs3_bot ga kiring
+- Yashil **Code** tugmasi → **Download ZIP**
+- Yuklangan ZIP faylni oching va papkani ish stoliga chiqarib oling (extract)
+
+**3-qadam. Ishga tushiring**
+
+- Papka ichidagi **`start.bat`** faylini ikki marta bosing (Mac'da — `start.sh`)
+- Birinchi safar ikkita savol beradi:
+  - *BotFather'dan olingan token* — @BotFather dan olgan tokeningizni qo'ying
+  - *Admin Telegram ID* — o'z ID raqamingiz (@userinfobot dan bilib olasiz)
+- Keyin o'zi hamma kerakli dasturni o'rnatadi (1-2 daqiqa) va botni ishga tushiradi
+
+`Bot polling rejimida ishga tushdi` degan yozuv chiqsa — tayyor. Telegram'da botga
+`/start` yozing.
+
+**Keyingi safar** — shunchaki `start.bat` ni bosasiz, savol berilmaydi.
+
+⚠️ Qora oynani yopsangiz bot to'xtaydi. Bot ishlashi uchun oyna ochiq turishi kerak.
+
+> Doimiy 24/7 ishlashi uchun server kerak bo'ladi — pastdagi bo'limga qarang.
+
+---
+
+## SERVERDA ISHGA TUSHIRISH (24/7 uchun)
+
 ## 1. Loyihani serverga joylash
 
 ```bash

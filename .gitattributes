@@ -1,0 +1,5 @@
+# Windows batch fayllari doim CRLF bilan saqlansin (aks holda cmd.exe xato berishi mumkin)
+*.bat text eol=crlf
+
+# Shell skriptlari doim LF bilan
+*.sh text eol=lf
