@@ -7,7 +7,7 @@ window.SITE_CONFIG = {
 
   // Saytga ulanish shu bot orqali bo'ladi (@ belgisisiz).
   // Foydalanuvchi faqat /start bosadi — bot bilan yozishmaydi.
-  telegramBotUsername: "cryptospot3_bot",
+  telegramBotUsername: "Cs3_aibot",
 
   channels: {
     telegram: "https://t.me/cryptospot3",
