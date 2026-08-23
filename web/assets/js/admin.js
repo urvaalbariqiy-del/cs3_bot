@@ -268,6 +268,14 @@
       CS3.api("/api/admin/content/" + del.getAttribute("data-delc"), { method: "DELETE" })
         .then(function () { loadContent(del.getAttribute("data-sec")); loadStats(); })
         .catch(function (err) { alert(err.message); });
+      return;
+    }
+    var delp = e.target.closest("[data-delp]");
+    if (delp) {
+      if (!confirm("Maqola o'chirilsinmi?")) return;
+      CS3.api("/api/admin/posts/" + delp.getAttribute("data-delp"), { method: "DELETE" })
+        .then(function () { loadPosts(); })
+        .catch(function (err) { alert(err.message); });
     }
   });
 
@@ -293,6 +301,58 @@
     }).then(function () { status("wStatus", "✅ Saqlandi.", "ok"); })
       .catch(function (e) { status("wStatus", e.message, "err"); });
   });
+
+  // ---------- kanal (maqolalar) ----------
+  var poAddBtn = $("poAdd");
+  if (poAddBtn) {
+    poAddBtn.addEventListener("click", function () {
+      var title = ($("poTitle").value || "").trim();
+      if (!title) { status("poStatus", "Sarlavhani kiriting.", "err"); return; }
+      var fd = new FormData();
+      fd.append("title", title);
+      fd.append("body", ($("poBody").value || "").trim());
+      fd.append("link", ($("poLink").value || "").trim());
+      var file = $("poFile");
+      if (file && file.files && file.files.length) fd.append("file", file.files[0]);
+      poAddBtn.disabled = true;
+      status("poStatus", "Joylanmoqda… media bo'lsa biroz kuting.");
+      fetch(CS3.apiBase + "/api/admin/posts", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + CS3.getToken() },
+        body: fd,
+      }).then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (b) {
+          if (!res.ok) throw new Error(b.detail || ("Xatolik (" + res.status + ")"));
+          return b;
+        });
+      }).then(function () {
+        status("poStatus", "✅ Joylandi.", "ok");
+        $("poTitle").value = ""; $("poBody").value = ""; $("poLink").value = "";
+        if (file) file.value = "";
+        loadPosts();
+      }).catch(function (e) {
+        status("poStatus", e.message, "err");
+      }).then(function () { poAddBtn.disabled = false; });
+    });
+  }
+
+  function loadPosts() {
+    var box = $("poList");
+    if (!box) return;
+    fetch(CS3.apiBase + "/api/posts").then(function (r) { return r.json(); }).then(function (d) {
+      var rows = d.posts || [];
+      if (!rows.length) { box.innerHTML = '<p class="muted">Hozircha yo\'q.</p>'; return; }
+      box.innerHTML = rows.map(function (p) {
+        var tag = p.kind === "image" ? "🖼" : p.kind === "video" ? "🎥"
+                : p.kind === "audio" ? "🎧" : p.kind === "link" ? "🔗" : "📝";
+        return '<div class="row-item">' +
+          '<div><b>' + tag + ' ' + esc(p.title) + '</b>' +
+          '<div class="meta">' + p.comments + ' izoh</div></div>' +
+          '<button class="btn-del" data-delp="' + p.id + '">O\'chirish</button>' +
+          '</div>';
+      }).join("");
+    }).catch(function (e) { box.innerHTML = '<p class="muted">' + esc(e.message) + '</p>'; });
+  }
 
   // ---------- statistika ----------
   function loadStats() {
@@ -320,6 +380,7 @@
       loadSignals("signals");
       loadSignals("scalping");
       Object.keys(CONTENT_FORMS).forEach(loadContent);
+      loadPosts();
       CS3.api("/api/admin/seats").then(function (s) {
         $("seatTaken").value = s.taken; $("seatTotal").value = s.total;
       });

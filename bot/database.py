@@ -123,6 +123,27 @@ CREATE TABLE IF NOT EXISTS violations (
     created_at TEXT NOT NULL,
     FOREIGN KEY(user_id) REFERENCES users(id)
 );
+
+-- Ommaviy "Kanal" (maqolalar) bo'limi: matn + bitta media (rasm/video/audio)
+CREATE TABLE IF NOT EXISTS posts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    body TEXT,
+    media TEXT,               -- yuklangan fayl nomi yoki http havola
+    media_kind TEXT,          -- image / video / audio / '' (matnli)
+    created_at TEXT NOT NULL
+);
+
+-- Maqolalarga izohlar. Faqat botga /start bosgan (kirgan) foydalanuvchi yozadi.
+CREATE TABLE IF NOT EXISTS post_comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id INTEGER NOT NULL,
+    telegram_id INTEGER NOT NULL,
+    full_name TEXT,
+    text TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY(post_id) REFERENCES posts(id)
+);
 """
 
 DEFAULT_PRICES = [
@@ -644,3 +665,69 @@ async def add_violation(user_id: int, note: str):
             (user_id, note, now_str()),
         )
         await db.commit()
+
+
+# ---------- KANAL (POSTS) ----------
+
+async def add_post(title: str, body: str, media: str = None, media_kind: str = "") -> int:
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute(
+            "INSERT INTO posts (title, body, media, media_kind, created_at) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (title, body, media, media_kind, now_str()),
+        )
+        await db.commit()
+        return cur.lastrowid
+
+
+async def get_posts(limit: int = 50):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT * FROM posts ORDER BY created_at DESC, id DESC LIMIT ?", (limit,)
+        )
+        return await cur.fetchall()
+
+
+async def get_post(post_id: int):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
+        return await cur.fetchone()
+
+
+async def delete_post(post_id: int):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("DELETE FROM post_comments WHERE post_id = ?", (post_id,))
+        await db.execute("DELETE FROM posts WHERE id = ?", (post_id,))
+        await db.commit()
+
+
+async def add_comment(post_id: int, telegram_id: int, full_name: str, text: str) -> int:
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute(
+            "INSERT INTO post_comments (post_id, telegram_id, full_name, text, created_at) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (post_id, telegram_id, full_name, text, now_str()),
+        )
+        await db.commit()
+        return cur.lastrowid
+
+
+async def get_comments(post_id: int, limit: int = 200):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT * FROM post_comments WHERE post_id = ? ORDER BY created_at ASC, id ASC LIMIT ?",
+            (post_id, limit),
+        )
+        return await cur.fetchall()
+
+
+async def count_comments(post_id: int) -> int:
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute(
+            "SELECT COUNT(*) FROM post_comments WHERE post_id = ?", (post_id,)
+        )
+        (n,) = await cur.fetchone()
+        return n

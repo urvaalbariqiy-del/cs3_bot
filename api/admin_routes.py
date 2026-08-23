@@ -29,6 +29,18 @@ from api.deps import admin_user
 # Ruxsat etilgan fayl turlari (kengaytma -> tur)
 _VIDEO_EXT = {".mp4", ".mov", ".webm", ".mkv", ".m4v"}
 _IMAGE_EXT = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+_AUDIO_EXT = {".mp3", ".m4a", ".ogg", ".oga", ".wav", ".aac"}
+
+
+def _media_kind(name: str) -> str:
+    ext = os.path.splitext(name or "")[1].lower()
+    if ext in _IMAGE_EXT:
+        return "image"
+    if ext in _VIDEO_EXT:
+        return "video"
+    if ext in _AUDIO_EXT:
+        return "audio"
+    return ""
 
 
 async def _save_upload(file: UploadFile, allowed_ext: set) -> str:
@@ -321,4 +333,38 @@ async def grant_subscription(payload: dict, admin=Depends(admin_user)):
         )
 
     await db.create_or_extend_subscription(user["id"], tariff, period)
+    return {"ok": True}
+
+
+# ==================== KANAL (POSTS) ====================
+
+@router.post("/posts")
+async def create_post(
+    admin=Depends(admin_user),
+    title: str = Form(...),
+    body: str = Form(""),
+    link: str = Form(""),
+    file: UploadFile | None = File(None),
+):
+    """Kanal maqolasini yaratadi: matn + ixtiyoriy media (rasm/video/audio) yoki havola."""
+    title = (title or "").strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="Sarlavha bo'sh bo'lmasin.")
+    media = None
+    kind = ""
+    if file is not None and file.filename:
+        media = await _save_upload(file, _IMAGE_EXT | _VIDEO_EXT | _AUDIO_EXT)
+        kind = _media_kind(media)
+    elif (link or "").strip():
+        media = link.strip()
+        kind = "link"
+    post_id = await db.add_post(title, (body or "").strip(), media, kind)
+    return {"ok": True, "id": post_id}
+
+
+@router.delete("/posts/{post_id}")
+async def remove_post(post_id: int, admin=Depends(admin_user)):
+    if not await db.get_post(post_id):
+        raise HTTPException(status_code=404, detail="Maqola topilmadi.")
+    await db.delete_post(post_id)
     return {"ok": True}

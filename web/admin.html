@@ -96,6 +96,7 @@
       <button class="tab" data-panel="pVideos">🎓 Video darslar</button>
       <button class="tab" data-panel="pReminders">🕌 Eslatmalar</button>
       <button class="tab" data-panel="pStrategies">🧠 Strategiyalar</button>
+      <button class="tab" data-panel="pPosts">📰 Kanal</button>
       <button class="tab" data-panel="pSeats">📊 O'rinlar va hamyon</button>
     </div>
 
@@ -213,6 +214,30 @@
       <div class="card admin-card">
         <h3 style="margin-top:0">Joriy strategiyalar</h3>
         <div id="stList"><p class="muted">Yuklanmoqda…</p></div>
+      </div>
+    </div>
+
+    <!-- KANAL (MAQOLALAR) -->
+    <div class="panel" id="pPosts">
+      <div class="card admin-card">
+        <h3 style="margin-top:0">Yangi maqola / xabar</h3>
+        <label for="poTitle">Sarlavha</label>
+        <input id="poTitle" placeholder="Bugungi bozor sharhi" />
+        <label for="poBody">Matn</label>
+        <textarea id="poBody" style="min-height:120px"></textarea>
+        <label for="poFile">Media (ixtiyoriy: rasm, video yoki audio)</label>
+        <input id="poFile" type="file" accept="image/*,video/*,audio/*" />
+        <label for="poLink">Yoki havola (ixtiyoriy — YouTube va h.k.)</label>
+        <input id="poLink" placeholder="https://..." inputmode="url" />
+        <p class="muted" style="font-size:12.5px;margin:10px 0 12px">
+          Faqat matn ham bo'lishi mumkin. Media maks. 200MB. Foydalanuvchilar izoh yozishi uchun avval Telegram orqali kirishlari kerak.
+        </p>
+        <button class="btn btn-primary" id="poAdd">Joylash</button>
+        <p class="form-status" id="poStatus"></p>
+      </div>
+      <div class="card admin-card">
+        <h3 style="margin-top:0">Joylangan maqolalar</h3>
+        <div id="poList"><p class="muted">Yuklanmoqda…</p></div>
       </div>
     </div>
 

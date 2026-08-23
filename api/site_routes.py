@@ -15,7 +15,7 @@ from fastapi.responses import FileResponse
 from bot import database as db
 from bot import sections as sec
 from bot.config import MENTORLIK_TOTAL_SEATS, MEDIA_DIR
-from api.deps import optional_user, user_tariff
+from api.deps import optional_user, current_user, user_tariff
 
 router = APIRouter(prefix="/api")
 
@@ -125,6 +125,56 @@ async def public_lessons(user=Depends(optional_user)):
             "created_at": c["created_at"],
         })
     return {"locked": False, "lessons": lessons}
+
+
+@router.get("/posts")
+async def public_posts():
+    """kanal.html uchun — ommaviy maqolalar lentasi."""
+    rows = await db.get_posts(limit=50)
+    posts = []
+    for p in rows:
+        media = p["media"] or ""
+        kind = p["media_kind"] or ""
+        if not media:
+            url = ""
+        elif media.startswith("http://") or media.startswith("https://"):
+            url = media
+        else:
+            url = "/api/media/" + media
+        posts.append({
+            "id": p["id"],
+            "title": p["title"],
+            "body": p["body"] or "",
+            "kind": kind,
+            "url": url,
+            "comments": await db.count_comments(p["id"]),
+            "created_at": p["created_at"],
+        })
+    return {"posts": posts}
+
+
+@router.get("/posts/{post_id}/comments")
+async def public_post_comments(post_id: int):
+    rows = await db.get_comments(post_id)
+    return {"comments": [{
+        "id": c["id"],
+        "name": c["full_name"] or "Foydalanuvchi",
+        "text": c["text"],
+        "created_at": c["created_at"],
+    } for c in rows]}
+
+
+@router.post("/posts/{post_id}/comments")
+async def add_post_comment(post_id: int, payload: dict, user=Depends(current_user)):
+    """Izoh qoldirish — faqat botga /start bosgan (kirgan) foydalanuvchi."""
+    if not await db.get_post(post_id):
+        raise HTTPException(status_code=404, detail="Maqola topilmadi.")
+    text = (payload.get("text") or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Izoh bo'sh bo'lmasin.")
+    text = text[:2000]
+    cid = await db.add_comment(post_id, user["telegram_id"], user["full_name"], text)
+    return {"ok": True, "id": cid}
 
 
 @router.get("/media/{name}")
