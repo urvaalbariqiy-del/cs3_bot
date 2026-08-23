@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="uz" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video darsliklar — Cryptospot 3%</title>
+<meta name="description" content="Mentorlik dasturining video darslari — 4 ta asosiy modul bo'yicha.">
+<meta property="og:title" content="Video darsliklar — Cryptospot 3%">
+<meta property="og:description" content="Mentorlik dasturining video darslari — 4 ta asosiy modul bo'yicha.">
+<meta property="og:image" content="assets/img/logo-cs3.png">
+<meta property="og:type" content="website">
+<link rel="icon" href="assets/img/logo-main.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/main.css">
+<style>
+/* Bu sayt bo'ylab hamburger — yagona asosiy menyu */
+.nav-links{display:none !important}
+.burger{display:flex !important}
+.mobile-menu a.active{color:var(--gold);font-weight:700}
+</style>
+<!-- Sozlamalar va ulanish moduli <head> da yuklanadi: sahifa ichidagi
+     skriptlar SITE_CONFIG ga tayanadi, shuning uchun ular avval kelishi shart -->
+<script src="assets/js/config.js"></script>
+<script src="assets/js/auth.js"></script>
+</head>
+<body>
+<nav class="nav" id="navbar">
+  <div class="container nav-inner">
+    <a href="index.html" class="nav-logo">
+      <img src="assets/img/logo-main.png" alt="Cryptospot 3%">
+      <span>Cryptospot <span class="grad-text">3%</span></span>
+    </a>
+    <div class="nav-actions" style="margin-left:auto">
+      <button class="icon-btn" id="themeToggle"><span data-theme-icon>☀️</span></button>
+      <a href="kurs.html" class="btn btn-primary" style="padding:10px 18px;font-size:14px">Qabul holati</a>
+      <button class="icon-btn" id="cs3Connect" title="Telegram orqali ulanish" style="width:auto;padding:0 12px;font-size:13px;font-weight:600">Ulanish</button>
+      <button class="icon-btn burger" id="burger" style="display:flex">☰</button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html">Bosh sahifa</a>
+    <a href="vip3.html">VIP 3%</a>
+    <a href="community.html">Community</a>
+    <a href="kurs.html">Kurs</a>
+    <a href="video-darslar.html" class="active">Video darsliklar</a>
+    <a href="signal.html">Signal</a>
+    <a href="eslatmalar.html">Eslatmalar</a>
+    <a href="social.html">Ijtimoiy tarmoqlar</a>
+  </div>
+</nav>
+<section class="section" style="padding-top:110px">
+  <div class="container">
+    <div class="section-head center reveal" style="max-width:640px">
+      <span class="eyebrow">Video darsliklar</span>
+      <h2>Mentorlik dasturi darslari</h2>
+      <p class="muted">40 ga yaqin video dars, 4 ta asosiy model bo'yicha tartiblangan. Darslar mentorlikka qo'shilgan a'zolar uchun ochiladi.</p>
+    </div>
+
+    <div class="grid-2 reveal" id="modulesGrid">
+      <div class="card feature-card">
+        <div class="feature-icon">🌐</div>
+        <h3>1-modul: Fundamental &amp; Macro</h3>
+        <p>Bozorga ta'sir qiluvchi fundamental omillar va makroiqtisodiy tahlil bo'yicha darslar.</p>
+        <p class="pill" style="margin-top:14px">🔒 Mentorlikka qo'shilgach ochiladi</p>
+      </div>
+      <div class="card feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>2-modul: Technical Analysis</h3>
+        <p>Grafik tahlili, market structure, price action darslari.</p>
+        <p class="pill" style="margin-top:14px">🔒 Mentorlikka qo'shilgach ochiladi</p>
+      </div>
+      <div class="card feature-card">
+        <div class="feature-icon">🎯</div>
+        <h3>3-modul: Trading Strategiyalar</h3>
+        <p>Turli strategiyalar va ularni qo'llash bo'yicha amaliy darslar.</p>
+        <p class="pill" style="margin-top:14px">🔒 Mentorlikka qo'shilgach ochiladi</p>
+      </div>
+      <div class="card feature-card">
+        <div class="feature-icon">📈</div>
+        <h3>4-modul: Execution &amp; Live Trading</h3>
+        <p>Mentor bilan birga real bozorni kuzatish va savdolarni tahlil qilish.</p>
+        <p class="pill" style="margin-top:14px">🔒 Mentorlikka qo'shilgach ochiladi</p>
+      </div>
+    </div>
+
+    <div class="cta-band reveal" style="margin-top:32px;text-align:center">
+      <h2 style="font-size:22px;margin:0 0 14px">Darslarga kirish uchun mentorlikka qo'shiling</h2>
+      <a href="kurs.html" class="btn btn-primary">Kurs va tariflarni ko'rish</a>
+    </div>
+
+    <div id="lessonsWrap" style="margin-top:40px;display:none">
+      <div class="section-head center reveal" style="max-width:560px">
+        <span class="eyebrow">Joylangan darslar</span>
+        <h2 style="font-size:24px">So'nggi video darslar</h2>
+      </div>
+      <div class="grid-2 reveal" id="lessonsGrid"></div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <div class="nav-logo"><img src="assets/img/logo-main.png" alt="Cryptospot 3%"><span>Cryptospot 3%</span></div>
+        <p>Tradingni noldan tizimli o'rganish va yopiq jamoa bilan real bozorda amaliyot qilish uchun mentorlik dasturi.</p>
+        <div class="foot-social">
+          <a href="https://t.me/cryptospot3" target="_blank" class="icon-btn">TG</a>
+          <a href="https://www.instagram.com/cryptospot3" target="_blank" class="icon-btn">IG</a>
+          <a href="https://youtube.com/@cryptospot3-m4e" target="_blank" class="icon-btn">YT</a>
+        </div>
+      </div>
+      <div>
+        <div class="pill" style="margin-bottom:14px">Sahifa</div>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:14px" class="muted">
+          <a href="vip3.html">VIP 3%</a>
+          <a href="community.html">Community</a>
+          <a href="kurs.html">Kurs</a>
+          <a href="signal.html">Signal</a>
+          <a href="eslatmalar.html">Eslatmalar</a>
+          <a href="social.html">Ijtimoiy tarmoqlar</a>
+        </div>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© <span id="yearNow"></span> Cryptospot 3%. Barcha huquqlar himoyalangan.</span>
+      <span style="max-width:480px;text-align:right">Eslatma: faqat SPOT yo'nalishida. Qolgan barcha yo'nalishlar shariatga ko'ra harom hisoblanadi.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var cfg = window.SITE_CONFIG || {};
+  var base = cfg.apiBaseUrl;
+  var wrap = document.getElementById("lessonsWrap");
+  var grid = document.getElementById("lessonsGrid");
+  if(!base || base.indexOf("YOUR-BACKEND-URL") !== -1 || !grid) return;
+
+  fetch(base + "/api/video-lessons")
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(!data.lessons || !data.lessons.length) return;
+      wrap.style.display = "block";
+      function esc(s){
+        return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+          return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c];
+        });
+      }
+      var botUrl = cfg.telegramBotUsername ? "https://t.me/" + cfg.telegramBotUsername : "";
+      data.lessons.forEach(function(l){
+        var card = document.createElement("div");
+        card.className = "card feature-card";
+        // Video fayli Telegramda saqlanadi - saytdan botga yo'naltiramiz
+        var link = l.video_url ? l.video_url : (l.has_file && botUrl ? botUrl : "");
+        card.innerHTML =
+          '<p class="pill" style="margin-bottom:10px">' + esc(l.module || "Dars") + '</p>' +
+          '<h3 style="margin:0 0 8px">' + esc(l.title) + '</h3>' +
+          (l.description ? '<p class="muted" style="font-size:13.5px;margin-bottom:12px">' + esc(l.description) + '</p>' : '') +
+          (link ? '<a href="' + esc(link) + '" target="_blank" rel="noopener" class="btn btn-outline btn-block">Darsni ko\u2019rish</a>' : '');
+        grid.appendChild(card);
+      });
+    })
+    .catch(function(){});
+})();
+</script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>

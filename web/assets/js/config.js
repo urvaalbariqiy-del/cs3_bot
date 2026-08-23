@@ -1,18 +1,15 @@
 // ==========================================================
-// SOZLAMALAR
+// SOZLAMALAR — bitta joy, hamma sahifa shu yerdan o'qiydi
 // ==========================================================
-// Bitta joy — landing sahifa ham, kabinet ham shu yerdan o'qiydi.
 window.SITE_CONFIG = {
-  // Yangi API manzili (bot bilan bitta bazani ishlatadi).
-  // Kompyuterda sinash uchun:  "http://localhost:8000"
-  // Serverga qo'ygandan keyin:  "https://api.cryptospot3.uz"
+  // API manzili (bot bilan bitta bazani ishlatadi).
+  // Kompyuterda sinash:      "http://localhost:8000"
+  // Serverga qo'ygandan keyin: "https://api.cryptospot3.uz"
   apiBaseUrl: "http://localhost:8000",
 
-  // Kabinetga kirish shu bot orqali amalga oshadi (@ belgisisiz).
-  // MUHIM: @BotFather'da shu botga /setdomain bilan sayt domenini
-  // ko'rsatmasangiz, "Telegram bilan kirish" tugmasi ishlamaydi.
-  telegramBotUsername: "cryptospot3_manager_bot",
-  managerBotUsername: "cryptospot3_manager_bot",
+  // Saytga ulanish shu bot orqali bo'ladi (@ belgisisiz).
+  // Foydalanuvchi faqat /start bosadi — bot bilan yozishmaydi.
+  telegramBotUsername: "cryptospot3_bot",
 
   channels: {
     telegram: "https://t.me/cryptospot3",

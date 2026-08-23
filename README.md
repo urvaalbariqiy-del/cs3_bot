@@ -1,23 +1,19 @@
-# Cryptospot 3% — bot, sayt va API
+# Cryptospot 3% — sayt, API va bot
 
-Bitta loyiha, bitta baza. Uch qismdan iborat:
+Bitta loyiha, bitta baza. Mahsulot markazi — **sayt**.
 
 ```
 cs3_bot/
-├── bot/        Telegram bot (aiogram)
-├── api/        Sayt va ilova uchun API (FastAPI)
-├── web/        Landing sahifa + shaxsiy kabinet (statik HTML/CSS/JS)
-├── main.py     faqat botni ishga tushiradi
-└── run_all.py  bot + API birgalikda (server uchun)
+├── web/        9 sahifali sayt + admin panel (statik HTML/CSS/JS, build kerak emas)
+├── api/        Sayt uchun API (FastAPI)
+├── bot/        Telegram bot — hozircha faqat saytga ulanish uchun
+├── run_all.py  API + bot birgalikda (server uchun)
+└── main.py     faqat bot
 ```
 
-**Asosiy tamoyil:** signal, kontent va foydalanuvchi faqat bitta joyda —
-`bot_database.db` faylida — saqlanadi. Bot ham, sayt ham, kelajakdagi ilova
-ham o'shani o'qiydi. Ikkinchi baza ham, ikkinchi haqiqat ham yo'q.
+## Hozirgi bosqich: bepul, odam yig'ish
 
-### Hozirgi bosqich: bepul, odam yig'ish
-
-`.env` da `FREE_MODE=true` (standart holat):
+`.env` da `FREE_MODE=true` (standart):
 
 - barcha bo'limlar **hammaga ochiq**, obuna talab qilinmaydi
 - to'lov qabul qilinmaydi, tariflar saytda **"tez orada"** deb ko'rsatiladi
@@ -26,12 +22,12 @@ ham o'shani o'qiydi. Ikkinchi baza ham, ikkinchi haqiqat ham yo'q.
 Obunani yoqish uchun `FREE_MODE=false` yozish kifoya. Obuna, to'lov, tarif
 nazorati va narx kuzatuvi kodda saqlanib turibdi — qaytadan yozish kerak emas.
 
-### Saytga ulanish
+## Saytga ulanish
 
-Parol yo'q, ro'yxatdan o'tish yo'q:
+Parol yo'q, ro'yxatdan o'tish yo'q, ID yozish yo'q:
 
 ```
-Saytda "Telegram orqali ulanish" bosadi
+Saytda "Ulanish" bosadi
   → bot ochiladi, /start bosadi
   → sayt uni o'zi tanidi
 ```
@@ -39,24 +35,46 @@ Saytda "Telegram orqali ulanish" bosadi
 Havola bir martalik va 5 daqiqada kuchini yo'qotadi. Foydalanuvchi bot bilan
 yozishmaydi — bot bu yerda faqat shaxsni tasdiqlaydi.
 
-### Admin panel — xavfsizlik haqida
+## Sahifalar
 
-Admin API'ga kirish uchun **Telegram ID ni bilish yetarli emas**. Har bir
-so'rov imzolangan sessiya tokeni bilan keladi, token esa faqat haqiqiy
-Telegram hisobiga kirgandan keyin beriladi. Ya'ni admin bo'lish uchun
-o'sha hisobning **egasi** bo'lish kerak.
+| Sahifa | Nima |
+|---|---|
+| `index.html` | Bosh sahifa |
+| `vip3.html` | VIP 3% — tavsif va narxlar |
+| `kurs.html` | CS3% Mentorlik — tariflar, o'rinlar hisoblagichi |
+| `community.html` | My Community |
+| `signal.html` | TradingView grafigi + **jonli signallar** |
+| `video-darslar.html` | Video darslar |
+| `eslatmalar.html` | Eslatmalar |
+| `social.html` | Ijtimoiy tarmoqlar |
+| `admin.html` | Admin panel |
+| `kabinet.html` | Shaxsiy kabinet |
 
-### Ishga tushirish
+Signallar sahifasida holat **o'zi yangilanib turadi**: bot narxni Binance'dan
+kuzatadi va signal faollashganda / TP olinganda / stop bo'lganda saytda
+darhol ko'rinadi.
+
+## Admin panel
+
+`admin.html` — signal va skalping qo'shish, video/eslatma/strategiya joylash,
+mentorlik o'rinlari va to'lov hamyoni.
+
+**Xavfsizlik:** Telegram ID ni bilish yetarli emas. Har bir so'rov imzolangan
+sessiya tokeni bilan keladi, token esa faqat haqiqiy Telegram hisobiga
+kirgandan keyin beriladi. Ya'ni admin bo'lish uchun o'sha hisobning **egasi**
+bo'lish kerak.
+
+## Ishga tushirish
 
 | Nima kerak | Buyruq |
 |---|---|
 | Faqat bot (kompyuterda sinash) | `start.bat` yoki `python3 main.py` |
-| Bot + sayt API (serverda) | `python3 run_all.py` |
+| API + bot (serverda) | `python3 run_all.py` |
 | Faqat API | `uvicorn api.main:app --port 8000` |
+| Saytni ko'rish | `web/` papkasini istalgan statik hostingga qo'yish |
 
-Saytni ishlatish uchun `web/assets/js/config.js` ichidagi `apiBaseUrl` ni
-API manziliga moslang. Kabinetga kirish ishlashi uchun @BotFather'da
-`/setdomain` orqali sayt domenini ko'rsating.
+Saytni ishlatish uchun `web/assets/js/config.js` ichidagi `apiBaseUrl` ni API
+manziliga, `telegramBotUsername` ni bot nomiga moslang.
 
 ---
 
@@ -100,7 +118,7 @@ yoniq turganda ishlaydi, kompyuterni o'chirsangiz bot ham to'xtaydi.
 
 ### Foydalanuvchi ko'radigan narsa
 
-Xabar bilan birga chiqadigan 4 ta tugma (`bot/config.py` → `SECTIONS`).
+Xabar bilan birga chiqadigan 5 ta tugma (`bot/config.py` → `SECTIONS`).
 Yozish maydonining pastidagi klaviatura ishlatilmaydi — barcha menyular
 xabarning o'ziga yopishgan (inline) holda chiqadi va bosilganda o'sha
 xabarning ichida yangilanadi:
@@ -111,6 +129,7 @@ xabarning ichida yangilanadi:
 | ⚡️ Skalping | Pro | signal (narx kuzatiladi) |
 | 🎓 Video darsliklar | Pro | kontent |
 | 🧠 Strategiyalar | Premium | kontent |
+| 🕌 Eslatmalar | Lite | kontent |
 
 Yuqori tarif pastki darajalarning hamma bo'limini ochadi (Premium → hammasi).
 
@@ -190,14 +209,14 @@ Agar hammasi to'g'ri bo'lsa, konsolda "Bot polling rejimida ishga tushdi" degan 
 
 ```ini
 [Unit]
-Description=Crypto Signal Telegram Bot
+Description=Cryptospot 3% — API va bot
 After=network.target
 
 [Service]
 Type=simple
 User=root
 WorkingDirectory=/root/cs3_bot
-ExecStart=/root/cs3_bot/venv/bin/python3 main.py
+ExecStart=/root/cs3_bot/venv/bin/python3 run_all.py
 Restart=always
 RestartSec=5
 

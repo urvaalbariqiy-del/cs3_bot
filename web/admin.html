@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="uz" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Admin panel — Cryptospot 3%</title>
+<meta name="robots" content="noindex, nofollow" />
+<link rel="icon" href="assets/img/logo-cs3.png" />
+<link rel="stylesheet" href="assets/css/main.css" />
+<style>
+  .admin-wrap{max-width:920px;margin:0 auto;padding:32px 20px 80px}
+  .admin-card{padding:22px;margin-bottom:18px}
+  .admin-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .admin-row > input,.admin-row > select{flex:1;min-width:130px}
+  input,select,textarea{
+    background:var(--bg-alt);border:1px solid var(--border);color:var(--fg);
+    border-radius:10px;padding:11px 13px;font:inherit;font-size:14px;width:100%;
+  }
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);outline-offset:1px}
+  textarea{min-height:90px;resize:vertical}
+  label{display:block;font-size:13px;color:var(--muted);margin:12px 0 5px}
+  .form-status{font-size:13px;margin:10px 0 0;min-height:18px}
+  .form-status.ok{color:var(--green-2)}
+  .form-status.err{color:var(--red)}
+  .row-item{
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    padding:12px 0;border-bottom:1px solid var(--border);font-size:14px;
+  }
+  .row-item:last-child{border-bottom:none}
+  .row-item .meta{color:var(--muted);font-size:12.5px}
+  .btn-del{
+    background:none;border:1px solid var(--border);color:var(--red);
+    border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;flex:none;
+  }
+  .btn-del:hover{border-color:var(--red)}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+  .tab{
+    padding:9px 16px;border-radius:999px;border:1px solid var(--border);
+    background:var(--card);color:var(--muted);cursor:pointer;font:inherit;font-size:14px;
+  }
+  .tab.active{color:var(--fg);border-color:var(--gold)}
+  .panel{display:none}
+  .panel.active{display:block}
+  #adminApp{display:none}
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+  .stat{background:var(--bg-alt);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+  .stat b{display:block;font-size:24px;font-family:'Space Grotesk',sans-serif}
+  .stat span{font-size:12.5px;color:var(--muted)}
+  .status-pill{
+    font-size:12px;padding:3px 9px;border-radius:999px;
+    border:1px solid var(--border);color:var(--muted);white-space:nowrap;
+  }
+  .status-pill.open{color:var(--green-2)}
+</style>
+<!-- Sozlamalar va ulanish moduli <head> da yuklanadi: sahifa ichidagi
+     skriptlar SITE_CONFIG ga tayanadi, shuning uchun ular avval kelishi shart -->
+<script src="assets/js/config.js"></script>
+<script src="assets/js/auth.js"></script>
+</head>
+<body>
+<div class="admin-wrap">
+
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:26px">
+    <img src="assets/img/logo-main.png" style="width:36px;height:36px;border-radius:8px" alt="" />
+    <h1 style="margin:0;font-size:20px;font-family:'Space Grotesk',sans-serif">Admin panel</h1>
+    <button class="icon-btn" id="themeToggle" style="margin-left:auto" title="Tema">◐</button>
+    <a class="btn btn-outline" href="index.html" style="padding:8px 14px;font-size:13px">Saytga</a>
+    <button class="btn btn-outline" id="logoutBtn" style="padding:8px 14px;font-size:13px;display:none">Chiqish</button>
+  </div>
+
+  <!-- ============ KIRISH ============ -->
+  <div class="card admin-card" id="loginCard">
+    <h3 style="margin-top:0">Telegram orqali kirish</h3>
+    <p class="muted" style="font-size:14px;line-height:1.6;margin-bottom:18px">
+      Tugmani bosing — Telegram ochiladi va u yerda <b>Start</b> bosasiz.
+      Boshqa hech narsa kerak emas.
+    </p>
+    <button class="btn btn-primary" id="connectBtn">Telegram orqali ulanish</button>
+    <p class="form-status" id="loginStatus"></p>
+    <p class="muted" style="font-size:12.5px;margin-top:18px;line-height:1.6">
+      Panelga faqat ruxsat berilgan hisoblar kiradi. Telegram ID ni bilish
+      yetarli emas — o'sha hisobning egasi bo'lish kerak.
+    </p>
+  </div>
+
+  <!-- ============ PANEL ============ -->
+  <div id="adminApp">
+
+    <div class="card admin-card">
+      <div class="stat-grid" id="statGrid"></div>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-panel="pSignals">📈 Signallar</button>
+      <button class="tab" data-panel="pScalping">⚡️ Skalping</button>
+      <button class="tab" data-panel="pVideos">🎓 Video darslar</button>
+      <button class="tab" data-panel="pReminders">🕌 Eslatmalar</button>
+      <button class="tab" data-panel="pStrategies">🧠 Strategiyalar</button>
+      <button class="tab" data-panel="pSeats">📊 O'rinlar va hamyon</button>
+    </div>
+
+    <!-- SIGNALLAR -->
+    <div class="panel active" id="pSignals">
+      <div class="card admin-card">
+        <h3 style="margin-top:0">Yangi signal</h3>
+        <label for="sgCoin">Coin</label>
+        <input id="sgCoin" placeholder="BTCUSDT" />
+        <div class="admin-row" style="margin-top:12px">
+          <div style="flex:1"><label for="sgEntry">Entry</label><input id="sgEntry" inputmode="decimal" /></div>
+          <div style="flex:1"><label for="sgStop">Stop</label><input id="sgStop" inputmode="decimal" /></div>
+        </div>
+        <div class="admin-row" style="margin-top:12px">
+          <div style="flex:1"><label for="sgTp1">TP1</label><input id="sgTp1" inputmode="decimal" /></div>
+          <div style="flex:1"><label for="sgTp2">TP2</label><input id="sgTp2" inputmode="decimal" /></div>
+        </div>
+        <label for="sgNote">Izoh (ixtiyoriy)</label>
+        <textarea id="sgNote"></textarea>
+        <p class="muted" style="font-size:12.5px;margin:10px 0 14px">
+          Tartib: Stop &lt; Entry &lt; TP1 &lt; TP2. Joylangach bot narxni
+          Binance'dan kuzatib boradi va holatni o'zi yangilaydi.
+        </p>
+        <button class="btn btn-primary" data-add-signal="signals">Qo'shish</button>
+        <p class="form-status" id="sgStatus"></p>
+      </div>
+      <div class="card admin-card">
+        <h3 style="margin-top:0">Joriy signallar</h3>
+        <div id="sgList"><p class="muted">Yuklanmoqda…</p></div>
+      </div>
+    </div>
+
+    <!-- SKALPING -->
+    <div class="panel" id="pScalping">
+      <div class="card admin-card">
+        <h3 style="margin-top:0">Yangi skalping signali</h3>
+        <label for="scCoin">Coin</label>
+        <input id="scCoin" placeholder="SOLUSDT" />
+        <div class="admin-row" style="margin-top:12px">
+          <div style="flex:1"><label for="scEntry">Entry</label><input id="scEntry" inputmode="decimal" /></div>
+          <div style="flex:1"><label for="scStop">Stop</label><input id="scStop" inputmode="decimal" /></div>
+        </div>
+        <div class="admin-row" style="margin-top:12px">
+          <div style="flex:1"><label for="scTp1">TP1</label><input id="scTp1" inputmode="decimal" /></div>
+          <div style="flex:1"><label for="scTp2">TP2</label><input id="scTp2" inputmode="decimal" /></div>
+        </div>
+        <label for="scNote">Izoh (ixtiyoriy)</label>
+        <textarea id="scNote"></textarea>
+        <button class="btn btn-primary" data-add-signal="scalping" style="margin-top:12px">Qo'shish</button>
+        <p class="form-status" id="scStatus"></p>
+      </div>
+      <div class="card admin-card">
+        <h3 style="margin-top:0">Joriy skalping signallari</h3>
+        <div id="scList"><p class="muted">Yuklanmoqda…</p></div>
+      </div>
+    </div>
+
+    <!-- VIDEO -->
+    <div class="panel" id="pVideos">
+      <div class="card admin-card">
+        <h3 style="margin-top:0">Yangi video dars</h3>
+        <label for="vdTitle">Sarlavha</label>
+        <input id="vdTitle" placeholder="1-dars: Spot savdo asoslari" />
+        <label for="vdBody">Tavsif</label>
+        <textarea id="vdBody"></textarea>
+        <button class="btn btn-primary" data-add-content="videos" style="margin-top:12px">Qo'shish</button>
+        <p class="form-status" id="vdStatus"></p>
+      </div>
+      <div class="card admin-card">
+        <h3 style="margin-top:0">Joriy video darslar</h3>
+        <div id="vdList"><p class="muted">Yuklanmoqda…</p></div>
+      </div>
+    </div>
+
+    <!-- ESLATMALAR -->
+    <div class="panel" id="pReminders">
+      <div class="card admin-card">
+        <h3 style="margin-top:0">Yangi eslatma</h3>
+        <label for="rmTitle">Sarlavha</label>
+        <input id="rmTitle" placeholder="Sabr haqida" />
+        <label for="rmBody">Matn</label>
+        <textarea id="rmBody"></textarea>
+        <button class="btn btn-primary" data-add-content="reminders" style="margin-top:12px">Qo'shish</button>
+        <p class="form-status" id="rmStatus"></p>
+      </div>
+      <div class="card admin-card">
+        <h3 style="margin-top:0">Joriy eslatmalar</h3>
+        <div id="rmList"><p class="muted">Yuklanmoqda…</p></div>
+      </div>
+    </div>
+
+    <!-- STRATEGIYALAR -->
+    <div class="panel" id="pStrategies">
+      <div class="card admin-card">
+        <h3 style="margin-top:0">Yangi strategiya</h3>
+        <label for="stTitle">Sarlavha</label>
+        <input id="stTitle" />
+        <label for="stBody">Matn</label>
+        <textarea id="stBody"></textarea>
+        <button class="btn btn-primary" data-add-content="strategies" style="margin-top:12px">Qo'shish</button>
+        <p class="form-status" id="stStatus"></p>
+      </div>
+      <div class="card admin-card">
+        <h3 style="margin-top:0">Joriy strategiyalar</h3>
+        <div id="stList"><p class="muted">Yuklanmoqda…</p></div>
+      </div>
+    </div>
+
+    <!-- O'RINLAR VA HAMYON -->
+    <div class="panel" id="pSeats">
+      <div class="card admin-card">
+        <h3 style="margin-top:0">📊 Mentorlik o'rinlari</h3>
+        <div class="admin-row">
+          <div style="flex:1"><label for="seatTaken">Band</label><input id="seatTaken" inputmode="numeric" /></div>
+          <div style="flex:1"><label for="seatTotal">Jami</label><input id="seatTotal" inputmode="numeric" /></div>
+        </div>
+        <button class="btn btn-primary" id="seatSave" style="margin-top:14px">Saqlash</button>
+        <p class="form-status" id="seatStatus"></p>
+      </div>
+      <div class="card admin-card">
+        <h3 style="margin-top:0">💳 To'lov hamyoni</h3>
+        <label for="wAddr">Manzil</label>
+        <input id="wAddr" placeholder="TXYZ…" />
+        <label for="wNet">Tarmoq</label>
+        <input id="wNet" placeholder="TRC20" />
+        <button class="btn btn-primary" id="wSave" style="margin-top:14px">Saqlash</button>
+        <p class="form-status" id="wStatus"></p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="assets/js/admin.js"></script>
+</body>
+</html>

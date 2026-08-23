@@ -70,51 +70,27 @@
     el.classList.remove("hidden");
   }
 
-  // ---------- Telegram bilan kirish ----------
-  window.onTelegramAuth = function (user) {
-    api("/api/auth/telegram", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(user),
-    }).then(function (data) {
-      setToken(data.token);
-      load();
-    }).catch(function (e) {
-      $("loginHint").textContent = "Kirishda xatolik: " + e.message;
-    });
-  };
+  // ---------- Telegram orqali ulanish ----------
+  // Umumiy modul (auth.js) ishlatiladi: bir martalik havola -> botda /start.
 
   function mountTelegramButton() {
     var box = $("tgLoginBox");
     if (box.dataset.mounted) return;
     box.dataset.mounted = "1";
 
-    if (!CFG.telegramBotUsername) {
-      $("loginHint").textContent =
-        "Bot nomi sozlanmagan. assets/js/config.js ichidagi telegramBotUsername'ni to'ldiring.";
-      return;
-    }
+    var btn = document.createElement("button");
+    btn.className = "btn btn-primary";
+    btn.type = "button";
+    btn.textContent = "Telegram orqali ulanish";
+    btn.addEventListener("click", function () {
+      CS3.connect(function () { load(); });
+    });
+    box.appendChild(btn);
 
-    var s = document.createElement("script");
-    s.src = "https://telegram.org/js/telegram-widget.js?22";
-    s.setAttribute("data-telegram-login", CFG.telegramBotUsername);
-    s.setAttribute("data-size", "large");
-    s.setAttribute("data-radius", "10");
-    s.setAttribute("data-onauth", "onTelegramAuth(user)");
-    s.setAttribute("data-request-access", "write");
-    s.async = true;
-    s.onerror = function () {
-      $("loginHint").textContent =
-        "Telegram tugmasi yuklanmadi. Internet aloqasini tekshiring.";
-    };
-    box.appendChild(s);
-
-    $("loginHint").innerHTML =
-      "Tugma ko'rinmasa: bu sahifa haqiqiy domenda ochilishi va @BotFather'da " +
-      "shu bot uchun <code>/setdomain</code> qilingan bo'lishi kerak.";
+    $("loginHint").textContent =
+      "Telegramda faqat Start bosasiz — boshqa hech narsa kerak emas.";
   }
 
-  // Bot ichidagi mini-ilovada ochilgan bo'lsa — tugmasiz, o'zi kiradi.
   function tryWebAppLogin() {
     var tg = window.Telegram && window.Telegram.WebApp;
     if (!tg || !tg.initData) return Promise.resolve(false);

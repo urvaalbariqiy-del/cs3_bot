@@ -38,15 +38,6 @@ const DICTS = {
     "problem.f3_title": "Temir intizom",
     "problem.f3_text": "Risk menejmenti qoidalaridan bir qadam ham chekinmaslikni mashq qilasiz.",
 
-    "about2.eyebrow": "Loyiha haqida",
-    "about2.title": "CS3% Execution Lab — bajarish laboratoriyasi",
-    "about2.text": "Bu shunchaki navbatdagi kurs emas. CS3% Execution Lab — 4 yillik real tajriba asosida qurilgan 2 oylik amaliy dastur bo'lib, sizni bozor tahlilini emas, balki psixologiya, temir intizom va o'z vaqtida aniq qaror qabul qilish — ya'ni Execution mahoratiga o'rgatadi. Faqat SPOT yo'nalishida, jonli sessiyalar va real amaliyot bilan savdolaringizni to'liq nazorat ostiga olasiz.",
-
-    "social.title": "Bizni ijtimoiy tarmoqlarda kuzatib boring",
-    "social.tg": "Asosiy kanal",
-    "social.ig": "Rasmiy sahifa",
-    "social.yt": "YouTube kanal",
-
     "program.eyebrow": "CS3% Execution Lab",
     "program.title": "2 oylik dastur ichida nima bor?",
     "program.lead": "Bu shunchaki navbatdagi nazariy kurs emas — real bozorda xatosiz savdo qilish uchun maxsus laboratoriya.",
@@ -164,14 +155,6 @@ const DICTS = {
     "survey.ok_msg": "Rahmat! Anketangiz qabul qilindi, tez orada admin siz bilan bog'lanadi.",
     "survey.err_msg": "Yuborishda xatolik yuz berdi. Iltimos, quyidagi tugma orqali to'g'ridan-to'g'ri botga yozing.",
     "survey.fallback": "Botga qo'lda yozish",
-    "survey.pending_title": "Anketangiz yuborildi!",
-    "survey.pending_text": "Admin ko'rib chiqmoqda. Tasdiqlangach, shu yerda tarif tanlash ochiladi.",
-    "survey.approved_title": "Tasdiqlandingiz! 🎉",
-    "survey.approved_text": "Endi o'zingizga mos tarifni tanlang — to'lov va kirish manejer bot orqali.",
-    "survey.need_anketa": "Avval anketani to'ldiring va admin tasdiqlashini kuting.",
-    "survey.rejected_title": "Anketa tasdiqlanmadi",
-    "survey.rejected_text": "Afsuski, hozircha tasdiqlanmadingiz. Anketani qayta yuborishingiz mumkin.",
-    "survey.retry": "Anketani qayta yuborish",
 
     "cta.title": "Tasodifiy savdolardan charchadingizmi?",
     "cta.sub": "CS3% Execution Lab bilan o'z savdolaringizni nazorat ostiga oling va professional treyderga aylaning.",
@@ -221,15 +204,6 @@ const DICTS = {
     "problem.f2_text": "Превращаете анализ в своевременную, уверенную и прибыльную сделку.",
     "problem.f3_title": "Железная дисциплина",
     "problem.f3_text": "Тренируетесь ни на шаг не отступать от правил риск-менеджмента.",
-
-    "about2.eyebrow": "О проекте",
-    "about2.title": "CS3% Execution Lab — лаборатория исполнения",
-    "about2.text": "Это не очередной курс. CS3% Execution Lab — 2-месячная практическая программа, построенная на 4-летнем реальном опыте. Мы учим не анализу рынка, а психологии, железной дисциплине и своевременному принятию решений — искусству Execution. Только направление SPOT, живые сессии и реальная практика, чтобы вы полностью контролировали свои сделки.",
-
-    "social.title": "Подписывайтесь на нас в соцсетях",
-    "social.tg": "Основной канал",
-    "social.ig": "Официальная страница",
-    "social.yt": "YouTube канал",
 
     "program.eyebrow": "CS3% Execution Lab",
     "program.title": "Что входит в 2-месячную программу?",
@@ -348,14 +322,6 @@ const DICTS = {
     "survey.ok_msg": "Спасибо! Ваша анкета принята, администратор скоро свяжется с вами.",
     "survey.err_msg": "Произошла ошибка при отправке. Пожалуйста, напишите боту напрямую через кнопку ниже.",
     "survey.fallback": "Написать боту вручную",
-    "survey.pending_title": "Анкета отправлена!",
-    "survey.pending_text": "Администратор проверяет. После одобрения здесь откроется выбор тарифа.",
-    "survey.approved_title": "Вы одобрены! 🎉",
-    "survey.approved_text": "Теперь выберите подходящий тариф — оплата и доступ через менеджер-бот.",
-    "survey.need_anketa": "Сначала заполните анкету и дождитесь одобрения администратора.",
-    "survey.rejected_title": "Анкета не одобрена",
-    "survey.rejected_text": "К сожалению, пока не одобрено. Вы можете отправить анкету повторно.",
-    "survey.retry": "Отправить анкету заново",
 
     "cta.title": "Устали от случайных сделок?",
     "cta.sub": "С CS3% Execution Lab возьмите свою торговлю под контроль и станьте профессиональным трейдером.",
@@ -444,7 +410,7 @@ function initNav(){
   });
 }
 
-// ======================= ANKETA VORONKASI (gate -> form -> pending -> approved) =======================
+// ======================= REGISTRATION GATE (bot orqali) =======================
 function getSessionId(){
   let id = localStorage.getItem("cs3_session_id");
   if(!id){
@@ -454,57 +420,25 @@ function getSessionId(){
   return id;
 }
 
-// Backend'dan holatni oladi: {registered, approved, admin_message}
-async function fetchStatus(){
-  const cfg = window.SITE_CONFIG || {};
-  const base = cfg.apiBaseUrl;
-  if(!base || base.includes("YOUR-BACKEND-URL")) return null;
-  try{
-    const res = await fetch(`${base}/api/status/${getSessionId()}`);
-    if(!res.ok) return null;
-    return await res.json();
-  }catch(err){ return null; }
+// Birinchi bosqichda sayt hammaga ochiq - anketa darvozasi yopilgan.
+// Kirish holati endi Telegram ulanishidan (auth.js) aniqlanadi.
+async function checkRegistration(){
+  return true;
 }
 
-// Qaysi blok ko'rinishini boshqaradi: 'gate' | 'form' | 'pending' | 'approved'
-function setSurveyState(state, data){
-  window.__surveyState = state;
+function showSurveyForm(show){
+  const gate = document.getElementById("surveyGate");
   const wrap = document.getElementById("surveyFormWrap");
+  const form = document.getElementById("surveyForm");
   if(wrap) wrap.style.display = "block";
-  const map = { gate:"surveyGate", form:"surveyForm", pending:"surveyPending", approved:"surveyApproved", rejected:"surveyRejected" };
-  Object.entries(map).forEach(([k,id])=>{
-    const el = document.getElementById(id);
-    if(el) el.style.display = (k === state) ? "block" : "none";
-  });
-  if(data && data.admin_message){
-    const target = { approved:"approvedAdminMsg", pending:"pendingAdminMsg", rejected:"rejectedAdminMsg" }[state];
-    if(target){
-      const m = document.getElementById(target);
-      if(m){ m.textContent = "Admin: " + data.admin_message; m.className = "form-status show " + (state === "rejected" ? "err" : "ok"); }
-    }
-  }
+  if(gate) gate.style.display = show ? "none" : "block";
+  if(form) form.style.display = show ? "block" : "none";
 }
 
-let __statusPoll = null;
-function startStatusPolling(){
-  if(__statusPoll) return;
-  __statusPoll = setInterval(async ()=>{
-    const st = await fetchStatus();
-    if(st && st.approved){
-      clearInterval(__statusPoll); __statusPoll = null;
-      setSurveyState("approved", st);
-    } else if(st && st.rejected){
-      clearInterval(__statusPoll); __statusPoll = null;
-      setSurveyState("rejected", st);
-    } else if(st && st.admin_message){
-      setSurveyState("pending", st);
-    }
-  }, 4000);
-}
+async function initRegistrationGate(){
+  const gate = document.getElementById("surveyGate");
+  if(!gate) return;
 
-async function initSurveyFlow(){
-  const wrap = document.getElementById("surveyFormWrap");
-  if(!wrap) return;
   const cfg = window.SITE_CONFIG || {};
   const startBtn = document.getElementById("startBotBtn");
   const checkBtn = document.getElementById("checkRegBtn");
@@ -512,63 +446,23 @@ async function initSurveyFlow(){
 
   if(startBtn) startBtn.href = `https://t.me/${cfg.telegramBotUsername || ""}?start=${getSessionId()}`;
 
-  const st = await fetchStatus();
-  if(st && st.approved){
-    setSurveyState("approved", st);
-  } else if(st && st.rejected){
-    setSurveyState("rejected", st);
-  } else if(st && st.registered){
-    if(localStorage.getItem("cs3_submitted") === "1"){ setSurveyState("pending", st); startStatusPolling(); }
-    else setSurveyState("form");
-  } else {
-    setSurveyState("gate");
-  }
-
-  const retryBtn = document.getElementById("retryBtn");
-  if(retryBtn){
-    retryBtn.addEventListener("click", ()=> setSurveyState("form"));
-  }
+  const already = await checkRegistration();
+  showSurveyForm(already);
 
   if(checkBtn){
     checkBtn.addEventListener("click", async ()=>{
       checkBtn.disabled = true;
-      const s = await fetchStatus();
+      const ok = await checkRegistration();
       checkBtn.disabled = false;
-      if(s && s.approved){ setSurveyState("approved", s); }
-      else if(s && s.registered){ setSurveyState("form"); }
-      else if(gateStatus){
+      if(ok){
+        showSurveyForm(true);
+      }else if(gateStatus){
         const lang = localStorage.getItem("cs3_lang") || "uz";
         gateStatus.textContent = DICTS[lang]["survey.not_registered_yet"];
         gateStatus.className = "form-status show err";
       }
     });
   }
-}
-
-// Tarif tugmalari: anketa tasdiqlanmagan bo'lsa avval anketaga yo'naltiradi
-function initTariffGate(){
-  const cfg = window.SITE_CONFIG || {};
-  document.querySelectorAll(".tariff-btn").forEach(btn=>{
-    btn.addEventListener("click", async (e)=>{
-      e.preventDefault();
-      let approved = window.__surveyState === "approved";
-      if(!approved){
-        const st = await fetchStatus();
-        approved = !!(st && st.approved);
-        if(approved) setSurveyState("approved", st);
-      }
-      if(approved){
-        window.open(`https://t.me/${cfg.managerBotUsername || ""}`, "_blank");
-        return;
-      }
-      // Tasdiqlanmagan -> anketaga yo'naltiramiz
-      const survey = document.getElementById("survey");
-      if(survey) survey.scrollIntoView({behavior:"smooth"});
-      const lang = localStorage.getItem("cs3_lang") || "uz";
-      const note = document.getElementById("tariffNote");
-      if(note){ note.textContent = DICTS[lang]["survey.need_anketa"]; note.className = "form-status show err"; }
-    });
-  });
 }
 
 // ======================= REVEAL ON SCROLL =======================
@@ -617,10 +511,9 @@ function initSurvey(){
       });
       const result = await res.json();
       if(!res.ok || !result.ok) throw new Error("send-failed");
+      status.textContent = DICTS[lang()]["survey.ok_msg"];
+      status.className = "form-status show ok";
       form.reset();
-      localStorage.setItem("cs3_submitted", "1");
-      setSurveyState("pending");        // anketa yuborildi -> admin tasdiqlashini kutamiz
-      startStatusPolling();
     }catch(err){
       status.textContent = DICTS[lang()]["survey.err_msg"];
       status.className = "form-status show err";
@@ -638,17 +531,16 @@ document.addEventListener("DOMContentLoaded", ()=>{
   initNav();
   initReveal();
   initSurvey();
-  initSurveyFlow();
-  initTariffGate();
-  document.getElementById("themeToggle").addEventListener("click", toggleTheme);
+  initRegistrationGate();
+  document.getElementById("themeToggle")?.addEventListener("click", toggleTheme);
   document.getElementById("themeToggleMobile")?.addEventListener("click", toggleTheme);
-  document.getElementById("langToggle").addEventListener("click", toggleLang);
-  document.getElementById("yearNow").textContent = new Date().getFullYear();
+  document.getElementById("langToggle")?.addEventListener("click", toggleLang);
+  const yearEl = document.getElementById("yearNow");
+  if(yearEl) yearEl.textContent = new Date().getFullYear();
 
   const cfg = window.SITE_CONFIG || {};
   document.querySelectorAll("[data-link=telegram]").forEach(a=> a.href = cfg.channels?.telegram || "#");
   document.querySelectorAll("[data-link=instagram]").forEach(a=> a.href = cfg.channels?.instagram || "#");
   document.querySelectorAll("[data-link=youtube]").forEach(a=> a.href = cfg.channels?.youtube || "#");
   document.querySelectorAll("[data-link=bot]").forEach(a=> a.href = `https://t.me/${cfg.telegramBotUsername || ""}`);
-  document.querySelectorAll("[data-link=manager]").forEach(a=> a.href = `https://t.me/${cfg.managerBotUsername || ""}`);
 });

@@ -62,7 +62,15 @@ SECTIONS = {
         "min_tariff": "premium",
         "kind": "content",
     },
+    "reminders": {
+        "title": "🕌 Eslatmalar",
+        "min_tariff": "lite",
+        "kind": "content",
+    },
 }
+
+# Mentorlik dasturi: jami o'rinlar soni (bandlari bazadagi settings'da).
+MENTORLIK_TOTAL_SEATS = int(os.getenv("MENTORLIK_TOTAL_SEATS", "40"))
 
 # ---------------------------------------------------------------------------
 # BEPUL REJIM

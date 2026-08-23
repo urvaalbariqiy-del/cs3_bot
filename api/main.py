@@ -18,6 +18,7 @@ from bot.config import CORS_ORIGINS
 from bot.database import init_db
 from api.routes import router
 from api.admin_routes import router as admin_router
+from api.site_routes import router as site_router
 
 
 @asynccontextmanager
@@ -41,6 +42,7 @@ app.add_middleware(
 )
 
 app.include_router(router)
+app.include_router(site_router)
 app.include_router(admin_router)
 
 

@@ -99,7 +99,7 @@ img{max-width:100%;display:block}
 .nav-inner{display:flex;align-items:center;justify-content:space-between;height:74px}
 .nav-logo{display:flex;align-items:center;gap:10px;font-weight:700;font-family:'Space Grotesk',sans-serif;font-size:18px}
 .nav-logo img{height:34px;width:34px;border-radius:8px;object-fit:cover}
-.nav-links{display:flex;align-items:center;gap:28px}
+.nav-links{display:none;align-items:center;gap:28px}
 .nav-links a{font-size:14px;color:var(--muted);transition:color .15s}
 .nav-links a:hover{color:var(--fg)}
 .nav-actions{display:flex;align-items:center;gap:10px}
@@ -109,13 +109,12 @@ img{max-width:100%;display:block}
 }
 .icon-btn:hover{background:var(--bg-alt)}
 .lang-btn{font-size:13px;font-weight:700;width:auto;padding:0 10px}
-.burger{display:none}
+.burger{display:flex}
 .mobile-menu{display:none;flex-direction:column;gap:4px;padding:12px 20px 20px;border-top:1px solid var(--border)}
 .mobile-menu a{padding:10px 0;font-size:15px;color:var(--fg);border-bottom:1px solid var(--border)}
+.mobile-menu.open{display:flex}
 @media(max-width:860px){
   .nav-links{display:none}
-  .burger{display:flex}
-  .mobile-menu.open{display:flex}
 }
 
 /* Hero */
@@ -399,162 +398,57 @@ footer.site-footer{border-top:1px solid var(--border);padding:52px 0 30px}
   background:rgba(230,72,79,.08);border:1px solid rgba(230,72,79,.35);font-size:14px;line-height:1.55;
 }
 
-/* ============================================================
-   PREMIUM LIGHT THEME — boyitilgan yorug' rejim
-   (faqat [data-theme="light"] — qorong'i rejimga tegmaydi)
-   ============================================================ */
-[data-theme="light"]{
-  --bg:#e5eaf2;        /* to'qroq, moviyga yaqin ko'k-kulrang (slate) */
-  --bg-alt:#dbe2ed;    /* biroz to'qroq slate */
-  --card:#ffffff;      /* oq kartalar fon ustida chuqurroq ko'rinadi */
-  --fg:#131722;
-  --muted:#525a6a;
-  --border:#d3dbe8;    /* salqin chegara */
-  --gold:#a97b1e;      /* yorug'da o'qiladigan boy oltin */
-  --gold-2:#c99a34;
-  --shadow:0 1px 2px rgba(18,26,48,.06), 0 20px 44px -22px rgba(18,26,48,.26);
+/* ==========================================================
+   Telegram orqali ulanish oynasi (auth.js yaratadi)
+   ========================================================== */
+.cs3-modal{
+  position:fixed;inset:0;z-index:1000;
+  background:rgba(0,0,0,.65);
+  display:flex;align-items:center;justify-content:center;padding:20px;
 }
-
-/* Umumiy fon — yassi emas, nozik ko'k nur bilan chuqurlik */
-[data-theme="light"] body{
-  background:
-    radial-gradient(72% 42% at 50% -10%, rgba(58,140,214,.12), transparent 62%),
-    var(--bg);
+.cs3-modal.hidden{display:none}
+.cs3-modal-card{
+  position:relative;width:min(420px,100%);
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:28px 24px;
+  box-shadow:var(--shadow);text-align:center;
 }
-
-/* Hero — salqin, yorqin nur */
-[data-theme="light"] .hero{
-  background:
-    radial-gradient(56% 46% at 8% -8%, rgba(201,154,52,.16), transparent 60%),
-    radial-gradient(52% 52% at 95% -4%, rgba(58,140,214,.22), transparent 60%),
-    linear-gradient(180deg,#eef2f8,#e5eaf2);
+.cs3-modal-card h3{margin:0 0 12px;font-size:20px}
+.cs3-modal-x{
+  position:absolute;top:10px;right:12px;
+  background:none;border:0;color:var(--muted);
+  font-size:26px;line-height:1;cursor:pointer;padding:4px 8px;
 }
-
-/* Kartalar — aniq, qatlamli soya (premium chuqurlik) */
-[data-theme="light"] .card{
-  border-color:#e4e9f1;
-  box-shadow:0 1px 2px rgba(18,26,48,.05), 0 18px 38px -18px rgba(18,26,48,.20);
+.cs3-modal-x:hover{color:var(--fg)}
+.cs3-muted{color:var(--muted);line-height:1.6;margin:0 0 18px}
+.cs3-small{font-size:13px;margin:14px 0 0}
+.cs3-btn{
+  display:inline-block;padding:13px 26px;border-radius:12px;
+  background:linear-gradient(90deg,var(--gold),var(--gold-2));
+  color:#151515;font-weight:700;text-decoration:none;cursor:pointer;
+  border:0;font-size:15px;
 }
+.cs3-btn:hover{filter:brightness(1.08)}
+.cs3-btn[href=""],.cs3-btn:not([href]){opacity:.55;pointer-events:none}
 
-/* Eyebrow — kontrast oltin yorliq */
-[data-theme="light"] .eyebrow{
-  color:#946a17;
-  background:linear-gradient(90deg, rgba(201,154,52,.15), rgba(58,140,214,.14));
-  border-color:#d8dfea;
+/* «tez orada» belgisi — tarif kartochkalarida */
+.cs3-soon{
+  display:inline-block;margin-left:8px;padding:3px 10px;
+  border:1px solid var(--border);border-radius:999px;
+  font-size:12px;font-weight:600;color:var(--blue-2);
+  vertical-align:middle;
 }
+.cs3-locked{opacity:.55}
 
-/* Gradient matn — yorug'da boy, o'qiladigan ranglar */
-[data-theme="light"] .grad-text{
-  background:linear-gradient(90deg,#c99a34,#a97b1e,#2f7fd6);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
+/* Tor ekranda yuqori panel sig'masdan sahifani yon tomonga siljitardi.
+   Asosiy chaqiruv tugmasi hamburger menyuda ham bor — mobilda yashiramiz. */
+@media (max-width: 620px){
+  .nav-actions{gap:6px}
+  .nav-actions .btn-primary{display:none}
+  #cs3Connect{padding:0 10px;font-size:12px}
+  .nav-logo{font-size:16px}
+  .nav-logo img{height:30px;width:30px}
 }
-
-/* Dark poster panellar yorug'da ham chiroyli — oltin aksentlar yorqin qolsin */
-[data-theme="light"] .poster-icon{border-color:rgba(232,184,75,.85)}
-[data-theme="light"] .poster-tagline{color:#f6d47a}
-
-/* CTA band — boy, yorqin gradient */
-[data-theme="light"] .cta-band{
-  background:
-    radial-gradient(85% 130% at 0% 0%, rgba(201,154,52,.17), transparent 55%),
-    radial-gradient(85% 130% at 100% 100%, rgba(58,140,214,.16), transparent 55%),
-    #ffffff;
-  border-color:#e9edf4;
-  box-shadow:0 30px 70px -34px rgba(30,30,50,.22);
+@media (max-width: 380px){
+  .nav-logo span{display:none}
 }
-
-/* Pricing "featured" — oltin nur kuchliroq */
-[data-theme="light"] .price-card.featured{
-  box-shadow:0 0 0 1px var(--gold), 0 30px 70px -30px rgba(176,125,26,.30);
-  background:
-    radial-gradient(120% 90% at 100% 0%, rgba(201,154,52,.14), transparent 55%),
-    radial-gradient(90% 70% at 0% 100%, rgba(58,140,214,.10), transparent 55%),
-    #fbfcff;
-}
-[data-theme="light"] .price-tag{color:#2a1c04}
-
-/* Kirish maydonlari — toza, yumshoq fon */
-[data-theme="light"] .field input[type=text],
-[data-theme="light"] .field input[type=number],
-[data-theme="light"] .field select,
-[data-theme="light"] .field textarea{
-  background:#eef2f8;border-color:#d8dfea;
-}
-
-/* Navbar — yorug'da scroll'da nozik soya */
-[data-theme="light"] .nav.scrolled{box-shadow:0 10px 34px -22px rgba(30,30,50,.28)}
-
-/* Ikon tugmalar — yorug'da nozik chegara */
-[data-theme="light"] .icon-btn:hover{background:#dbe2ed}
-
-/* ============================================================
-   UMUMIY POLISH (ikkala rejimda ham)
-   ============================================================ */
-/* Forma maydonlari fokusda — nozik oltin halqa */
-.field input:focus,.field select:focus,.field textarea:focus{
-  outline:none;border-color:var(--gold);
-  box-shadow:0 0 0 3px rgba(232,184,75,.18);
-}
-
-/* Interaktiv kartalarda yumshoq ko'tarilish (premium his) */
-.feature-card,.price-card,.tcard,.step-card{
-  transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease;
-}
-.feature-card:hover,.tcard:hover,.step-card:hover{transform:translateY(-4px)}
-
-/* Fikrlar — kommentariya (chat bubble) uslubi */
-.tgrid{gap:22px}
-.tcard{
-  position:relative;
-  padding:20px 22px 16px;
-  border-radius:18px 18px 18px 5px;   /* chat bubble: pastki-chap burchagi o'tkir */
-}
-.tcard::before{                         /* 5 yulduz reyting (tepada) */
-  content:"★★★★★";
-  display:block;color:var(--gold);
-  font-size:13px;letter-spacing:3px;margin-bottom:12px;
-}
-.tcard::after{                          /* pastki-chap "tail" (bubble dumchasi) */
-  content:"";position:absolute;left:26px;bottom:-8px;
-  width:16px;height:16px;background:var(--card);
-  border-right:1px solid var(--border);border-bottom:1px solid var(--border);
-  transform:rotate(45deg);
-}
-.tcard p{font-size:14.5px;line-height:1.7;margin:0 0 16px}
-.tcard footer{border-top:1px solid var(--border);padding-top:14px}
-
-/* Ijtimoiy tarmoq kartalari */
-.social-grid{gap:20px}
-.social-card{
-  display:flex;align-items:center;gap:16px;padding:20px 22px;
-  transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
-}
-.social-card:hover{transform:translateY(-4px)}
-.social-ic{
-  width:52px;height:52px;border-radius:14px;flex-shrink:0;color:#fff;
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 8px 20px -8px rgba(0,0,0,.4);
-}
-.social-ic svg{width:26px;height:26px}
-.social-ic.tg{background:linear-gradient(135deg,#2AABEE,#229ED9)}
-.social-ic.ig{background:linear-gradient(135deg,#feda75,#fa7e1e 28%,#d62976 60%,#962fbf 80%,#4f5bd5)}
-.social-ic.yt{background:linear-gradient(135deg,#ff4e45,#d70000)}
-.social-tx b{display:block;font-size:16px;line-height:1.2}
-.social-tx span{font-size:13px;color:var(--muted)}
-
-/* ============================================================
-   BLOCKCHAIN / CRYPTO ORQA FON (biroz blur bilan)
-   ============================================================ */
-body::before{
-  content:"";
-  position:fixed; inset:0; z-index:-1;
-  background:url("../img/crypto-bg.png") center center / cover no-repeat;
-  opacity:.6;
-  filter:blur(2px);
-  pointer-events:none;
-}
-[data-theme="light"] body::before{ opacity:.5; }
-
-/* Bo'limlar fonи shaffof — crypto fon butun sayt ortidan ko'rinadi.
-   Kartalar, formalar, posterlar o'z fonида qoladi (matn o'qilishи uchun). */
-.section{ background:transparent !important; }

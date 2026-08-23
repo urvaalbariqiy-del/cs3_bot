@@ -17,7 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from bot import database as db
 from bot import sections as sec
-from bot.config import ADMIN_IDS, TARIFF_NAMES, PERIOD_NAMES
+from bot.config import ADMIN_IDS, TARIFF_NAMES, PERIOD_NAMES, MENTORLIK_TOTAL_SEATS
 from api.deps import admin_user
 
 router = APIRouter(prefix="/api/admin")
@@ -142,6 +142,58 @@ async def create_section(payload: dict, admin=Depends(admin_user)):
     code = f"custom{int(time.time())}"
     await db.add_section(code, title, min_tariff)
     return {"ok": True, "code": code}
+
+
+# ==================== MENTORLIK O'RINLARI ====================
+
+@router.get("/seats")
+async def get_seats(admin=Depends(admin_user)):
+    taken = int(await db.get_setting("mentorlik_taken", "0") or 0)
+    total = int(await db.get_setting("mentorlik_total", str(MENTORLIK_TOTAL_SEATS)) or MENTORLIK_TOTAL_SEATS)
+    return {"total": total, "taken": taken, "remaining": max(0, total - taken)}
+
+
+@router.post("/seats")
+async def set_seats(payload: dict, admin=Depends(admin_user)):
+    try:
+        taken = int(payload.get("taken", 0))
+        total = int(payload.get("total", await db.get_setting(
+            "mentorlik_total", str(MENTORLIK_TOTAL_SEATS))))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="O'rinlar soni raqam bo'lishi kerak.")
+
+    if total < 1:
+        raise HTTPException(status_code=400, detail="Jami o'rinlar 1 dan kam bo'lmasin.")
+    if not 0 <= taken <= total:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Band o'rinlar 0 va {total} orasida bo'lishi kerak.",
+        )
+
+    await db.set_setting("mentorlik_taken", str(taken))
+    await db.set_setting("mentorlik_total", str(total))
+    return {"ok": True, "total": total, "taken": taken, "remaining": total - taken}
+
+
+# ==================== TO'LOV HAMYONI ====================
+
+@router.get("/wallet")
+async def get_wallet(admin=Depends(admin_user)):
+    return {
+        "address": await db.get_setting("wallet_address", "") or "",
+        "network": await db.get_setting("wallet_network", "TRC20") or "TRC20",
+    }
+
+
+@router.post("/wallet")
+async def set_wallet(payload: dict, admin=Depends(admin_user)):
+    address = (payload.get("address") or "").strip()
+    network = (payload.get("network") or "TRC20").strip()
+    if not address:
+        raise HTTPException(status_code=400, detail="Hamyon manzili bo'sh bo'lmasin.")
+    await db.set_setting("wallet_address", address)
+    await db.set_setting("wallet_network", network)
+    return {"ok": True}
 
 
 # ==================== FOYDALANUVCHILAR ====================

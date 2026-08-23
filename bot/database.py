@@ -80,6 +80,13 @@ CREATE TABLE IF NOT EXISTS content (
     created_at TEXT NOT NULL
 );
 
+-- Sayt uchun erkin sozlamalar: mentorlik o'rinlari, to'lov hamyoni va h.k.
+CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
 -- Saytga "Telegram orqali ulanish" uchun bir martalik havolalar.
 -- Sayt token yaratadi, foydalanuvchi botda /start <token> bosadi, bot
 -- uning telegram_id sini shu qatorga yozadi va sayt kirgizadi.
@@ -248,6 +255,26 @@ async def set_price(tariff_code: str, period: str, price: float, payment_info: s
                DO UPDATE SET price=excluded.price,
                              payment_info=COALESCE(excluded.payment_info, prices.payment_info)""",
             (tariff_code, period, price, payment_info),
+        )
+        await db.commit()
+
+
+# ---------- SOZLAMALAR (kalit-qiymat) ----------
+
+async def get_setting(key: str, default: str = None):
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute("SELECT value FROM settings WHERE key=?", (key,))
+        row = await cur.fetchone()
+        return row[0] if row else default
+
+
+async def set_setting(key: str, value: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            """INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
+               ON CONFLICT(key) DO UPDATE SET value=excluded.value,
+                                              updated_at=excluded.updated_at""",
+            (key, value, now_str()),
         )
         await db.commit()
 
