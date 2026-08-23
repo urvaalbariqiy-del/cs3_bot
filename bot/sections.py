@@ -8,7 +8,7 @@ Ikkalasini bir xil ko'rinishga keltirib beradi, shunda handler'lar
 "bu asosiy bo'limmi yoki qo'shimchami" deb o'ylab o'tirmaydi.
 """
 from bot import database as db
-from bot.config import SECTIONS, TARIFF_LEVEL, TARIFF_NAMES
+from bot.config import SECTIONS, TARIFF_LEVEL, TARIFF_NAMES, FREE_MODE
 
 
 async def all_sections() -> dict:
@@ -38,8 +38,14 @@ async def by_code(code: str):
 def has_access(user_tariff: str | None, min_tariff: str) -> bool:
     """Foydalanuvchi tarifi bo'lim uchun yetarlimi.
 
-    Yuqori daraja pastki darajalarning hamma bo'limini ochadi.
+    FREE_MODE yoqilgan bo'lsa hamma bo'lim hammaga ochiq - birinchi
+    bosqichda maqsad auditoriya yig'ish. Tarif mantig'i esa joyida
+    turibdi: FREE_MODE o'chirilishi bilan darhol kuchga kiradi.
+
+    Aks holda yuqori daraja pastki darajalarning hamma bo'limini ochadi.
     """
+    if FREE_MODE:
+        return True
     if not user_tariff:
         return False
     return TARIFF_LEVEL.get(user_tariff, 0) >= TARIFF_LEVEL.get(min_tariff, 99)

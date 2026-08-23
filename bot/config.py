@@ -65,8 +65,26 @@ SECTIONS = {
 }
 
 # ---------------------------------------------------------------------------
+# BEPUL REJIM
+# ---------------------------------------------------------------------------
+# Birinchi bosqichda maqsad - odam yig'ish, pul emas. Shuning uchun barcha
+# bo'limlar hammaga ochiq, to'lov qabul qilinmaydi, tariflar esa saytda
+# "tez orada" deb ko'rsatiladi.
+#
+# Obunani yoqish uchun .env'ga FREE_MODE=false yozish kifoya - obuna, to'lov
+# va tarif nazorati kodda saqlanib turibdi, qaytadan yozish kerak emas.
+FREE_MODE = os.getenv("FREE_MODE", "true").strip().lower() in ("1", "true", "yes", "ha")
+
+# ---------------------------------------------------------------------------
 # API / SAYT
 # ---------------------------------------------------------------------------
+# Saytdan "Telegram orqali ulanish" bosilganda foydalanuvchi shu botga
+# yo'naltiriladi va /start bosadi (@ belgisisiz).
+BOT_USERNAME = os.getenv("BOT_USERNAME", "").lstrip("@")
+
+# Saytga kirish havolasi shuncha soniyadan keyin kuchini yo'qotadi.
+LOGIN_TOKEN_TTL_SECONDS = int(os.getenv("LOGIN_TOKEN_TTL_SECONDS", "300"))
+
 # Sessiya tokenlarini imzolash uchun maxfiy kalit. Ishlab chiqarishda .env'ga
 # uzun tasodifiy qiymat yozing - o'zgartirilsa hamma sessiya bekor bo'ladi.
 API_SECRET = os.getenv("API_SECRET", "") or (BOT_TOKEN + "-cs3-api")

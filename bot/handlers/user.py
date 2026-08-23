@@ -1,5 +1,5 @@
 from aiogram import Router, F, Bot
-from aiogram.filters import CommandStart, Command, StateFilter
+from aiogram.filters import CommandStart, Command, StateFilter, CommandObject
 from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 from datetime import datetime
@@ -62,6 +62,35 @@ async def _drop_old_keyboard(message: Message):
 
 
 # ---------- START / MENU ----------
+
+@router.message(CommandStart(deep_link=True))
+async def cmd_start_deeplink(message: Message, command: CommandObject):
+    """Saytdan kelgan ulanish havolasi: /start <token>.
+
+    Foydalanuvchi saytda "Telegram orqali ulanish" bosadi, bot ochiladi,
+    /start bosadi — va sayt o'zi kirgizadi. Boshqa hech narsa qilmaydi.
+    """
+    token = (command.args or "").strip()
+    await _ensure_user(message)
+
+    if token and await db.bind_login_token(token, message.from_user.id):
+        await message.answer(
+            "✅ <b>Tayyor!</b>\n\n"
+            "Saytga qaytishingiz mumkin — u sizni o'zi tanidi.\n"
+            "Bu oynani yopsangiz ham bo'ladi.",
+            parse_mode="HTML",
+        )
+        return
+
+    if token:
+        await message.answer(
+            "⏳ Bu havolaning muddati tugagan yoki allaqachon ishlatilgan.\n\n"
+            "Saytga qaytib, \"Telegram orqali ulanish\" tugmasini qaytadan bosing."
+        )
+        return
+
+    await cmd_start(message)
+
 
 @router.message(CommandStart())
 async def cmd_start(message: Message):

@@ -80,6 +80,16 @@ CREATE TABLE IF NOT EXISTS content (
     created_at TEXT NOT NULL
 );
 
+-- Saytga "Telegram orqali ulanish" uchun bir martalik havolalar.
+-- Sayt token yaratadi, foydalanuvchi botda /start <token> bosadi, bot
+-- uning telegram_id sini shu qatorga yozadi va sayt kirgizadi.
+CREATE TABLE IF NOT EXISTS login_tokens (
+    token TEXT PRIMARY KEY,
+    telegram_id INTEGER,              -- /start bosilgach to'ldiriladi
+    created_at TEXT NOT NULL,
+    used INTEGER NOT NULL DEFAULT 0   -- bir marta ishlatiladi
+);
+
 -- To'lov usullari: karta, Click, Payme va h.k. Foydalanuvchi to'lov
 -- paytida shulardan birini tanlaydi.
 CREATE TABLE IF NOT EXISTS payment_methods (
@@ -239,6 +249,58 @@ async def set_price(tariff_code: str, period: str, price: float, payment_info: s
                              payment_info=COALESCE(excluded.payment_info, prices.payment_info)""",
             (tariff_code, period, price, payment_info),
         )
+        await db.commit()
+
+
+# ---------- SAYTGA ULANISH (bir martalik havola) ----------
+
+async def create_login_token(token: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            "INSERT INTO login_tokens (token, created_at) VALUES (?, ?)",
+            (token, now_str()),
+        )
+        await db.commit()
+
+
+async def bind_login_token(token: str, telegram_id: int) -> bool:
+    """Bot /start bosilganda chaqiradi. Token topilib, hali bog'lanmagan
+    bo'lsa True qaytaradi."""
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute(
+            "UPDATE login_tokens SET telegram_id=? WHERE token=? AND telegram_id IS NULL",
+            (telegram_id, token),
+        )
+        await db.commit()
+        return cur.rowcount > 0
+
+
+async def take_login_token(token: str, max_age_seconds: int):
+    """Sayt so'raydi: kimdir /start bosdimi? Bosgan bo'lsa telegram_id ni
+    qaytaradi va tokenni ishlatilgan deb belgilaydi (bir martalik)."""
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT * FROM login_tokens WHERE token=? AND used=0", (token,)
+        )
+        row = await cur.fetchone()
+        if not row or row["telegram_id"] is None:
+            return None
+
+        age = (datetime.utcnow() - datetime.fromisoformat(row["created_at"])).total_seconds()
+        if age > max_age_seconds:
+            return None
+
+        await db.execute("UPDATE login_tokens SET used=1 WHERE token=?", (token,))
+        await db.commit()
+        return row["telegram_id"]
+
+
+async def cleanup_login_tokens(max_age_seconds: int):
+    """Eskirgan havolalarni tozalaydi - jadval cheksiz o'smasligi uchun."""
+    threshold = (datetime.utcnow() - timedelta(seconds=max_age_seconds)).isoformat()
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("DELETE FROM login_tokens WHERE created_at < ?", (threshold,))
         await db.commit()
 
 
@@ -486,6 +548,12 @@ async def get_content_by_type(content_type: str):
             (content_type,),
         )
         return await cur.fetchall()
+
+
+async def delete_content(content_id: int):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("DELETE FROM content WHERE id=?", (content_id,))
+        await db.commit()
 
 
 async def get_content(content_id: int):

@@ -11,13 +11,40 @@ cs3_bot/
 └── run_all.py  bot + API birgalikda (server uchun)
 ```
 
-**Asosiy tamoyil:** signal, obuna va tarif faqat bitta joyda — `bot_database.db`
-faylida — saqlanadi. Bot ham, sayt ham, kelajakdagi ilova ham o'shani o'qiydi.
-Ikkinchi baza ham, ikkinchi haqiqat ham yo'q.
+**Asosiy tamoyil:** signal, kontent va foydalanuvchi faqat bitta joyda —
+`bot_database.db` faylida — saqlanadi. Bot ham, sayt ham, kelajakdagi ilova
+ham o'shani o'qiydi. Ikkinchi baza ham, ikkinchi haqiqat ham yo'q.
 
-Foydalanuvchi saytga **Telegram orqali** kiradi (parol yo'q). Botdagi obunasi
-saytda ham darhol ishlaydi, chunki ikkalasi ham bir xil `telegram_id` ustiga
-qurilgan.
+### Hozirgi bosqich: bepul, odam yig'ish
+
+`.env` da `FREE_MODE=true` (standart holat):
+
+- barcha bo'limlar **hammaga ochiq**, obuna talab qilinmaydi
+- to'lov qabul qilinmaydi, tariflar saytda **"tez orada"** deb ko'rsatiladi
+- botning yagona vazifasi — saytga ulanish uchun `/start`
+
+Obunani yoqish uchun `FREE_MODE=false` yozish kifoya. Obuna, to'lov, tarif
+nazorati va narx kuzatuvi kodda saqlanib turibdi — qaytadan yozish kerak emas.
+
+### Saytga ulanish
+
+Parol yo'q, ro'yxatdan o'tish yo'q:
+
+```
+Saytda "Telegram orqali ulanish" bosadi
+  → bot ochiladi, /start bosadi
+  → sayt uni o'zi tanidi
+```
+
+Havola bir martalik va 5 daqiqada kuchini yo'qotadi. Foydalanuvchi bot bilan
+yozishmaydi — bot bu yerda faqat shaxsni tasdiqlaydi.
+
+### Admin panel — xavfsizlik haqida
+
+Admin API'ga kirish uchun **Telegram ID ni bilish yetarli emas**. Har bir
+so'rov imzolangan sessiya tokeni bilan keladi, token esa faqat haqiqiy
+Telegram hisobiga kirgandan keyin beriladi. Ya'ni admin bo'lish uchun
+o'sha hisobning **egasi** bo'lish kerak.
 
 ### Ishga tushirish
 

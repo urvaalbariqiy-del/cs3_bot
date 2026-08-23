@@ -4,6 +4,7 @@ Muhim qoida: yopiq bo'lim mazmuni hech qachon javobga tushmaydi. Mehmon
 signalning coin nomini ham, narxlarini ham ko'rmaydi — faqat "shuncha
 material bor, obuna kerak" degan ma'lumot boradi.
 """
+import secrets
 from datetime import datetime
 
 import httpx
@@ -12,7 +13,8 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from bot import database as db
 from bot import sections as sec
 from bot.config import (
-    ADMIN_IDS, BOT_TOKEN, TARIFF_NAMES, PERIOD_NAMES, TARIFF_LEVEL,
+    ADMIN_IDS, BOT_TOKEN, BOT_USERNAME, TARIFF_NAMES, PERIOD_NAMES, TARIFF_LEVEL,
+    FREE_MODE, LOGIN_TOKEN_TTL_SECONDS,
 )
 from api.auth import (
     verify_login_widget, verify_webapp_init_data, issue_token, AuthError,
@@ -34,6 +36,52 @@ async def auth_telegram(payload: dict):
     except AuthError as e:
         raise HTTPException(status_code=401, detail=str(e))
     return await _login(info)
+
+
+@router.post("/auth/start")
+async def auth_start():
+    """«Telegram orqali ulanish» bosilganda chaqiriladi.
+
+    Bir martalik havola yaratadi. Foydalanuvchi shu havola bilan botni
+    ochib /start bosadi — boshqa hech narsa qilmaydi.
+    """
+    if not BOT_USERNAME:
+        raise HTTPException(
+            status_code=503,
+            detail="Bot nomi sozlanmagan (.env ichida BOT_USERNAME).",
+        )
+    token = secrets.token_urlsafe(24)
+    await db.create_login_token(token)
+    await db.cleanup_login_tokens(LOGIN_TOKEN_TTL_SECONDS * 12)
+    return {
+        "login_token": token,
+        "bot_url": f"https://t.me/{BOT_USERNAME}?start={token}",
+        "expires_in": LOGIN_TOKEN_TTL_SECONDS,
+    }
+
+
+@router.get("/auth/poll/{login_token}")
+async def auth_poll(login_token: str):
+    """Sayt shu manzilni so'rab turadi: /start bosildimi?
+
+    Bosilgan bo'lsa sessiya tokenini beradi. Havola bir martalik.
+    """
+    telegram_id = await db.take_login_token(login_token, LOGIN_TOKEN_TTL_SECONDS)
+    if telegram_id is None:
+        return {"ready": False}
+
+    row = await db.get_user_by_telegram_id(telegram_id)
+    full_name = row["full_name"] if row else "Foydalanuvchi"
+    username = row["username"] if row else None
+
+    return {
+        "ready": True,
+        **await _login({
+            "telegram_id": telegram_id,
+            "username": username,
+            "full_name": full_name,
+        }),
+    }
 
 
 @router.post("/auth/webapp")
@@ -198,6 +246,16 @@ async def content_detail(content_id: int, user=Depends(optional_user)):
 
 # ==================== TARIF VA TO'LOV ====================
 
+@router.get("/config")
+async def public_config():
+    """Sayt ishga tushganda o'qiydi: hozir qaysi rejimda ishlayapmiz."""
+    return {
+        "free_mode": FREE_MODE,
+        "payments_enabled": not FREE_MODE,
+        "bot_username": BOT_USERNAME,
+    }
+
+
 @router.get("/tariffs")
 async def tariffs():
     rows = await db.get_all_prices()
@@ -219,7 +277,13 @@ async def tariffs():
             "price": r["price"],
             "currency": r["currency"],
         })
-    return sorted(out.values(), key=lambda t: t["level"])
+
+    result = sorted(out.values(), key=lambda t: t["level"])
+    # Bepul rejimda tariflar ko'rsatiladi, lekin sotilmaydi - sayt ularni
+    # "tez orada" deb chizadi.
+    for t in result:
+        t["coming_soon"] = FREE_MODE
+    return result
 
 
 @router.get("/payment-methods")
@@ -238,6 +302,11 @@ async def submit_payment(
 ):
     """Saytdan to'lov chekini yuborish. Bot orqali yuborilgani bilan bir xil
     oqimga tushadi: admin tasdiqlaydi, obuna faollashadi."""
+    if FREE_MODE:
+        raise HTTPException(
+            status_code=503,
+            detail="Hozircha barcha bo'limlar bepul. Obuna tez orada ochiladi.",
+        )
     if tariff not in TARIFF_NAMES or period not in PERIOD_NAMES:
         raise HTTPException(status_code=400, detail="Tarif yoki muddat noto'g'ri.")
 

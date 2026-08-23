@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from bot.config import CORS_ORIGINS
 from bot.database import init_db
 from api.routes import router
+from api.admin_routes import router as admin_router
 
 
 @asynccontextmanager
@@ -35,11 +36,12 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
     allow_credentials=False,   # Authorization sarlavhasi ishlatiladi, cookie emas
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["Authorization", "Content-Type"],
 )
 
 app.include_router(router)
+app.include_router(admin_router)
 
 
 @app.get("/health")
