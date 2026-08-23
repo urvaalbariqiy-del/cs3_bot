@@ -146,33 +146,86 @@
 })(window);
 
 /* ----------------------------------------------------------
-   Har bir sahifadagi "Ulanish" tugmasi.
-   Ulangan bo'lsa — ismni ko'rsatadi va bosilganda chiqish taklif qiladi.
+   Navbar "Kirish" tugmasi + chap tomondagi hamburger (hisob paneli).
+   - kirmagan: "Kirish" -> Telegram orqali ulanish; panelda kirish tugmasi
+   - kirgan:  tugma ism, panel esa profil (ism + Telegram ID) + havolalar
    ---------------------------------------------------------- */
 document.addEventListener("DOMContentLoaded", function () {
   var btn = document.getElementById("cs3Connect");
-  if (!btn) return;
+  var btnLabel = document.getElementById("cs3ConnectLabel");
+  var acct = document.getElementById("accountMenu");
+  if (!btn && !acct) return;
+
+  var TG_ICON =
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">' +
+    '<path d="M9.04 15.47l-.38 5.34c.54 0 .78-.23 1.06-.51l2.55-2.44 5.29 3.87c.97.54 1.66.26 1.92-.9l3.48-16.3' +
+    'c.31-1.45-.52-2.02-1.47-1.67L1.16 9.5c-1.41.55-1.39 1.34-.24 1.69l5.28 1.64L18.4 5.28c.58-.38 1.11-.17.67.21z"/></svg>';
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c];
+    });
+  }
+
+  function setBtn(text) {
+    if (btnLabel) btnLabel.textContent = text;
+    else if (btn) btn.textContent = text;
+  }
+
+  function renderGuest() {
+    if (!acct) return;
+    acct.innerHTML =
+      '<p style="font-size:13px;margin:0 0 12px;color:var(--muted)">' +
+        'Video darslar, signallar va bo\'limlarni ko\'rish uchun Telegram orqali kiring — botda faqat <b>Start</b> bosasiz.' +
+      '</p>' +
+      '<button type="button" class="btn btn-primary" id="acctLogin" ' +
+        'style="display:inline-flex;align-items:center;justify-content:center;gap:8px">' +
+        TG_ICON + '<span>Telegram orqali kirish</span></button>';
+    var a = document.getElementById("acctLogin");
+    if (a) a.onclick = function () { acct.classList.remove("open"); CS3.connect(function () { location.reload(); }); };
+  }
+
+  function renderUser(me) {
+    if (!acct) return;
+    var full = (me.user && me.user.full_name) || "Foydalanuvchi";
+    var initial = (full.trim().charAt(0) || "U").toUpperCase();
+    var tgid = (me.user && me.user.telegram_id) || "";
+    var isAdmin = !!(me.user && me.user.is_admin);
+    acct.innerHTML =
+      '<div class="account-profile">' +
+        '<div class="account-avatar">' + esc(initial) + '</div>' +
+        '<div>' +
+          '<div class="account-name">' + (isAdmin ? "⚙ " : "") + esc(full) + '</div>' +
+          '<div class="account-id">ID: ' + esc(String(tgid)) + '</div>' +
+        '</div>' +
+      '</div>' +
+      (isAdmin
+        ? '<a class="acct-link" href="admin.html">⚙ Admin panel</a>'
+        : '<a class="acct-link" href="kabinet.html">Kabinetim</a>') +
+      '<a class="acct-link" href="index.html">Bosh sahifa</a>' +
+      '<button type="button" class="acct-link" id="acctLogout">Chiqish</button>';
+    var lo = document.getElementById("acctLogout");
+    if (lo) lo.onclick = function () { if (confirm("Hisobdan chiqasizmi?")) CS3.logout(); };
+  }
 
   function asGuest() {
-    btn.textContent = "Ulanish";
-    btn.onclick = function () { CS3.connect(function () { asUser(); }); };
+    setBtn("Kirish");
+    if (btn) { btn.title = "Telegram orqali kirish"; btn.onclick = function () { CS3.connect(function () { location.reload(); }); }; }
+    renderGuest();
   }
 
   function asUser() {
     CS3.me().then(function (me) {
-      var name = (me.user.full_name || "Hisobim").split(" ")[0];
-      btn.textContent = (me.user.is_admin ? "⚙ " : "") + name;
-      btn.title = "Chiqish uchun bosing";
-      btn.onclick = function () {
-        if (confirm("Hisobdan chiqasizmi?")) CS3.logout();
-      };
-    }).catch(function () {
-      CS3.clearToken();
-      asGuest();
-    });
+      var name = ((me.user && me.user.full_name) || "Hisobim").split(" ")[0];
+      setBtn((me.user && me.user.is_admin ? "⚙ " : "") + name);
+      if (btn) { btn.title = "Hisob menyusi"; btn.onclick = function () { if (acct) acct.classList.toggle("open"); }; }
+      renderUser(me);
+    }).catch(function () { CS3.clearToken(); asGuest(); });
   }
 
-  if (CS3.isLoggedIn()) asUser(); else asGuest();
+  function refresh() { if (CS3.isLoggedIn()) asUser(); else asGuest(); }
+
+  refresh();
 });
 
 /* ----------------------------------------------------------
@@ -190,7 +243,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function asGuest() {
     setLabel("Telegram orqali kirish");
-    sbtn.onclick = function () { CS3.connect(function () { asUser(); }); };
+    sbtn.onclick = function () { CS3.connect(function () { location.reload(); }); };
   }
 
   function asUser() {

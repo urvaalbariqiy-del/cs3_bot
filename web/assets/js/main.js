@@ -396,18 +396,23 @@ function toggleLang(){
 // ======================= NAV / MOBILE MENU =======================
 function initNav(){
   const nav = document.getElementById("navbar");
-  window.addEventListener("scroll", ()=>{
-    if(window.scrollY > 12) nav.classList.add("scrolled");
-    else nav.classList.remove("scrolled");
-  });
+  if(nav){
+    window.addEventListener("scroll", ()=>{
+      if(window.scrollY > 12) nav.classList.add("scrolled");
+      else nav.classList.remove("scrolled");
+    });
+  }
   const burger = document.getElementById("burger");
-  const menu = document.getElementById("mobileMenu");
-  burger.addEventListener("click", ()=>{
-    menu.classList.toggle("open");
-  });
-  menu.querySelectorAll("a").forEach(a=>{
-    a.addEventListener("click", ()=> menu.classList.remove("open"));
-  });
+  const acct = document.getElementById("accountMenu");
+  if(burger && acct){
+    burger.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      acct.classList.toggle("open");
+    });
+    document.addEventListener("click", (e)=>{
+      if(!acct.contains(e.target) && e.target !== burger) acct.classList.remove("open");
+    });
+  }
 }
 
 // ======================= REGISTRATION GATE (bot orqali) =======================

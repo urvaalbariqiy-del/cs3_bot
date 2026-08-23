@@ -109,8 +109,32 @@ img{max-width:100%;display:block}
 }
 .icon-btn:hover{background:var(--bg-alt)}
 .lang-btn{font-size:13px;font-weight:700;width:auto;padding:0 10px}
-/* Hamburger o'rniga — doim ko'rinadigan, yon tomonga suriladigan sahifa tugmalari */
-.burger{display:none !important}
+/* Chap tomondagi hamburger — hisob/profil panelini ochadi */
+.burger{display:flex;order:-1;margin-right:4px}
+/* Hisob paneli (hamburger ochadi) — profil, Telegram ID, havolalar */
+.account-menu{
+  display:none;position:absolute;left:16px;top:68px;z-index:60;
+  width:min(300px,calc(100vw - 32px));
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:16px;
+}
+.account-menu.open{display:block}
+.account-profile{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.account-avatar{
+  width:44px;height:44px;border-radius:50%;flex:none;
+  background:linear-gradient(135deg,var(--gold),var(--gold-2));
+  display:flex;align-items:center;justify-content:center;font-weight:700;color:#111;font-size:18px;
+}
+.account-name{font-weight:700;font-size:15px}
+.account-id{font-size:12.5px;color:var(--muted);font-family:'Courier New',monospace;margin-top:2px}
+.account-menu .btn{width:100%}
+.acct-link{
+  display:block;padding:10px 12px;border-radius:9px;color:var(--fg);font-size:14px;
+  border:1px solid var(--border);margin-top:8px;text-align:center;background:none;
+  width:100%;cursor:pointer;font:inherit;
+}
+.acct-link:hover{border-color:var(--gold)}
+/* Doim ko'rinadigan, yon tomonga suriladigan sahifa tugmalari (pastki qator) */
 .mobile-menu{
   display:flex;flex-direction:row;gap:8px;
   overflow-x:auto;padding:8px 20px 12px;
