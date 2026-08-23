@@ -45,30 +45,43 @@ async def setup_commands(bot: Bot):
             logger.warning(f"Admin {admin_id} uchun buyruqlar o'rnatilmadi: {e}")
 
 
+# Dispatcher va routerlar modul darajasida, bir marta ulanadi.
+# Bu muhim: bot uzilib qayta ko'tarilganda (run_all.py) routerni ikkinchi
+# marta ulash "Router is already attached" xatosini berardi.
+dp = Dispatcher()
+dp.include_router(admin.router)   # admin avval — uning handlerlari ustun
+dp.include_router(user.router)
+
+_background_started = False
+
+
 async def main():
+    global _background_started
+
     if not BOT_TOKEN:
         raise RuntimeError("BOT_TOKEN .env faylida ko'rsatilmagan! .env.example'ga qarang.")
 
     bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-    dp = Dispatcher()
-
-    # admin.py handlerlari user.py'dagi umumiy matnlar bilan to'qnashmasligi uchun
-    # avval admin, keyin user routerini ulaymiz
-    dp.include_router(admin.router)
-    dp.include_router(user.router)
 
     await init_db()
     logger.info("Ma'lumotlar bazasi tayyor.")
 
-    # Fon jarayonlarini alohida task sifatida ishga tushiramiz
-    asyncio.create_task(run_price_watcher(bot))
-    asyncio.create_task(run_subscription_checker(bot))
-    logger.info("Narx kuzatish va obuna tekshirish xizmatlari ishga tushdi.")
+    # Fon jarayonlari faqat bir marta ishga tushadi — bot qayta ko'tarilganda
+    # ular ikki nusxada ishlab, xabarni ikki marta yubormasligi uchun.
+    if not _background_started:
+        asyncio.create_task(run_price_watcher(bot))
+        asyncio.create_task(run_subscription_checker(bot))
+        _background_started = True
+        logger.info("Narx kuzatish va obuna tekshirish xizmatlari ishga tushdi.")
 
-    await bot.delete_webhook(drop_pending_updates=True)
-    await setup_commands(bot)
-    logger.info("Bot polling rejimida ishga tushdi.")
-    await dp.start_polling(bot)
+    try:
+        await bot.delete_webhook(drop_pending_updates=True)
+        await setup_commands(bot)
+        logger.info("Bot polling rejimida ishga tushdi.")
+        await dp.start_polling(bot)
+    finally:
+        # Ulanish ochiq qolmasin — qayta urinishda yangisi ochiladi
+        await bot.session.close()
 
 
 if __name__ == "__main__":
