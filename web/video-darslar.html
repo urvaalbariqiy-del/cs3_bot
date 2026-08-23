@@ -121,10 +121,10 @@
       data.lessons.forEach(function(l){
         var card = document.createElement("div");
         card.className = "card feature-card";
-        // Video fayli Telegramda saqlanadi - saytdan botga yo'naltiramiz
-        var link = l.video_url ? l.video_url : (l.has_file && botUrl ? botUrl : "");
+        // Havola bo'lsa - o'shanga; aks holda fayl botda ochiladi
+        var link = l.url ? l.url : (l.has_file && botUrl ? botUrl : "");
         card.innerHTML =
-          '<p class="pill" style="margin-bottom:10px">' + esc(l.module || "Dars") + '</p>' +
+          '<p class="pill" style="margin-bottom:10px">' + esc(l.module || "Video dars") + '</p>' +
           '<h3 style="margin:0 0 8px">' + esc(l.title) + '</h3>' +
           (l.description ? '<p class="muted" style="font-size:13.5px;margin-bottom:12px">' + esc(l.description) + '</p>' : '') +
           (link ? '<a href="' + esc(link) + '" target="_blank" rel="noopener" class="btn btn-outline btn-block">Darsni ko\u2019rish</a>' : '');

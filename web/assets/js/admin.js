@@ -133,7 +133,7 @@
 
   // ---------- kontent ----------
   var CONTENT_FORMS = {
-    videos:     { title: "vdTitle", body: "vdBody", status: "vdStatus", list: "vdList" },
+    videos:     { title: "vdTitle", body: "vdBody", url: "vdUrl", status: "vdStatus", list: "vdList" },
     reminders:  { title: "rmTitle", body: "rmBody", status: "rmStatus", list: "rmList" },
     strategies: { title: "stTitle", body: "stBody", status: "stStatus", list: "stList" },
   };
@@ -145,15 +145,22 @@
       var title = ($(f.title).value || "").trim();
       if (!title) { status(f.status, "Sarlavhani kiriting.", "err"); return; }
 
+      var payload = { section: section, title: title, body: ($(f.body).value || "").trim() };
+      if (f.url) {
+        var url = ($(f.url).value || "").trim();
+        if (url) payload.file_id = url;   // video havolasi file_id maydonida saqlanadi
+      }
+
       btn.disabled = true;
       status(f.status, "Yuborilmoqda…");
       CS3.api("/api/admin/content", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ section: section, title: title, body: ($(f.body).value || "").trim() }),
+        body: JSON.stringify(payload),
       }).then(function () {
         status(f.status, "✅ Qo'shildi.", "ok");
         $(f.title).value = ""; $(f.body).value = "";
+        if (f.url) $(f.url).value = "";
         loadContent(section);
         loadStats();
       }).catch(function (e) {

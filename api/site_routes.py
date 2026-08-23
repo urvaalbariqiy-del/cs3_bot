@@ -85,17 +85,19 @@ async def public_lessons(user=Depends(optional_user)):
     if not await _can_see("videos", user):
         return {"lessons": [], "locked": True}
     rows = await db.get_content_by_type("videos")
-    return {
-        "locked": False,
-        "lessons": [{
+    lessons = []
+    for c in rows:
+        fid = c["file_id"] or ""
+        is_url = fid.startswith("http://") or fid.startswith("https://")
+        lessons.append({
             "id": c["id"],
             "title": c["title"],
             "description": c["caption"] or "",
-            "url": "",                      # fayl botda ochiladi
-            "has_file": bool(c["file_id"]),
+            "url": fid if is_url else "",           # web'dan qo'yilgan havola
+            "has_file": bool(fid) and not is_url,   # botdan yuklangan Telegram fayl
             "created_at": c["created_at"],
-        } for c in rows],
-    }
+        })
+    return {"locked": False, "lessons": lessons}
 
 
 @router.get("/reminders")

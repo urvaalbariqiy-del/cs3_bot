@@ -159,9 +159,14 @@
         <h3 style="margin-top:0">Yangi video dars</h3>
         <label for="vdTitle">Sarlavha</label>
         <input id="vdTitle" placeholder="1-dars: Spot savdo asoslari" />
-        <label for="vdBody">Tavsif</label>
+        <label for="vdUrl">Video havolasi (YouTube yoki Telegram post havolasi)</label>
+        <input id="vdUrl" placeholder="https://youtu.be/... yoki https://t.me/cryptospot3/123" inputmode="url" />
+        <label for="vdBody">Tavsif (ixtiyoriy)</label>
         <textarea id="vdBody"></textarea>
-        <button class="btn btn-primary" data-add-content="videos" style="margin-top:12px">Qo'shish</button>
+        <p class="muted" style="font-size:12.5px;margin:10px 0 12px">
+          Video havolasini qo'ysangiz — saytda "Darsni ko'rish" tugmasi o'sha havolaga olib boradi.
+        </p>
+        <button class="btn btn-primary" data-add-content="videos" style="margin-top:4px">Qo'shish</button>
         <p class="form-status" id="vdStatus"></p>
       </div>
       <div class="card admin-card">
