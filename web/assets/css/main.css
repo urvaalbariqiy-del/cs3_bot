@@ -109,10 +109,22 @@ img{max-width:100%;display:block}
 }
 .icon-btn:hover{background:var(--bg-alt)}
 .lang-btn{font-size:13px;font-weight:700;width:auto;padding:0 10px}
-.burger{display:flex}
-.mobile-menu{display:none;flex-direction:column;gap:4px;padding:12px 20px 20px;border-top:1px solid var(--border)}
-.mobile-menu a{padding:10px 0;font-size:15px;color:var(--fg);border-bottom:1px solid var(--border)}
-.mobile-menu.open{display:flex}
+/* Hamburger o'rniga — doim ko'rinadigan, yon tomonga suriladigan sahifa tugmalari */
+.burger{display:none !important}
+.mobile-menu{
+  display:flex;flex-direction:row;gap:8px;
+  overflow-x:auto;padding:8px 20px 12px;
+  border-top:1px solid var(--border);
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;
+}
+.mobile-menu::-webkit-scrollbar{display:none}
+.mobile-menu a{
+  white-space:nowrap;padding:8px 14px;border-radius:9px;
+  font-size:14px;color:var(--muted);background:var(--bg-alt);
+  border:1px solid var(--border);transition:color .15s ease,border-color .15s ease;
+}
+.mobile-menu a:hover{color:var(--fg)}
+.mobile-menu a.active{color:var(--gold);border-color:var(--gold);font-weight:700}
 @media(max-width:860px){
   .nav-links{display:none}
 }

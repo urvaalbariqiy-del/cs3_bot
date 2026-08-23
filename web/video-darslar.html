@@ -14,10 +14,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/main.css">
 <style>
-/* Bu sayt bo'ylab hamburger — yagona asosiy menyu */
-.nav-links{display:none !important}
-.burger{display:flex !important}
-.mobile-menu a.active{color:var(--gold);font-weight:700}
 </style>
 <!-- Sozlamalar va ulanish moduli <head> da yuklanadi: sahifa ichidagi
      skriptlar SITE_CONFIG ga tayanadi, shuning uchun ular avval kelishi shart -->
@@ -53,48 +49,19 @@
   <div class="container">
     <div class="section-head center reveal" style="max-width:640px">
       <span class="eyebrow">Video darsliklar</span>
-      <h2>Mentorlik dasturi darslari</h2>
-      <p class="muted">40 ga yaqin video dars, 4 ta asosiy model bo'yicha tartiblangan. Darslar mentorlikka qo'shilgan a'zolar uchun ochiladi.</p>
+      <h2>Bepul video darslar</h2>
+      <p class="muted">Barcha darslar hozircha hamma uchun ochiq va mutlaqo bepul — hech qanday kurs yoki obunaga bog'liq emas. Yangi darslar muntazam qo'shib boriladi.</p>
     </div>
 
-    <div class="grid-2 reveal" id="modulesGrid">
-      <div class="card feature-card">
-        <div class="feature-icon">🌐</div>
-        <h3>1-modul: Fundamental &amp; Macro</h3>
-        <p>Bozorga ta'sir qiluvchi fundamental omillar va makroiqtisodiy tahlil bo'yicha darslar.</p>
-        <p class="pill" style="margin-top:14px">🔒 Mentorlikka qo'shilgach ochiladi</p>
-      </div>
-      <div class="card feature-card">
-        <div class="feature-icon">📊</div>
-        <h3>2-modul: Technical Analysis</h3>
-        <p>Grafik tahlili, market structure, price action darslari.</p>
-        <p class="pill" style="margin-top:14px">🔒 Mentorlikka qo'shilgach ochiladi</p>
-      </div>
-      <div class="card feature-card">
-        <div class="feature-icon">🎯</div>
-        <h3>3-modul: Trading Strategiyalar</h3>
-        <p>Turli strategiyalar va ularni qo'llash bo'yicha amaliy darslar.</p>
-        <p class="pill" style="margin-top:14px">🔒 Mentorlikka qo'shilgach ochiladi</p>
-      </div>
-      <div class="card feature-card">
-        <div class="feature-icon">📈</div>
-        <h3>4-modul: Execution &amp; Live Trading</h3>
-        <p>Mentor bilan birga real bozorni kuzatish va savdolarni tahlil qilish.</p>
-        <p class="pill" style="margin-top:14px">🔒 Mentorlikka qo'shilgach ochiladi</p>
-      </div>
-    </div>
-
-    <div class="cta-band reveal" style="margin-top:32px;text-align:center">
-      <h2 style="font-size:22px;margin:0 0 14px">Darslarga kirish uchun mentorlikka qo'shiling</h2>
-      <a href="kurs.html" class="btn btn-primary">Kurs va tariflarni ko'rish</a>
-    </div>
-
-    <div id="lessonsWrap" style="margin-top:40px;display:none">
-      <div class="section-head center reveal" style="max-width:560px">
-        <span class="eyebrow">Joylangan darslar</span>
-        <h2 style="font-size:24px">So'nggi video darslar</h2>
-      </div>
+    <div id="lessonsWrap" style="margin-top:36px;display:none">
       <div class="grid-2 reveal" id="lessonsGrid"></div>
+    </div>
+
+    <div id="lessonsEmpty" class="card reveal" style="margin-top:36px;text-align:center;padding:40px 24px">
+      <div style="font-size:38px;margin-bottom:12px">🎬</div>
+      <h3 style="margin:0 0 8px">Darslar tez orada shu yerda</h3>
+      <p class="muted" style="max-width:460px;margin:0 auto">Hozircha yangi bepul video darslar tayyorlanmoqda. Birinchilardan bo'lib ko'rish uchun Telegram kanalimizga qo'shiling.</p>
+      <a href="https://t.me/cryptospot3" target="_blank" rel="noopener" class="btn btn-primary" style="margin-top:18px">Telegram kanalga qo'shilish</a>
     </div>
   </div>
 </section>
@@ -136,6 +103,7 @@
   var base = cfg.apiBaseUrl;
   var wrap = document.getElementById("lessonsWrap");
   var grid = document.getElementById("lessonsGrid");
+  var empty = document.getElementById("lessonsEmpty");
   if(!base || base.indexOf("YOUR-BACKEND-URL") !== -1 || !grid) return;
 
   fetch(base + "/api/video-lessons")
@@ -143,6 +111,7 @@
     .then(function(data){
       if(!data.lessons || !data.lessons.length) return;
       wrap.style.display = "block";
+      if(empty) empty.style.display = "none";
       function esc(s){
         return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
           return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c];
