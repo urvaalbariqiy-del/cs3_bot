@@ -2,10 +2,8 @@
 // SOZLAMALAR — bitta joy, hamma sahifa shu yerdan o'qiydi
 // ==========================================================
 window.SITE_CONFIG = {
-  // API manzili (bot bilan bitta bazani ishlatadi).
-  // Kompyuterda sinash:      "http://localhost:8000"
-  // Serverga qo'ygandan keyin: "https://api.cryptospot3.uz"
-  apiBaseUrl: "http://localhost:8000",
+  // API manzili (bot bilan bitta bazani ishlatadi) — Railway.
+  apiBaseUrl: "https://web-production-253b3.up.railway.app",
 
   // Saytga ulanish shu bot orqali bo'ladi (@ belgisisiz).
   // Foydalanuvchi faqat /start bosadi — bot bilan yozishmaydi.
