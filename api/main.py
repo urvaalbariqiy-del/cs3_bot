@@ -9,12 +9,13 @@ Alohida ishga tushirish:
 Bot bilan birga (bitta jarayonda):
     python3 run_all.py
 """
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from bot.config import CORS_ORIGINS
+from bot.config import CORS_ORIGINS, MEDIA_DIR
 from bot.database import init_db
 from api.routes import router
 from api.admin_routes import router as admin_router
@@ -23,6 +24,7 @@ from api.site_routes import router as site_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    os.makedirs(MEDIA_DIR, exist_ok=True)
     await init_db()
     yield
 

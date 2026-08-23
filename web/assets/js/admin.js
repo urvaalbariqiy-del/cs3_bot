@@ -145,6 +145,37 @@
       var title = ($(f.title).value || "").trim();
       if (!title) { status(f.status, "Sarlavhani kiriting.", "err"); return; }
 
+      // Video: tayyor fayl tanlangan bo'lsa — multipart orqali yuklaymiz
+      if (section === "videos") {
+        var fileInput = document.getElementById("vdFile");
+        if (fileInput && fileInput.files && fileInput.files.length) {
+          var fd = new FormData();
+          fd.append("title", title);
+          fd.append("body", ($(f.body).value || "").trim());
+          fd.append("file", fileInput.files[0]);
+          btn.disabled = true;
+          status(f.status, "Video yuklanmoqda… biroz kuting.");
+          fetch(CS3.apiBase + "/api/admin/videos/upload", {
+            method: "POST",
+            headers: { "Authorization": "Bearer " + CS3.getToken() },
+            body: fd,
+          }).then(function (res) {
+            return res.json().catch(function () { return {}; }).then(function (b) {
+              if (!res.ok) throw new Error(b.detail || ("Xatolik (" + res.status + ")"));
+              return b;
+            });
+          }).then(function () {
+            status(f.status, "✅ Video yuklandi.", "ok");
+            $(f.title).value = ""; $(f.body).value = "";
+            fileInput.value = ""; if (f.url) $(f.url).value = "";
+            loadContent(section); loadStats();
+          }).catch(function (e) {
+            status(f.status, e.message, "err");
+          }).then(function () { btn.disabled = false; });
+          return;   // JSON yo'liga o'tmaymiz
+        }
+      }
+
       var payload = { section: section, title: title, body: ($(f.body).value || "").trim() };
       if (f.url) {
         var url = ($(f.url).value || "").trim();

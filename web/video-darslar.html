@@ -121,13 +121,21 @@
       data.lessons.forEach(function(l){
         var card = document.createElement("div");
         card.className = "card feature-card";
-        // Havola bo'lsa - o'shanga; aks holda fayl botda ochiladi
-        var link = l.url ? l.url : (l.has_file && botUrl ? botUrl : "");
+        // /media/... nisbiy havola bo'lsa API manzilini oldiga qo'shamiz
+        var full = l.url ? (l.url.charAt(0) === "/" ? base + l.url : l.url) : "";
+        var media = "";
+        if(l.kind === "file" && full){
+          media = '<video controls preload="metadata" style="width:100%;border-radius:10px;margin-top:8px;background:#000" src="' + esc(full) + '"></video>';
+        } else if(l.kind === "link" && full){
+          media = '<a href="' + esc(full) + '" target="_blank" rel="noopener" class="btn btn-outline btn-block" style="margin-top:10px">Darsni ko\u2019rish</a>';
+        } else if(l.kind === "tg" && botUrl){
+          media = '<a href="' + esc(botUrl) + '" target="_blank" rel="noopener" class="btn btn-outline btn-block" style="margin-top:10px">Botda ko\u2019rish</a>';
+        }
         card.innerHTML =
           '<p class="pill" style="margin-bottom:10px">' + esc(l.module || "Video dars") + '</p>' +
           '<h3 style="margin:0 0 8px">' + esc(l.title) + '</h3>' +
-          (l.description ? '<p class="muted" style="font-size:13.5px;margin-bottom:12px">' + esc(l.description) + '</p>' : '') +
-          (link ? '<a href="' + esc(link) + '" target="_blank" rel="noopener" class="btn btn-outline btn-block">Darsni ko\u2019rish</a>' : '');
+          (l.description ? '<p class="muted" style="font-size:13.5px;margin-bottom:4px">' + esc(l.description) + '</p>' : '') +
+          media;
         grid.appendChild(card);
       });
     })

@@ -13,12 +13,48 @@ faqat Telegram orqali haqiqiy kirishdan keyin beriladi, ya'ni:
 
 ID ni bilish yetarli emas: o'sha hisobga kira olish kerak.
 """
-from fastapi import APIRouter, Depends, HTTPException
+import os
+import uuid
+
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 
 from bot import database as db
 from bot import sections as sec
-from bot.config import ADMIN_IDS, TARIFF_NAMES, PERIOD_NAMES, MENTORLIK_TOTAL_SEATS
+from bot.config import (
+    ADMIN_IDS, TARIFF_NAMES, PERIOD_NAMES, MENTORLIK_TOTAL_SEATS,
+    MEDIA_DIR, MAX_UPLOAD_BYTES,
+)
 from api.deps import admin_user
+
+# Ruxsat etilgan fayl turlari (kengaytma -> tur)
+_VIDEO_EXT = {".mp4", ".mov", ".webm", ".mkv", ".m4v"}
+_IMAGE_EXT = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+
+
+async def _save_upload(file: UploadFile, allowed_ext: set) -> str:
+    """Yuklangan faylni MEDIA_DIR ga saqlaydi va fayl nomini qaytaradi."""
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in allowed_ext:
+        raise HTTPException(status_code=400, detail="Fayl turi mos emas.")
+    os.makedirs(MEDIA_DIR, exist_ok=True)
+    name = uuid.uuid4().hex + ext
+    dest = os.path.join(MEDIA_DIR, name)
+    size = 0
+    try:
+        with open(dest, "wb") as out:
+            while True:
+                chunk = await file.read(1024 * 1024)
+                if not chunk:
+                    break
+                size += len(chunk)
+                if size > MAX_UPLOAD_BYTES:
+                    raise HTTPException(status_code=413, detail="Fayl juda katta.")
+                out.write(chunk)
+    except HTTPException:
+        if os.path.exists(dest):
+            os.remove(dest)
+        raise
+    return name
 
 router = APIRouter(prefix="/api/admin")
 
@@ -106,6 +142,27 @@ async def create_content(payload: dict, admin=Depends(admin_user)):
         meta["min_tariff"],
     )
     return {"ok": True, "id": content_id}
+
+
+@router.post("/videos/upload")
+async def upload_video(
+    admin=Depends(admin_user),
+    title: str = Form(...),
+    body: str = Form(""),
+    file: UploadFile = File(...),
+):
+    """Tayyor video faylni yuklab, video dars sifatida saqlaydi."""
+    title = (title or "").strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="Sarlavha bo'sh bo'lmasin.")
+    meta = await sec.by_code("videos")
+    if not meta:
+        raise HTTPException(status_code=400, detail="Video bo'limi topilmadi.")
+    name = await _save_upload(file, _VIDEO_EXT)
+    content_id = await db.add_content(
+        "videos", title, name, (body or "").strip(), meta["min_tariff"],
+    )
+    return {"ok": True, "id": content_id, "file": name}
 
 
 @router.delete("/content/{content_id}")

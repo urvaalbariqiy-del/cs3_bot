@@ -7,11 +7,14 @@ lekin ma'lumot bizning yagona bazamizdan keladi.
 Bepul rejimda hamma narsa ochiq. FREE_MODE o'chirilsa, yopiq bo'lim
 mazmuni bu yerdan ham chiqmaydi - tekshiruv bitta joyda (sections.has_access).
 """
-from fastapi import APIRouter, Depends
+import os
+
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 
 from bot import database as db
 from bot import sections as sec
-from bot.config import MENTORLIK_TOTAL_SEATS
+from bot.config import MENTORLIK_TOTAL_SEATS, MEDIA_DIR
 from api.deps import optional_user, user_tariff
 
 router = APIRouter(prefix="/api")
@@ -89,15 +92,36 @@ async def public_lessons(user=Depends(optional_user)):
     for c in rows:
         fid = c["file_id"] or ""
         is_url = fid.startswith("http://") or fid.startswith("https://")
+        if is_url:
+            kind, url = "link", fid                 # tashqi havola (YouTube va h.k.)
+        elif fid and (os.path.splitext(fid)[1].lower() in
+                      (".mp4", ".mov", ".webm", ".mkv", ".m4v")):
+            kind, url = "file", "/api/media/" + fid  # yuklangan video fayl
+        elif fid:
+            kind, url = "tg", ""                     # botdagi Telegram fayl
+        else:
+            kind, url = "none", ""
         lessons.append({
             "id": c["id"],
             "title": c["title"],
             "description": c["caption"] or "",
-            "url": fid if is_url else "",           # web'dan qo'yilgan havola
-            "has_file": bool(fid) and not is_url,   # botdan yuklangan Telegram fayl
+            "kind": kind,
+            "url": url,
+            "has_file": kind == "tg",
             "created_at": c["created_at"],
         })
     return {"locked": False, "lessons": lessons}
+
+
+@router.get("/media/{name}")
+async def media_file(name: str):
+    """Yuklangan video/rasm fayllarni uzatadi (Range so'rovlarini qo'llab-quvvatlaydi)."""
+    if "/" in name or "\\" in name or ".." in name:
+        raise HTTPException(status_code=404, detail="Topilmadi.")
+    path = os.path.join(MEDIA_DIR, name)
+    if not os.path.isfile(path):
+        raise HTTPException(status_code=404, detail="Fayl topilmadi.")
+    return FileResponse(path)
 
 
 @router.get("/reminders")

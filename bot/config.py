@@ -11,6 +11,16 @@ ADMIN_IDS = {
 
 DB_PATH = os.getenv("DB_PATH", "bot_database.db")
 
+# Yuklangan fayllar (video darslar, signal rasmlari) shu papkada saqlanadi.
+# Standart: baza yonidagi 'uploads' papka (Railway'da /data/uploads — disk saqlanadi).
+MEDIA_DIR = os.getenv(
+    "MEDIA_DIR",
+    os.path.join(os.path.dirname(os.path.abspath(DB_PATH)) or ".", "uploads"),
+)
+
+# Yuklanadigan bitta faylning maksimal hajmi (baytlarda). Standart: 200 MB.
+MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_MB", "200")) * 1024 * 1024
+
 REMINDER_HOURS_BEFORE = int(os.getenv("REMINDER_HOURS_BEFORE", "24"))
 
 # Tarif darajalari. Yuqori daraja pastki darajalarning hamma bo'limini ochadi.
