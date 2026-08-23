@@ -16,7 +16,10 @@ import time
 from base64 import urlsafe_b64encode, urlsafe_b64decode
 from urllib.parse import parse_qsl
 
-from bot.config import BOT_TOKEN, API_SECRET, AUTH_TTL_SECONDS, TOKEN_TTL_SECONDS
+from bot.config import (
+    BOT_TOKEN, API_SECRET, AUTH_TTL_SECONDS,
+    TOKEN_TTL_SECONDS, ADMIN_TOKEN_TTL_SECONDS, ADMIN_IDS,
+)
 
 
 class AuthError(Exception):
@@ -114,7 +117,9 @@ def _b64d(text: str) -> bytes:
 
 
 def issue_token(telegram_id: int) -> str:
-    payload = {"sub": int(telegram_id), "exp": int(time.time()) + TOKEN_TTL_SECONDS}
+    # Admin sessiyasi uzoqroq (144 soat), oddiy foydalanuvchi 72 soat.
+    ttl = ADMIN_TOKEN_TTL_SECONDS if int(telegram_id) in ADMIN_IDS else TOKEN_TTL_SECONDS
+    payload = {"sub": int(telegram_id), "exp": int(time.time()) + ttl}
     body = _b64e(json.dumps(payload, separators=(",", ":")).encode())
     sig = hmac.new(API_SECRET.encode(), body.encode(), hashlib.sha256).digest()
     return f"{body}.{_b64e(sig)}"

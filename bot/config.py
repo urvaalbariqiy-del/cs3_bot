@@ -114,8 +114,12 @@ CORS_ORIGINS = [x.strip() for x in os.getenv("CORS_ORIGINS", "*").split(",") if 
 # Telegram bergan kirish ma'lumoti shuncha soniyadan keyin eskiradi.
 AUTH_TTL_SECONDS = int(os.getenv("AUTH_TTL_SECONDS", str(24 * 3600)))
 
-# Saytdagi sessiya shuncha soniya amal qiladi (standart: 30 kun).
-TOKEN_TTL_SECONDS = int(os.getenv("TOKEN_TTL_SECONDS", str(30 * 24 * 3600)))
+# Saytdagi sessiya shuncha soniya amal qiladi.
+# Oddiy foydalanuvchi: 72 soat. Muddat tugagach qaytadan Telegram orqali kiradi.
+TOKEN_TTL_SECONDS = int(os.getenv("TOKEN_TTL_SECONDS", str(72 * 3600)))
+
+# Admin sessiyasi uzoqroq: 144 soat.
+ADMIN_TOKEN_TTL_SECONDS = int(os.getenv("ADMIN_TOKEN_TTL_SECONDS", str(144 * 3600)))
 
 # Binance spot narx oqimi uchun bazaviy manzil
 BINANCE_WS_BASE = "wss://stream.binance.com:9443/stream?streams="
