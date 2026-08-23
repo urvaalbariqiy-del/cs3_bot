@@ -174,3 +174,37 @@ document.addEventListener("DOMContentLoaded", function () {
 
   if (CS3.isLoggedIn()) asUser(); else asGuest();
 });
+
+/* ----------------------------------------------------------
+   Bosh sahifadagi katta "Telegram orqali kirish" tugmasi.
+   - kirmagan bo'lsa: Telegram orqali ulanadi
+   - oddiy foydalanuvchi: kabinetga o'tadi
+   - admin: to'g'ridan-to'g'ri admin panelga o'tadi
+   ---------------------------------------------------------- */
+document.addEventListener("DOMContentLoaded", function () {
+  var sbtn = document.getElementById("cs3Start");
+  if (!sbtn) return;
+  var lbl = document.getElementById("cs3StartLabel");
+
+  function setLabel(t) { if (lbl) lbl.textContent = t; else sbtn.textContent = t; }
+
+  function asGuest() {
+    setLabel("Telegram orqali kirish");
+    sbtn.onclick = function () { CS3.connect(function () { asUser(); }); };
+  }
+
+  function asUser() {
+    CS3.me().then(function (me) {
+      if (me.user && me.user.is_admin) {
+        setLabel("⚙ Admin panelga o'tish");
+        sbtn.onclick = function () { location.href = "admin.html"; };
+      } else {
+        var name = ((me.user && me.user.full_name) || "Kabinet").split(" ")[0];
+        setLabel(name + " — Kabinetga o'tish");
+        sbtn.onclick = function () { location.href = "kabinet.html"; };
+      }
+    }).catch(function () { CS3.clearToken(); asGuest(); });
+  }
+
+  if (CS3.isLoggedIn()) asUser(); else asGuest();
+});
