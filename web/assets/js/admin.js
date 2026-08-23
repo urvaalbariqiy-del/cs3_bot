@@ -67,7 +67,7 @@
 
   // ---------- signallar ----------
   var SIGNAL_FORMS = {
-    signals:  { coin: "sgCoin", entry: "sgEntry", stop: "sgStop", tp1: "sgTp1", tp2: "sgTp2", note: "sgNote", status: "sgStatus", list: "sgList" },
+    signals:  { coin: "sgCoin", entry: "sgEntry", stop: "sgStop", tp1: "sgTp1", tp2: "sgTp2", note: "sgNote", image: "sgImage", status: "sgStatus", list: "sgList" },
     scalping: { coin: "scCoin", entry: "scEntry", stop: "scStop", tp1: "scTp1", tp2: "scTp2", note: "scNote", status: "scStatus", list: "scList" },
   };
 
@@ -86,6 +86,40 @@
       if ([payload.entry, payload.stop, payload.tp1, payload.tp2].some(function (v) {
         return v === null || isNaN(v);
       })) { status(f.status, "Barcha narxlarni raqam bilan to'ldiring.", "err"); return; }
+
+      // Rasm tanlangan bo'lsa — multipart bilan yuboramiz
+      var imgInput = f.image ? document.getElementById(f.image) : null;
+      if (imgInput && imgInput.files && imgInput.files.length) {
+        var fd = new FormData();
+        fd.append("section", section);
+        fd.append("coin", payload.coin);
+        fd.append("entry", payload.entry);
+        fd.append("stop", payload.stop);
+        fd.append("tp1", payload.tp1);
+        fd.append("tp2", payload.tp2);
+        fd.append("comment", payload.comment);
+        fd.append("file", imgInput.files[0]);
+        btn.disabled = true;
+        status(f.status, "Yuborilmoqda… rasm yuklanmoqda.");
+        fetch(CS3.apiBase + "/api/admin/signals/upload", {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + CS3.getToken() },
+          body: fd,
+        }).then(function (res) {
+          return res.json().catch(function () { return {}; }).then(function (b) {
+            if (!res.ok) throw new Error(b.detail || ("Xatolik (" + res.status + ")"));
+            return b;
+          });
+        }).then(function () {
+          status(f.status, "✅ Qo'shildi. Narx kuzatuvi boshlandi.", "ok");
+          [f.coin, f.entry, f.stop, f.tp1, f.tp2, f.note].forEach(function (i) { $(i).value = ""; });
+          imgInput.value = "";
+          loadSignals(section); loadStats();
+        }).catch(function (e) {
+          status(f.status, e.message, "err");
+        }).then(function () { btn.disabled = false; });
+        return;
+      }
 
       btn.disabled = true;
       status(f.status, "Yuborilmoqda…");

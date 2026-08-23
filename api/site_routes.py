@@ -29,6 +29,19 @@ STATUS_LABELS = {
 }
 OPEN_STATUSES = ("pending", "active", "tp1_hit")
 
+_IMAGE_EXT = (".jpg", ".jpeg", ".png", ".webp", ".gif")
+
+
+def _media_url(fid) -> str:
+    """photo_id/file_id ni saytda ochiladigan rasm havolasiga aylantiradi."""
+    fid = fid or ""
+    if fid.startswith("http://") or fid.startswith("https://"):
+        return fid
+    import os as _os
+    if fid and _os.path.splitext(fid)[1].lower() in _IMAGE_EXT:
+        return "/api/media/" + fid
+    return ""
+
 
 async def _can_see(section_code: str, user) -> bool:
     meta = await sec.by_code(section_code)
@@ -55,6 +68,7 @@ async def public_signals(user=Depends(optional_user)):
             "tp": f"{_fmt(s['tp1'])} / {_fmt(s['tp2'])}",
             "sl": _fmt(s["stop"]),
             "note": s["comment"] or "",
+            "image": _media_url(s["photo_id"]),
             "status": s["status"],
             "status_label": STATUS_LABELS.get(s["status"], s["status"]),
             "active": 1 if s["status"] in OPEN_STATUSES else 0,

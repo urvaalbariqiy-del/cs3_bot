@@ -14,6 +14,24 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/main.css">
 <style>
+.calc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:640px){.calc-grid{grid-template-columns:1fr}}
+.calc-lbl{display:block;font-size:13px;color:var(--muted);margin:0 0 5px}
+.calc-in{
+  width:100%;background:var(--bg-alt);border:1px solid var(--border);color:var(--fg);
+  border-radius:10px;padding:11px 13px;font:inherit;font-size:14px;
+}
+.calc-in:focus{outline:2px solid var(--gold);outline-offset:1px}
+.calc-tp-head{display:grid;grid-template-columns:56px 1fr 1fr;gap:10px;font-size:12px;color:var(--muted);margin-bottom:6px;padding:0 2px}
+.calc-tp-head span:first-child{visibility:hidden}
+.calc-tp-row{display:grid;grid-template-columns:56px 1fr 1fr;gap:10px;align-items:center;margin-bottom:10px}
+.calc-tp-name{font-weight:700;font-size:14px;color:var(--gold)}
+.calc-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.calc-stat{background:var(--bg-alt);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.calc-stat b{display:block;font-size:20px;font-family:'Space Grotesk',sans-serif}
+.calc-stat span{font-size:12.5px;color:var(--muted)}
+.calc-stat.win b{color:#3ddc97}
+.calc-stat.lose b{color:#e6484f}
 </style>
 <!-- Sozlamalar va ulanish moduli <head> da yuklanadi: sahifa ichidagi
      skriptlar SITE_CONFIG ga tayanadi, shuning uchun ular avval kelishi shart -->
@@ -79,27 +97,59 @@
   </div>
 </section>
 
+<!-- TRADING KALKULYATOR -->
 <section class="section" style="padding-top:20px">
-  <div class="container">
+  <div class="container" style="max-width:860px">
     <div class="section-head center reveal" style="max-width:640px">
-      <span class="eyebrow">Top coinlar</span>
-      <h2 style="font-size:24px">Top 25 — SPOT / USDT</h2>
-      <p class="muted">Yuqoridagi qidiruv orqali ro'yxatda yo'q coinni ham topishingiz mumkin.</p>
+      <span class="eyebrow">Kalkulyator</span>
+      <h2 style="font-size:24px">Trading kalkulyator</h2>
+      <p class="muted">Sarmoya, kirish, stop va TP narxlarini kiriting — foyda va zararni hisoblab beradi. Faqat SPOT (long) uchun.</p>
     </div>
-    <div class="card reveal" style="padding:8px;overflow:hidden">
-      <div class="tradingview-widget-container">
-        <div class="tradingview-widget-container__widget"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-screener.js" async>
-        {
-          "width": "100%",
-          "height": 500,
-          "defaultColumn": "overview",
-          "screener_type": "crypto_mkt",
-          "displayCurrency": "USD",
-          "colorTheme": "dark",
-          "locale": "en"
-        }
-        </script>
+
+    <div class="card reveal" style="padding:22px">
+      <div class="calc-grid">
+        <div>
+          <label class="calc-lbl" for="cSize">Sarmoya ($)</label>
+          <input class="calc-in" id="cSize" inputmode="decimal" placeholder="1000" />
+        </div>
+        <div>
+          <label class="calc-lbl" for="cEntry">Kirish narxi (Entry)</label>
+          <input class="calc-in" id="cEntry" inputmode="decimal" placeholder="60000" />
+        </div>
+        <div>
+          <label class="calc-lbl" for="cStop">Stop narxi (Stop-loss)</label>
+          <input class="calc-in" id="cStop" inputmode="decimal" placeholder="58000" />
+        </div>
+      </div>
+
+      <div style="margin-top:18px">
+        <div class="calc-tp-head">
+          <span>TP narxi</span><span>Ulush (%)</span>
+        </div>
+        <div class="calc-tp-row">
+          <span class="calc-tp-name">TP1</span>
+          <input class="calc-in" id="cTp1" inputmode="decimal" placeholder="62000" />
+          <input class="calc-in" id="cTp1p" inputmode="decimal" placeholder="50" />
+        </div>
+        <div class="calc-tp-row">
+          <span class="calc-tp-name">TP2</span>
+          <input class="calc-in" id="cTp2" inputmode="decimal" placeholder="64000" />
+          <input class="calc-in" id="cTp2p" inputmode="decimal" placeholder="30" />
+        </div>
+        <div class="calc-tp-row">
+          <span class="calc-tp-name">TP3</span>
+          <input class="calc-in" id="cTp3" inputmode="decimal" placeholder="66000" />
+          <input class="calc-in" id="cTp3p" inputmode="decimal" placeholder="20" />
+        </div>
+        <p class="muted" style="font-size:12.5px;margin:10px 0 0">Ulushlar yig'indisi 100% bo'lgani ma'qul. Ishlatmaydigan TP'ni bo'sh qoldiring.</p>
+      </div>
+
+      <button class="btn btn-primary" id="cCalc" style="margin-top:18px;width:100%">Hisoblash</button>
+      <p class="form-status" id="cErr" style="color:#e6484f;font-size:13px;margin:10px 0 0;min-height:16px"></p>
+
+      <div id="cResult" style="display:none;margin-top:18px">
+        <div class="calc-stat-grid" id="cStats"></div>
+        <div id="cBreak" style="margin-top:14px"></div>
       </div>
     </div>
   </div>
@@ -149,9 +199,11 @@
           var stColor = s.active ? "#3ddc97" : "var(--muted)";
           var card = document.createElement("div");
           card.className = "card feature-card" + (s.active ? "" : " cs3-locked");
+          var imgUrl = s.image ? (s.image.charAt(0) === "/" ? base + s.image : s.image) : "";
           card.innerHTML =
             '<p class="pill" style="margin-bottom:10px;color:' + dirColor + ';border-color:' + dirColor + '">' +
               esc(s.symbol) + ' \u00b7 ' + esc(s.direction) + '</p>' +
+            (imgUrl ? '<img src="' + esc(imgUrl) + '" alt="' + esc(s.symbol) + '" style="width:100%;border-radius:10px;margin-bottom:10px" loading="lazy">' : '') +
             '<p style="margin:0 0 10px;font-size:12.5px;color:' + stColor + '"><b>' +
               esc(s.status_label || "") + '</b></p>' +
             '<p style="margin:0 0 6px;font-size:13.5px"><b>Entry:</b> ' + esc(s.entry) + '</p>' +
@@ -169,6 +221,72 @@
   render();
   // Holat botda o'zgaradi (TP/Stop) - sahifani yangilamasdan ko'rinsin
   setInterval(render, 30000);
+})();
+</script>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var btn = $("cCalc");
+  if(!btn) return;
+  function num(id){ var v = parseFloat((($(id).value)||"").replace(",", ".")); return isFinite(v) ? v : NaN; }
+  function money(x){ return "$" + Number(x).toLocaleString("en-US",{maximumFractionDigits:2}); }
+  function pct(x){ return (x>=0?"+":"") + x.toFixed(2) + "%"; }
+
+  btn.addEventListener("click", function(){
+    var err = $("cErr"); err.textContent = "";
+    var size = num("cSize"), entry = num("cEntry"), stop = num("cStop");
+    if(!(size>0)){ err.textContent = "Sarmoyani ($) kiriting."; return; }
+    if(!(entry>0)){ err.textContent = "Kirish narxini kiriting."; return; }
+    if(!(stop>0)){ err.textContent = "Stop narxini kiriting."; return; }
+    if(stop>=entry){ err.textContent = "Stop narxi kirish narxidan past bo'lishi kerak (SPOT long)."; return; }
+
+    var coin = size/entry;
+    var tps = [
+      { name:"TP1", price:num("cTp1"), p:num("cTp1p") },
+      { name:"TP2", price:num("cTp2"), p:num("cTp2p") },
+      { name:"TP3", price:num("cTp3"), p:num("cTp3p") }
+    ];
+    var used = [], totalPct = 0, tpProfit = 0;
+    for(var i=0;i<tps.length;i++){
+      var t = tps[i];
+      if(t.price>0 && t.p>0){
+        if(t.price<=entry){ err.textContent = t.name+" narxi kirish narxidan yuqori bo'lishi kerak."; return; }
+        t.portionCoin = coin*(t.p/100);
+        t.profit = t.portionCoin*(t.price-entry);
+        totalPct += t.p; tpProfit += t.profit;
+        used.push(t);
+      }
+    }
+    if(!used.length){ err.textContent = "Kamida bitta TP narxi va ulushini kiriting."; return; }
+    if(totalPct > 100.0001){ err.textContent = "Ulushlar yig'indisi 100% dan oshib ketdi ("+totalPct+"%)."; return; }
+
+    var loss = coin*(entry-stop);       // Stop ishlasa — to'liq pozitsiya zarari
+    var profitPct = tpProfit/size*100;
+    var lossPct = loss/size*100;
+    var rr = loss>0 ? (tpProfit/loss) : 0;
+
+    var stats = [
+      { cls:"win",  b: money(tpProfit), s:"Foyda (barcha TP) · "+pct(profitPct) },
+      { cls:"lose", b: "-"+money(loss), s:"Zarar (Stop) · "+pct(-lossPct) },
+      { cls:"",     b: coin.toLocaleString("en-US",{maximumFractionDigits:6}), s:"Coin miqdori" },
+      { cls:"",     b: (rr>0?rr.toFixed(2):"—")+" : 1", s:"Risk / Reward" }
+    ];
+    $("cStats").innerHTML = stats.map(function(x){
+      return '<div class="calc-stat '+x.cls+'"><b>'+x.b+'</b><span>'+x.s+'</span></div>';
+    }).join("");
+
+    var rows = used.map(function(t){
+      return '<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13.5px">'+
+        '<span>'+t.name+' · '+t.p+'% · '+t.price+'</span>'+
+        '<b style="color:#3ddc97">'+money(t.profit)+'</b></div>';
+    }).join("");
+    if(totalPct < 99.9999){
+      rows += '<p class="muted" style="font-size:12.5px;margin-top:8px">Diqqat: ulushlar yig\'indisi '+totalPct+'% — qolgan '+(100-totalPct).toFixed(0)+'% hisobga olinmadi.</p>';
+    }
+    $("cBreak").innerHTML = '<div class="pill" style="margin-bottom:8px">Har bir TP bo\'yicha foyda</div>'+rows;
+    $("cResult").style.display = "block";
+  });
 })();
 </script>
 

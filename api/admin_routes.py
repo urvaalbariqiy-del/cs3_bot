@@ -76,37 +76,68 @@ async def list_signals(section: str | None = None, admin=Depends(admin_user)):
     return [dict(r) for r in rows]
 
 
-@router.post("/signals")
-async def create_signal(payload: dict, admin=Depends(admin_user)):
-    section = (payload.get("section") or "signals").strip()
+async def _validate_signal(section, coin, entry, stop, tp1, tp2):
+    """Signal maydonlarini tekshiradi va tozalangan qiymatlarni qaytaradi."""
+    section = (section or "signals").strip()
     meta = await sec.by_code(section)
     if not meta or meta["kind"] != "signal":
         raise HTTPException(status_code=400, detail="Signal bo'limi topilmadi.")
 
-    coin = (payload.get("coin") or "").strip().upper().replace("/", "").replace("-", "")
+    coin = (coin or "").strip().upper().replace("/", "").replace("-", "")
     if not coin.isalnum():
         raise HTTPException(status_code=400, detail="Coin nomi noto'g'ri. Masalan: BTCUSDT")
 
     try:
-        entry = float(payload["entry"])
-        stop = float(payload["stop"])
-        tp1 = float(payload["tp1"])
-        tp2 = float(payload["tp2"])
+        entry = float(entry); stop = float(stop); tp1 = float(tp1); tp2 = float(tp2)
     except (KeyError, TypeError, ValueError):
         raise HTTPException(status_code=400, detail="Entry, Stop, TP1 va TP2 raqam bo'lishi kerak.")
 
-    # Bot bilan bir xil qoida: spot/long signal
     if not (stop < entry < tp1 < tp2):
         raise HTTPException(
             status_code=400,
             detail="Tartib noto'g'ri. Stop < Entry < TP1 < TP2 bo'lishi kerak.",
         )
+    return section, coin, entry, stop, tp1, tp2
 
+
+@router.post("/signals")
+async def create_signal(payload: dict, admin=Depends(admin_user)):
+    section, coin, entry, stop, tp1, tp2 = await _validate_signal(
+        payload.get("section"), payload.get("coin"),
+        payload.get("entry"), payload.get("stop"),
+        payload.get("tp1"), payload.get("tp2"),
+    )
     signal_id = await db.create_signal(
         coin, entry, stop, tp1, tp2,
         (payload.get("comment") or "").strip(), section=section,
     )
     return {"ok": True, "id": signal_id}
+
+
+@router.post("/signals/upload")
+async def create_signal_with_image(
+    admin=Depends(admin_user),
+    section: str = Form("signals"),
+    coin: str = Form(...),
+    entry: str = Form(...),
+    stop: str = Form(...),
+    tp1: str = Form(...),
+    tp2: str = Form(...),
+    comment: str = Form(""),
+    file: UploadFile | None = File(None),
+):
+    """Signalni rasm bilan yaratadi (rasm ixtiyoriy)."""
+    section, coin, entry, stop, tp1, tp2 = await _validate_signal(
+        section, coin, entry, stop, tp1, tp2,
+    )
+    photo = None
+    if file is not None and file.filename:
+        photo = await _save_upload(file, _IMAGE_EXT)
+    signal_id = await db.create_signal(
+        coin, entry, stop, tp1, tp2,
+        (comment or "").strip(), section=section, photo_id=photo,
+    )
+    return {"ok": True, "id": signal_id, "photo": photo}
 
 
 @router.delete("/signals/{signal_id}")
