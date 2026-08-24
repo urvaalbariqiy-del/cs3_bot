@@ -388,10 +388,15 @@
         $("wAddr").value = w.address; $("wNet").value = w.network;
       });
     }).catch(function (e) {
-      CS3.clearToken();
-      showLogin(e.status === 403
-        ? "Bu hisobda admin huquqi yo'q."
-        : "Kirish muddati tugagan, qaytadan ulaning.");
+      if (e.status === 401 || e.status === 403) {
+        CS3.clearToken();
+        showLogin(e.status === 403
+          ? "Bu hisobda admin huquqi yo'q."
+          : "Kirish muddati tugagan, qaytadan ulaning.");
+      } else {
+        // Tarmoq/vaqtinchalik xato — tokenni o'chirmaymiz, qayta urinishga qoldiramiz.
+        showLogin("Aloqa vaqtincha uzildi. Qayta urinib ko'ring.");
+      }
     });
   }
 

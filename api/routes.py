@@ -136,6 +136,8 @@ async def me(user=Depends(current_user)):
             "full_name": user["full_name"],
             "is_admin": user["telegram_id"] in ADMIN_IDS,
         },
+        # Har tashrifda sessiyani uzaytiramiz (rolling): yangi token beramiz.
+        "token": issue_token(user["telegram_id"]),
         "subscription": subscription,
         "open_sections": [
             code for code, meta in all_sections.items()

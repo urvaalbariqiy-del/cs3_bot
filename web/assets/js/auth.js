@@ -131,7 +131,13 @@
     location.reload();
   }
 
-  function me() { return api("/api/me"); }
+  function me() {
+    return api("/api/me").then(function (data) {
+      // Server har safar yangi token beradi — sessiya uzaytiriladi.
+      if (data && data.token) setToken(data.token);
+      return data;
+    });
+  }
 
   global.CS3 = {
     api: api,
@@ -220,7 +226,19 @@ document.addEventListener("DOMContentLoaded", function () {
       setBtn((me.user && me.user.is_admin ? "⚙ " : "") + name);
       if (btn) { btn.title = "Hisob menyusi"; btn.onclick = function () { if (acct) acct.classList.toggle("open"); }; }
       renderUser(me);
-    }).catch(function () { CS3.clearToken(); asGuest(); });
+    }).catch(function (err) {
+      // FAQAT haqiqiy 401'da chiqaramiz. Tarmoq/vaqtinchalik xatoda sessiya saqlanadi.
+      if (err && err.status === 401) { CS3.clearToken(); asGuest(); return; }
+      setBtn("Hisobim");
+      if (btn) { btn.title = "Hisob menyusi"; btn.onclick = function () { if (acct) acct.classList.toggle("open"); }; }
+      if (acct) {
+        acct.innerHTML =
+          '<p style="font-size:13px;margin:0 0 12px;color:var(--muted)">Aloqa vaqtincha uzildi — siz tizimdasiz.</p>' +
+          '<button type="button" class="acct-link" id="acctLogout">Chiqish</button>';
+        var lo = document.getElementById("acctLogout");
+        if (lo) lo.onclick = function () { if (confirm("Hisobdan chiqasizmi?")) CS3.logout(); };
+      }
+    });
   }
 
   function refresh() { if (CS3.isLoggedIn()) asUser(); else asGuest(); }
@@ -256,7 +274,10 @@ document.addEventListener("DOMContentLoaded", function () {
         setLabel(name + " — Kabinetga o'tish");
         sbtn.onclick = function () { location.href = "kabinet.html"; };
       }
-    }).catch(function () { CS3.clearToken(); asGuest(); });
+    }).catch(function (err) {
+      // FAQAT 401'da chiqaramiz; tarmoq xatosida sessiya saqlanadi.
+      if (err && err.status === 401) { CS3.clearToken(); asGuest(); }
+    });
   }
 
   if (CS3.isLoggedIn()) asUser(); else asGuest();
