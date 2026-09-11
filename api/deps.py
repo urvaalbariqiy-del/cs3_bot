@@ -13,6 +13,11 @@ async def _user_from_header(authorization: str | None):
     except AuthError:
         return None
     row = await db.get_user_by_telegram_id(telegram_id)
+    if row is None:
+        # Token imzolangan (biz bergan) — foydalanuvchi bazadan yo'qolgan bo'lsa
+        # (masalan baza qayta ishga tushган) uni qayta yaratamiz, sessiya uzilmaydi.
+        await db.get_or_create_user(telegram_id, None, "Foydalanuvchi")
+        row = await db.get_user_by_telegram_id(telegram_id)
     return dict(row) if row else None
 
 

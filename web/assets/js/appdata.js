@@ -17,6 +17,17 @@
   function full(url) { return url ? (url.charAt(0) === "/" ? base + url : url) : ""; }
 
   document.addEventListener("DOMContentLoaded", function () {
+    // Kirish darvozasi: kirmagan bo'lsa — ilovaga o'tishdan oldin Telegram kirish.
+    var gate = document.getElementById("appLoginGate");
+    if (gate) {
+      if (window.CS3 && CS3.isLoggedIn()) {
+        gate.style.display = "none";
+      } else {
+        gate.style.display = "flex";
+        var gb = document.getElementById("appGateLogin");
+        if (gb) gb.addEventListener("click", function () { CS3.connect(function () { location.reload(); }); });
+      }
+    }
     if (ready) {
       loadPosts();
       loadVideos();
