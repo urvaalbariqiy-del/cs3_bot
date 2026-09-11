@@ -94,6 +94,21 @@ async def auth_webapp(payload: dict):
     return await _login(info)
 
 
+@router.post("/auth/telegram")
+async def auth_telegram(payload: dict):
+    """Telegram Login Widget orqali to'g'ridan-to'g'ri kirish.
+
+    Botga o'tib /start bosib qaytish shart emas — foydalanuvchi bitta tugma
+    bilan Telegram hisobini tasdiqlaydi, imzo shu yerda tekshiriladi va
+    darhol sessiya beriladi. Admin telegram_id ADMIN_IDS'да bo'lsa avtomatik.
+    """
+    try:
+        info = verify_login_widget(payload)
+    except AuthError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+    return await _login(info)
+
+
 async def _login(info: dict):
     await db.get_or_create_user(info["telegram_id"], info["username"], info["full_name"])
     return {

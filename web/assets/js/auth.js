@@ -63,12 +63,9 @@
     el.innerHTML =
       '<div class="cs3-modal-card">' +
         '<button class="cs3-modal-x" type="button" aria-label="Yopish">&times;</button>' +
-        '<h3>Telegram orqali ulanish</h3>' +
-        '<p class="cs3-muted" id="cs3AuthText">' +
-          'Pastdagi tugmani bosing — Telegram ochiladi. U yerda ' +
-          '<b>Start</b> bosishingiz kifoya, boshqa hech narsa kerak emas.' +
-        '</p>' +
-        '<a class="cs3-btn" id="cs3AuthLink" target="_blank" rel="noopener">Telegramni ochish</a>' +
+        '<h3>Telegram orqali kirish</h3>' +
+        '<p class="cs3-muted">Pastdagi <b>Telegram</b> tugmasini bosib hisobingizni tasdiqlang — tamom. Botga o\'tib qaytish shart emas.</p>' +
+        '<div id="cs3TgWidget" style="display:flex;justify-content:center;margin:16px 0 6px;min-height:48px"></div>' +
         '<p class="cs3-muted cs3-small" id="cs3AuthHint"></p>' +
       '</div>';
     document.body.appendChild(el);
@@ -84,47 +81,49 @@
     if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
   }
 
-  /** Ulanishni boshlaydi. onDone(user) muvaffaqiyatda chaqiriladi. */
+  /** Ulanishni boshlaydi — Telegram Login Widget orqali (bir tugma). */
   function connect(onDone) {
     var modal = ensureModal();
     modal.classList.remove("hidden");
+    window.__cs3AuthDone = (typeof onDone === "function") ? onDone : null;
+
+    var holder = document.getElementById("cs3TgWidget");
     var hint = document.getElementById("cs3AuthHint");
-    var link = document.getElementById("cs3AuthLink");
-    hint.textContent = "Havola tayyorlanmoqda…";
-    link.removeAttribute("href");
+    var uname = (CFG.telegramBotUsername || "").replace(/^@/, "");
+    if (hint) hint.textContent = "";
+    if (!uname) { if (hint) hint.textContent = "Bot nomi sozlanmagan (config.js)."; return; }
 
-    api("/api/auth/start", { method: "POST" }).then(function (data) {
-      link.href = data.bot_url;
-      hint.textContent = "Telegramda Start bosgach, shu oyna o'zi yopiladi.";
-
-      // Ba'zi brauzerlar yangi oynani bloklaydi — shuning uchun havolani
-      // ko'rinadigan tugma qilib qo'yamiz va o'zimiz ham ochishga urinamiz.
-      try { window.open(data.bot_url, "_blank", "noopener"); } catch (e) {}
-
-      var waited = 0;
-      if (pollTimer) clearInterval(pollTimer);
-      pollTimer = setInterval(function () {
-        waited += 2;
-        if (waited > (data.expires_in || 300)) {
-          clearInterval(pollTimer); pollTimer = null;
-          hint.textContent = "Havolaning muddati tugadi. Oynani yopib, qaytadan bosing.";
-          return;
-        }
-        api("/api/auth/poll/" + encodeURIComponent(data.login_token))
-          .then(function (r) {
-            if (!r.ready) return;
-            clearInterval(pollTimer); pollTimer = null;
-            setToken(r.token);
-            closeModal();
-            if (typeof onDone === "function") onDone(r.user);
-            else location.reload();
-          })
-          .catch(function () { /* tarmoq uzilishi — keyingi urinishda */ });
-      }, 2000);
-    }).catch(function (e) {
-      hint.textContent = e.message;
-    });
+    // Telegram tugmasini har ochilganda qayta joylaymiz.
+    holder.innerHTML = "";
+    var s = document.createElement("script");
+    s.async = true;
+    s.src = "https://telegram.org/js/telegram-widget.js?22";
+    s.setAttribute("data-telegram-login", uname);
+    s.setAttribute("data-size", "large");
+    s.setAttribute("data-userpic", "false");
+    s.setAttribute("data-request-access", "write");
+    s.setAttribute("data-onauth", "cs3OnTelegramAuth(user)");
+    s.onerror = function () { if (hint) hint.textContent = "Telegram tugmasini yuklab bo'lmadi."; };
+    holder.appendChild(s);
   }
+
+  // Telegram Login Widget muvaffaqiyatli bo'lganda chaqiriladi (global).
+  global.cs3OnTelegramAuth = function (user) {
+    var hint = document.getElementById("cs3AuthHint");
+    if (hint) hint.textContent = "Kirilyapti…";
+    api("/api/auth/telegram", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(user),
+    }).then(function (r) {
+      setToken(r.token);
+      closeModal();
+      if (typeof window.__cs3AuthDone === "function") window.__cs3AuthDone(r.user);
+      else location.reload();
+    }).catch(function (e) {
+      if (hint) hint.textContent = e.message || "Kirishda xatolik.";
+    });
+  };
 
   function logout() {
     clearToken();
