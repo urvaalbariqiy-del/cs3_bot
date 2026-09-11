@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "app.vercel.cryptospot_3.twa",
+    "sha256_cert_fingerprints": ["76:B7:77:7B:02:79:D9:2E:16:77:9D:95:16:9D:45:14:55:D6:DE:8F:59:81:1C:A7:08:C3:1E:81:B2:B1:35:5F"]
+  }
+}]
