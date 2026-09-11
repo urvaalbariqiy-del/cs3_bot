@@ -74,14 +74,25 @@
     var box = $("jamoaCompose");
     if (!box) return;
     box.innerHTML = '<textarea id="jamoaText" placeholder="Fikringizni yozing…" style="width:100%;background:var(--bg-alt);border:1px solid var(--border);color:var(--fg);border-radius:10px;padding:11px;font:inherit;font-size:14px;min-height:64px"></textarea>' +
-      '<button class="btn btn-primary" id="jamoaSend" style="margin-top:8px;width:100%">Yuborish</button><p id="jamoaSendErr" style="font-size:12px;margin:6px 0 0;min-height:14px"></p>';
+      '<div style="display:flex;gap:8px;align-items:center;margin-top:8px">' +
+        '<label class="btn btn-outline" style="font-size:13px;padding:8px 12px;cursor:pointer;margin:0">🖼 Rasm<input type="file" id="jamoaImg" accept="image/*" style="display:none"></label>' +
+        '<span id="jamoaImgName" class="muted" style="font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>' +
+        '<button class="btn btn-primary" id="jamoaSend" style="font-size:13px;padding:9px 18px">Yuborish</button>' +
+      '</div><p id="jamoaSendErr" style="font-size:12px;margin:6px 0 0;min-height:14px"></p>';
+    var img = $("jamoaImg");
+    if (img) img.addEventListener("change", function () { $("jamoaImgName").textContent = (img.files && img.files.length) ? img.files[0].name : ""; });
     var s = $("jamoaSend");
     if (s) s.addEventListener("click", function () {
       var err = $("jamoaSendErr"), t = ($("jamoaText").value || "").trim();
-      if (!t) { err.textContent = "Xabar bo'sh."; err.style.color = "#e6484f"; return; }
-      s.disabled = true;
-      CS3.api("/api/community/messages", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: t }) })
-        .then(function () { $("jamoaText").value = ""; err.textContent = ""; loadMessages(); })
+      var hasImg = img && img.files && img.files.length;
+      if (!t && !hasImg) { err.textContent = "Xabar yoki rasm qo'shing."; err.style.color = "#e6484f"; return; }
+      var fd = new FormData();
+      fd.append("text", t);
+      if (hasImg) fd.append("image", img.files[0]);
+      s.disabled = true; err.textContent = "Yuborilmoqda…"; err.style.color = "var(--muted)";
+      fetch(base + "/api/community/messages", { method: "POST", headers: { "Authorization": "Bearer " + CS3.getToken() }, body: fd })
+        .then(function (res) { return res.json().catch(function () { return {}; }).then(function (b) { if (!res.ok) throw new Error(b.detail || ("Xatolik (" + res.status + ")")); return b; }); })
+        .then(function () { $("jamoaText").value = ""; if (img) img.value = ""; $("jamoaImgName").textContent = ""; err.textContent = ""; loadMessages(); })
         .catch(function (e) { err.textContent = e.message; err.style.color = "#e6484f"; })
         .then(function () { s.disabled = false; });
     });
@@ -96,9 +107,12 @@
       box.innerHTML = msgs.map(function (m) {
         var side = m.mine ? "margin-left:auto;background:linear-gradient(90deg,var(--gold),var(--gold-2));color:#1a1204" : "background:var(--card)";
         var del = window.__cs3IsAdmin ? '<button data-delmsg="' + m.id + '" style="background:none;border:none;color:#e6484f;cursor:pointer;font-size:12px;float:right">✕</button>' : '';
+        var av = m.avatar ? '<img src="' + esc(full(m.avatar)) + '" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px">' : '';
+        var imgHtml = m.image ? '<img src="' + esc(full(m.image)) + '" style="width:100%;border-radius:10px;margin-top:6px" loading="lazy">' : '';
         return '<div style="max-width:85%;' + side + ';border:1px solid var(--border);border-radius:14px;padding:10px 13px;margin-bottom:10px">' +
-          del + '<div style="font-size:12px;font-weight:700;opacity:.85">' + (m.is_admin ? "⚙ " : "") + esc(m.name) + '</div>' +
-          '<div style="font-size:14px;white-space:pre-wrap;margin-top:3px">' + esc(m.text) + '</div></div>';
+          del + '<div style="font-size:12px;font-weight:700;opacity:.85">' + av + (m.is_admin ? "⚙ " : "") + esc(m.name) + '</div>' +
+          (m.text ? '<div style="font-size:14px;white-space:pre-wrap;margin-top:3px">' + esc(m.text) + '</div>' : '') +
+          imgHtml + '</div>';
       }).join("");
       if (window.__cs3IsAdmin) box.querySelectorAll("[data-delmsg]").forEach(function (b) {
         b.addEventListener("click", function () {
@@ -354,14 +368,31 @@
           var u = me.user || {};
           var sub = me.subscription;
           if (u.is_admin) { var w = $("drawerAdminWrap"); if (w) w.style.display = "block"; }
+          var avatarHtml = u.avatar
+            ? '<img src="' + esc(full(u.avatar)) + '" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex:none" alt="">'
+            : '<div class="account-avatar">' + esc((u.full_name || "U").trim().charAt(0).toUpperCase()) + '</div>';
           box.innerHTML =
-            '<div class="card" style="padding:18px;display:flex;align-items:center;gap:14px">' +
-              '<div class="account-avatar">' + esc((u.full_name || "U").trim().charAt(0).toUpperCase()) + '</div>' +
-              '<div style="flex:1"><div style="font-weight:700;font-size:16px">' + (u.is_admin ? "⚙ " : "") + esc(u.full_name || "Foydalanuvchi") + '</div>' +
-              '<div class="muted" style="font-size:12.5px;font-family:\'Courier New\',monospace">ID: ' + esc(String(u.telegram_id || "")) + '</div>' +
-              '<div style="font-size:13px;margin-top:4px">' + (sub ? ('Obuna: <b>' + esc(sub.tariff_name) + '</b> · ' + sub.days_left + ' kun qoldi') : 'Obuna: <span class="muted">yo\'q</span>') + '</div></div>' +
-              (u.is_admin ? '<a href="admin.html" class="btn btn-outline" style="font-size:13px;padding:8px 12px">Admin</a>' : '') +
+            '<div class="card" style="padding:18px">' +
+              '<div style="display:flex;align-items:center;gap:14px">' +
+                avatarHtml +
+                '<div style="flex:1"><div style="font-weight:700;font-size:16px">' + (u.is_admin ? "⚙ " : "") + esc(u.full_name || "Foydalanuvchi") + '</div>' +
+                '<div class="muted" style="font-size:12.5px;font-family:\'Courier New\',monospace">ID: ' + esc(String(u.telegram_id || "")) + '</div>' +
+                '<div style="font-size:13px;margin-top:4px">' + (sub ? ('Obuna: <b>' + esc(sub.tariff_name) + '</b> · ' + sub.days_left + ' kun qoldi') : 'Obuna: <span class="muted">yo\'q</span>') + '</div></div>' +
+                (u.is_admin ? '<a href="admin.html" class="btn btn-outline" style="font-size:13px;padding:8px 12px">Admin</a>' : '') +
+              '</div>' +
+              '<label class="btn btn-outline btn-block" style="margin-top:12px;cursor:pointer;font-size:13px">🖼 Profil rasmini qo\'yish<input type="file" id="avatarInput" accept="image/*" style="display:none"></label>' +
+              '<p id="avatarStatus" style="font-size:12px;margin:8px 0 0;min-height:14px"></p>' +
             '</div>';
+          var ai = $("avatarInput");
+          if (ai) ai.addEventListener("change", function () {
+            if (!ai.files || !ai.files.length) return;
+            var st = $("avatarStatus"); st.textContent = "Yuklanmoqda…"; st.style.color = "var(--muted)";
+            var fd = new FormData(); fd.append("image", ai.files[0]);
+            fetch(base + "/api/me/avatar", { method: "POST", headers: { "Authorization": "Bearer " + CS3.getToken() }, body: fd })
+              .then(function (res) { return res.json().catch(function () { return {}; }).then(function (b) { if (!res.ok) throw new Error(b.detail || ("Xatolik (" + res.status + ")")); return b; }); })
+              .then(function () { st.textContent = "✅ Saqlandi."; st.style.color = "#3ddc97"; loadKabinet(); })
+              .catch(function (e) { st.textContent = e.message; st.style.color = "#e6484f"; });
+          });
         }).catch(function () { guestProfile(box); });
       } else {
         guestProfile(box);

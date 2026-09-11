@@ -4,7 +4,9 @@ Muhim qoida: yopiq bo'lim mazmuni hech qachon javobga tushmaydi. Mehmon
 signalning coin nomini ham, narxlarini ham ko'rmaydi — faqat "shuncha
 material bor, obuna kerak" degan ma'lumot boradi.
 """
+import os
 import secrets
+import uuid
 from datetime import datetime
 
 import httpx
@@ -14,7 +16,7 @@ from bot import database as db
 from bot import sections as sec
 from bot.config import (
     ADMIN_IDS, BOT_TOKEN, BOT_USERNAME, TARIFF_NAMES, PERIOD_NAMES, TARIFF_LEVEL,
-    FREE_MODE, LOGIN_TOKEN_TTL_SECONDS,
+    FREE_MODE, LOGIN_TOKEN_TTL_SECONDS, MEDIA_DIR, MAX_UPLOAD_BYTES,
 )
 from api.auth import (
     verify_login_widget, verify_webapp_init_data, issue_token, AuthError,
@@ -22,6 +24,34 @@ from api.auth import (
 from api.deps import optional_user, current_user, user_tariff
 
 router = APIRouter(prefix="/api")
+
+_IMAGE_EXT = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+
+
+async def _save_image(file: UploadFile) -> str:
+    """Rasmni MEDIA_DIR ga saqlaydi va fayl nomini qaytaradi."""
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in _IMAGE_EXT:
+        raise HTTPException(status_code=400, detail="Faqat rasm (jpg, png, webp, gif).")
+    os.makedirs(MEDIA_DIR, exist_ok=True)
+    name = uuid.uuid4().hex + ext
+    dest = os.path.join(MEDIA_DIR, name)
+    size = 0
+    try:
+        with open(dest, "wb") as out:
+            while True:
+                chunk = await file.read(1024 * 1024)
+                if not chunk:
+                    break
+                size += len(chunk)
+                if size > MAX_UPLOAD_BYTES:
+                    raise HTTPException(status_code=413, detail="Rasm juda katta.")
+                out.write(chunk)
+    except HTTPException:
+        if os.path.exists(dest):
+            os.remove(dest)
+        raise
+    return name
 
 TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
@@ -149,6 +179,7 @@ async def me(user=Depends(current_user)):
             "telegram_id": user["telegram_id"],
             "username": user["username"],
             "full_name": user["full_name"],
+            "avatar": _media_url(user.get("avatar") if hasattr(user, "get") else user["avatar"]),
             "is_admin": user["telegram_id"] in ADMIN_IDS,
         },
         # Har tashrifda sessiyani uzaytiramiz (rolling): yangi token beramiz.
@@ -414,6 +445,13 @@ async def community_redeem(payload: dict, user=Depends(current_user)):
     return {"ok": True, "member": True}
 
 
+def _media_url(fid) -> str:
+    fid = fid or ""
+    if fid.startswith("http://") or fid.startswith("https://"):
+        return fid
+    return "/api/media/" + fid if fid else ""
+
+
 @router.get("/community/messages")
 async def community_messages(user=Depends(current_user)):
     if not await _is_member(user):
@@ -424,6 +462,8 @@ async def community_messages(user=Depends(current_user)):
         "id": m["id"],
         "name": m["full_name"] or "A'zo",
         "text": m["text"],
+        "image": _media_url(m["media"]),
+        "avatar": _media_url(m["avatar"]),
         "is_admin": m["telegram_id"] in admin_ids,
         "mine": m["telegram_id"] == user["telegram_id"],
         "created_at": m["created_at"],
@@ -431,12 +471,26 @@ async def community_messages(user=Depends(current_user)):
 
 
 @router.post("/community/messages")
-async def community_post_message(payload: dict, user=Depends(current_user)):
+async def community_post_message(
+    text: str = Form(""),
+    image: UploadFile | None = File(None),
+    user=Depends(current_user),
+):
     if not await _is_member(user):
         raise HTTPException(status_code=403, detail="Jamoaga faqat kalit orqali kiriladi.")
-    text = (payload.get("text") or "").strip()
-    if not text:
-        raise HTTPException(status_code=400, detail="Xabar bo'sh bo'lmasin.")
-    text = text[:2000]
-    mid = await db.add_community_message(user["telegram_id"], user["full_name"], text)
+    text = (text or "").strip()[:2000]
+    media = None
+    if image is not None and image.filename:
+        media = await _save_image(image)
+    if not text and not media:
+        raise HTTPException(status_code=400, detail="Xabar yoki rasm bo'lsin.")
+    mid = await db.add_community_message(user["telegram_id"], user["full_name"], text, media)
     return {"ok": True, "id": mid}
+
+
+@router.post("/me/avatar")
+async def set_avatar(image: UploadFile = File(...), user=Depends(current_user)):
+    """Foydalanuvchi profil rasmini yuklaydi."""
+    name = await _save_image(image)
+    await db.set_user_avatar(user["telegram_id"], name)
+    return {"ok": True, "avatar": _media_url(name)}

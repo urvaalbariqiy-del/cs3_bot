@@ -193,6 +193,17 @@ async def init_db():
                 await db.execute(ddl)
         await db.commit()
 
+        # Migratsiya: users.avatar (profil rasmi) va community_messages.media (rasm)
+        cur = await db.execute("PRAGMA table_info(users)")
+        ucols = {row[1] for row in await cur.fetchall()}
+        if "avatar" not in ucols:
+            await db.execute("ALTER TABLE users ADD COLUMN avatar TEXT")
+        cur = await db.execute("PRAGMA table_info(community_messages)")
+        ccols = {row[1] for row in await cur.fetchall()}
+        if "media" not in ccols:
+            await db.execute("ALTER TABLE community_messages ADD COLUMN media TEXT")
+        await db.commit()
+
         # Migratsiya: ilgari to'lov usuli bitta bo'lib prices.payment_info'da turardi.
         # Uni yo'qotmaslik uchun birinchi to'lov usuli qilib ko'chirib olamiz.
         cur = await db.execute("SELECT COUNT(*) FROM payment_methods")
@@ -813,24 +824,35 @@ async def is_community_member(telegram_id: int) -> bool:
         return await cur.fetchone() is not None
 
 
-async def add_community_message(telegram_id: int, full_name: str, text: str) -> int:
+async def add_community_message(telegram_id: int, full_name: str, text: str, media: str = None) -> int:
     async with aiosqlite.connect(DB_PATH) as db:
         cur = await db.execute(
-            "INSERT INTO community_messages (telegram_id, full_name, text, created_at) "
-            "VALUES (?, ?, ?, ?)",
-            (int(telegram_id), full_name, text, now_str()),
+            "INSERT INTO community_messages (telegram_id, full_name, text, media, created_at) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (int(telegram_id), full_name, text, media, now_str()),
         )
         await db.commit()
         return cur.lastrowid
 
 
 async def get_community_messages(limit: int = 200):
+    """Xabarlar + yuboruvchining profil rasmi (avatar) birga."""
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         cur = await db.execute(
-            "SELECT * FROM community_messages ORDER BY created_at ASC, id ASC LIMIT ?", (limit,)
+            "SELECT m.*, u.avatar AS avatar FROM community_messages m "
+            "LEFT JOIN users u ON u.telegram_id = m.telegram_id "
+            "ORDER BY m.created_at ASC, m.id ASC LIMIT ?", (limit,)
         )
         return await cur.fetchall()
+
+
+async def set_user_avatar(telegram_id: int, avatar: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            "UPDATE users SET avatar = ? WHERE telegram_id = ?", (avatar, int(telegram_id))
+        )
+        await db.commit()
 
 
 async def delete_community_message(msg_id: int):
