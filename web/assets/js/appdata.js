@@ -24,6 +24,23 @@
         gate.style.display = "none";
       } else {
         gate.style.display = "flex";
+        // 1) Telegram tugmasini to'g'ridan-to'g'ri darvozaga joylaymiz (bitta bosish).
+        var holder = document.getElementById("appGateWidget");
+        var hint = document.getElementById("appGateHint");
+        var uname = ((window.SITE_CONFIG || {}).telegramBotUsername || "").replace(/^@/, "");
+        if (holder && uname) {
+          var s = document.createElement("script");
+          s.async = true;
+          s.src = "https://telegram.org/js/telegram-widget.js?22";
+          s.setAttribute("data-telegram-login", uname);
+          s.setAttribute("data-size", "large");
+          s.setAttribute("data-userpic", "false");
+          s.setAttribute("data-request-access", "write");
+          s.setAttribute("data-onauth", "cs3OnTelegramAuth(user)");
+          s.onerror = function () { if (hint) hint.textContent = "Telegram tugmasi yuklanmadi — pastdagi tugmani bosing."; };
+          holder.appendChild(s);
+        }
+        // 2) Zaxira: tugma bosilsa kirish oynasini ochadi.
         var gb = document.getElementById("appGateLogin");
         if (gb) gb.addEventListener("click", function () { CS3.connect(function () { location.reload(); }); });
       }
