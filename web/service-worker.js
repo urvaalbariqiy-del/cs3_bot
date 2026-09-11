@@ -5,7 +5,7 @@
 // Strategiya: "avval tarmoq, bo'lmasa kesh" (network-first). Shunda kontent
 // doim yangi bo'ladi, internet bo'lmaganda oxirgi kesh ko'rsatiladi.
 
-const CACHE = "cs3-v2";
+const CACHE = "cs3-v3";
 const CORE = [
   "/",
   "/index.html",
@@ -16,6 +16,7 @@ const CORE = [
   "/assets/js/auth.js",
   "/assets/js/main.js",
   "/assets/js/app.js",
+  "/assets/js/appdata.js",
   "/assets/js/pwa.js",
   "/assets/img/logo-main.png",
 ];

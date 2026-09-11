@@ -4,34 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Cryptospot 3% — Ilova</title>
-<meta name="description" content="VIP 3% signallari, My Community, CS3% Mentorlik va jonli bozor grafigi — bitta ilovada.">
+<meta name="description" content="Cryptospot 3% — signal, bozor holati, akademiya va kabinet bitta ilovada.">
 <meta name="theme-color" content="#0a0a0d">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Cryptospot 3%">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-<link rel="icon" href="assets/icons/icon-192.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+<link rel="icon" href="/assets/icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/main.css">
 <style>
 /* ============ ILOVA QOBIG'I: pastki tab + sub-tab + hamburger drawer ============ */
 html, body { overscroll-behavior-y: contain; }
-body{ padding-bottom: 78px; }
+body{ padding-bottom: 80px; }
 
-/* Top app bar (soddalashtirilgan) */
 .app-topbar{
   position:sticky; top:0; z-index:60;
   display:flex; align-items:center; gap:10px;
-  padding:14px 16px; background:color-mix(in srgb, var(--bg) 85%, transparent);
+  padding:12px 14px; background:color-mix(in srgb, var(--bg) 85%, transparent);
   backdrop-filter:blur(14px); border-bottom:1px solid var(--border);
 }
-.app-topbar .nav-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-family:'Space Grotesk',sans-serif}
+.app-topbar .nav-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-family:'Space Grotesk',sans-serif;font-size:16px}
 .app-topbar .nav-logo img{height:30px;width:30px;border-radius:8px;object-fit:cover}
 .app-hamburger-btn{
-  margin-left:auto; width:40px;height:40px;border-radius:10px;border:1px solid var(--border);
+  width:40px;height:40px;border-radius:10px;border:1px solid var(--border);
   background:var(--bg-alt); color:var(--fg); display:flex;align-items:center;justify-content:center;
   font-size:18px; cursor:pointer;
 }
@@ -40,7 +39,7 @@ body{ padding-bottom: 78px; }
 .app-bottom-tabs{
   position:fixed; left:0; right:0; bottom:0; z-index:70;
   display:flex; justify-content:space-around; align-items:center;
-  background:color-mix(in srgb, var(--bg) 92%, transparent);
+  background:color-mix(in srgb, var(--bg) 94%, transparent);
   backdrop-filter:blur(16px);
   border-top:1px solid var(--border);
   padding:8px 4px calc(8px + env(safe-area-inset-bottom));
@@ -48,69 +47,77 @@ body{ padding-bottom: 78px; }
 .app-tab-btn{
   display:flex; flex-direction:column; align-items:center; gap:3px;
   background:none; border:none; color:var(--muted); font-family:inherit;
-  font-size:11px; font-weight:600; cursor:pointer; padding:4px 10px; border-radius:10px;
-  flex:1; max-width:110px;
+  font-size:10.5px; font-weight:600; cursor:pointer; padding:4px 6px; border-radius:10px;
+  flex:1; max-width:90px;
 }
-.app-tab-btn .icon{font-size:20px; line-height:1}
+.app-tab-btn .icon{font-size:19px; line-height:1}
 .app-tab-btn.active{color:var(--gold-2)}
 .app-tab-btn.active .icon{filter:drop-shadow(0 0 8px rgba(232,184,75,.5))}
 
-/* Main tab panels */
 .app-page{display:none}
 .app-page.active{display:block}
 
-/* Sub-tab segmented control */
-.app-subtabs{
-  display:flex; gap:6px; padding:14px 16px 0; overflow-x:auto;
-}
+.app-subtabs{display:flex; gap:6px; padding:14px 16px 0; overflow-x:auto; scrollbar-width:none}
+.app-subtabs::-webkit-scrollbar{display:none}
 .app-subtab-btn{
   white-space:nowrap; padding:9px 16px; border-radius:999px; border:1px solid var(--border);
   background:var(--bg-alt); color:var(--muted); font-size:13.5px; font-weight:600;
   cursor:pointer; font-family:inherit;
 }
-.app-subtab-btn.active{
-  background:linear-gradient(90deg,var(--gold),var(--gold-2)); color:#1a1204; border-color:transparent;
-}
+.app-subtab-btn.active{background:linear-gradient(90deg,var(--gold),var(--gold-2)); color:#1a1204; border-color:transparent}
 .app-subpanel{display:none}
 .app-subpanel.active{display:block}
 
-/* Hamburger settings drawer */
-.app-drawer-overlay{
-  position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:90;
-  opacity:0; pointer-events:none; transition:opacity .25s ease;
-}
+/* Drawer */
+.app-drawer-overlay{position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:90; opacity:0; pointer-events:none; transition:opacity .25s ease}
 .app-drawer-overlay.open{opacity:1; pointer-events:auto}
-.app-drawer{
-  position:fixed; top:0; right:0; bottom:0; width:300px; max-width:86vw; z-index:91;
-  background:var(--card); border-left:1px solid var(--border);
-  transform:translateX(100%); transition:transform .3s ease;
-  padding:22px; overflow-y:auto;
-}
+.app-drawer{position:fixed; top:0; right:0; bottom:0; width:300px; max-width:86vw; z-index:91; background:var(--card); border-left:1px solid var(--border); transform:translateX(100%); transition:transform .3s ease; padding:22px; overflow-y:auto}
 .app-drawer.open{transform:translateX(0)}
 .app-drawer h3{margin:0 0 4px;font-size:16px;font-family:'Space Grotesk',sans-serif}
-.app-drawer-section{margin-bottom:26px}
+.app-drawer-section{margin-bottom:24px}
 .app-drawer-section label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
 .app-seg{display:flex;gap:6px}
-.app-seg button{
-  flex:1; padding:9px 6px; border-radius:9px; border:1px solid var(--border); background:var(--bg-alt);
-  color:var(--muted); font-size:13px; font-weight:600; cursor:pointer; font-family:inherit;
-}
+.app-seg button{flex:1; padding:9px 6px; border-radius:9px; border:1px solid var(--border); background:var(--bg-alt); color:var(--muted); font-size:13px; font-weight:600; cursor:pointer; font-family:inherit}
 .app-seg button.active{background:linear-gradient(90deg,var(--gold),var(--gold-2));color:#1a1204;border-color:transparent}
-.app-tier-card{
-  border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:10px; cursor:pointer;
-}
-.app-tier-card.selected{border-color:var(--gold)}
-.app-tier-card b{display:block;font-size:14px;margin-bottom:3px}
-.app-tier-card span{font-size:12px;color:var(--muted)}
-.app-drawer-close{
-  position:absolute; top:16px; left:16px; width:32px;height:32px;border-radius:8px;
-  border:1px solid var(--border); background:var(--bg-alt); color:var(--fg); cursor:pointer;
-}
-@media(min-width:860px){
-  .app-bottom-tabs{ max-width:520px; left:50%; transform:translateX(-50%); border-radius:18px 18px 0 0; }
-}
-</style>
+.app-drawer-close{position:absolute; top:16px; left:16px; width:32px;height:32px;border-radius:8px; border:1px solid var(--border); background:var(--bg-alt); color:var(--fg); cursor:pointer}
 
+/* Account menu (Kirish) */
+.account-menu{display:none;position:absolute;left:14px;top:64px;z-index:80;width:min(300px,calc(100vw - 28px));background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:16px}
+.account-menu.open{display:block}
+.account-profile{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.account-avatar{width:44px;height:44px;border-radius:50%;flex:none;background:linear-gradient(135deg,var(--gold),var(--gold-2));display:flex;align-items:center;justify-content:center;font-weight:700;color:#111;font-size:18px}
+.account-name{font-weight:700;font-size:15px}
+.account-id{font-size:12.5px;color:var(--muted);font-family:'Courier New',monospace;margin-top:2px}
+.acct-link{display:block;padding:10px 12px;border-radius:9px;color:var(--fg);font-size:14px;border:1px solid var(--border);margin-top:8px;text-align:center;background:none;width:100%;cursor:pointer;font:inherit}
+.acct-link:hover{border-color:var(--gold)}
+
+/* Kalkulyator */
+.calc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:560px){.calc-grid{grid-template-columns:1fr}}
+.calc-lbl{display:block;font-size:12.5px;color:var(--muted);margin:0 0 5px}
+.calc-in{width:100%;background:var(--bg-alt);border:1px solid var(--border);color:var(--fg);border-radius:10px;padding:11px 13px;font:inherit;font-size:14px}
+.calc-in:focus{outline:2px solid var(--gold);outline-offset:1px}
+.calc-tp-head{display:grid;grid-template-columns:50px 1fr 1fr;gap:8px;font-size:12px;color:var(--muted);margin-bottom:6px}
+.calc-tp-head span:first-child{visibility:hidden}
+.calc-tp-row{display:grid;grid-template-columns:50px 1fr 1fr;gap:8px;align-items:center;margin-bottom:8px}
+.calc-tp-name{font-weight:700;font-size:14px;color:var(--gold)}
+.calc-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.calc-stat{background:var(--bg-alt);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.calc-stat b{display:block;font-size:18px;font-family:'Space Grotesk',sans-serif}
+.calc-stat span{font-size:12px;color:var(--muted)}
+.calc-stat.win b{color:#3ddc97}
+.calc-stat.lose b{color:#e6484f}
+
+/* Tariflar */
+.tier{border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px;background:var(--card)}
+.tier.pop{border-color:var(--gold)}
+.tier h3{margin:0 0 6px;font-size:18px}
+.tier .price{font-size:22px;font-weight:700;font-family:'Space Grotesk',sans-serif}
+.tier ul{margin:12px 0 0;padding-left:18px;font-size:13.5px;color:var(--muted)}
+.tier ul li{margin-bottom:5px}
+</style>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/auth.js"></script>
 </head>
 <body>
 
@@ -121,12 +128,12 @@ body{ padding-bottom: 78px; }
 </div>
 <div class="account-menu" id="accountMenu"></div>
 
+<!-- Sozlamalar drawer -->
 <div class="app-drawer-overlay" id="appDrawerOverlay"></div>
 <div class="app-drawer" id="appDrawer">
   <button class="app-drawer-close" id="appDrawerCloseBtn">✕</button>
   <h3 style="margin-top:36px">Sozlamalar</h3>
-  <p class="muted" style="font-size:12.5px;margin-bottom:24px">Til, rang va obuna shu yerda boshqariladi.</p>
-
+  <p class="muted" style="font-size:12.5px;margin-bottom:24px">Til va rang shu yerda boshqariladi.</p>
   <div class="app-drawer-section">
     <label>Til</label>
     <div class="app-seg" id="appLangSeg">
@@ -134,7 +141,6 @@ body{ padding-bottom: 78px; }
       <button data-lang="ru">RU</button>
     </div>
   </div>
-
   <div class="app-drawer-section">
     <label>Rang</label>
     <div class="app-seg" id="appThemeSeg">
@@ -142,961 +148,323 @@ body{ padding-bottom: 78px; }
       <button data-theme="light">☀️ Light</button>
     </div>
   </div>
-
-  <div class="app-drawer-section">
-    <label>Obuna darajasi</label>
-    <div class="app-tier-card" data-tier="lite">
-      <b>🔓 Lite</b>
-      <span>Asosiy kanal, ijtimoiy tarmoqlar, eslatmalar — bepul.</span>
-    </div>
-    <div class="app-tier-card" data-tier="pro">
-      <b>⭐ Pro</b>
-      <span>VIP 3% signallari va Signal bo'limi to'liq ochiladi.</span>
-    </div>
-    <div class="app-tier-card" data-tier="premium">
-      <b>👑 Premium</b>
-      <span>My Community + CS3% Mentorlik — to'liq kirish.</span>
-    </div>
-    <p class="muted" style="font-size:11.5px;margin-top:8px">Obuna tanlovi hozircha ma'lumot uchun saqlanadi — to'lov admin orqali amalga oshiriladi.</p>
-  </div>
-
-  <div class="app-drawer-section">
+  <div class="app-drawer-section" id="drawerAdminWrap" style="display:none">
     <label>Boshqaruv</label>
-    <a href="admin.html" class="btn btn-outline btn-block" style="margin-bottom:10px">Admin panel</a>
+    <a href="admin.html" class="btn btn-outline btn-block" style="margin-bottom:10px">⚙ Admin panel</a>
+  </div>
+  <div class="app-drawer-section">
     <button id="appInstallBtn" class="btn btn-primary btn-block" style="display:none">📲 Ilovani o'rnatish</button>
   </div>
 </div>
 
+<!-- ============================ 1) BOSH SAHIFA ============================ -->
 <div class="app-page active" data-tab="home">
   <div class="app-subtabs">
     <button class="app-subtab-btn active" data-group="home" data-sub="about">Biz haqimizda</button>
+    <button class="app-subtab-btn" data-group="home" data-sub="xabarlar">Xabarlar</button>
     <button class="app-subtab-btn" data-group="home" data-sub="eslatmalar">Eslatmalar</button>
-    <button class="app-subtab-btn" data-group="home" data-sub="social">Ijtimoiy tarmoqlar</button>
+    <button class="app-subtab-btn" data-group="home" data-sub="social">Ijtimoiy</button>
   </div>
 
+  <!-- Biz haqimizda -->
   <div class="app-subpanel active" data-group="home" data-sub="about">
-<!-- HERO -->
-<section class="hero" id="hero">
-  <div class="container" style="max-width:720px">
-    <div class="center reveal" style="margin-bottom:30px">
-      <span class="eyebrow" data-i18n="hero.eyebrow">CRYPTOSPOT 3%</span>
-      <p class="muted" style="margin-top:16px;font-size:15.5px;max-width:480px;margin-left:auto;margin-right:auto" data-i18n="hero.tagline">4 yillik tajriba, aniq intizom falsafasi bilan qurilgan jamoa.</p>
-    </div>
-    <div class="hero-visual reveal" style="max-width:620px;margin:0 auto">
-      <img src="assets/img/founder.jpg" alt="Abdulloh - Cryptospot 3% asoschisi">
-      <div class="hero-visual-caption">
-        <p class="grad-text" style="font-weight:600;font-size:17px" data-i18n="hero.badge">"Har bir katta muvaffaqiyat — kichik, ammo qat'iy qadamlardan boshlanadi."</p>
-        <p data-i18n="hero.founder_intro">Mening ismim Abdulloh, Cryptospot 3% asoschisiman.</p>
-        <p class="muted" data-i18n="about.p1">4 yil oldin bu sohaga kirib kelganimda...</p>
-        <p class="muted" data-i18n="about.p2">Brendimiz nomidagi 3% raqami...</p>
-        <div class="hero-visual-foot">
-          <div class="hero-social-row">
-            <a href="#" target="_blank" data-link="telegram" aria-label="Telegram"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M9.04 15.47l-.38 5.34c.54 0 .78-.23 1.06-.51l2.55-2.44 5.29 3.87c.97.54 1.66.26 1.92-.9l3.48-16.3c.31-1.45-.52-2.02-1.47-1.67L1.16 9.5c-1.41.55-1.39 1.34-.24 1.69l5.28 1.64L18.4 5.28c.58-.38 1.11-.17.67.21z"/></svg></a>
-            <a href="#" target="_blank" data-link="instagram" aria-label="Instagram"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
-            <a href="#" target="_blank" data-link="youtube" aria-label="YouTube"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M23 7.5a3 3 0 0 0-2.11-2.12C19.02 5 12 5 12 5s-7.02 0-8.89.38A3 3 0 0 0 1 7.5 31.3 31.3 0 0 0 .62 12 31.3 31.3 0 0 0 1 16.5a3 3 0 0 0 2.11 2.12C4.98 19 12 19 12 19s7.02 0 8.89-.38A3 3 0 0 0 23 16.5 31.3 31.3 0 0 0 23.38 12 31.3 31.3 0 0 0 23 7.5zM9.75 15.5v-7l6 3.5z"/></svg></a>
+    <section class="hero" id="hero">
+      <div class="container" style="max-width:720px">
+        <div class="center reveal" style="margin-bottom:24px">
+          <span class="eyebrow" data-i18n="hero.eyebrow">CRYPTOSPOT 3%</span>
+          <p class="muted" style="margin-top:14px;font-size:15px;max-width:480px;margin-left:auto;margin-right:auto" data-i18n="hero.tagline">4 yillik tajriba, aniq intizom falsafasi bilan qurilgan jamoa.</p>
+        </div>
+        <div class="hero-visual reveal" style="max-width:620px;margin:0 auto">
+          <img src="assets/img/founder.jpg" alt="Abdulloh - Cryptospot 3% asoschisi">
+          <div class="hero-visual-caption">
+            <p class="grad-text" style="font-weight:600;font-size:17px" data-i18n="hero.badge">"Har bir katta muvaffaqiyat — kichik, ammo qat'iy qadamlardan boshlanadi."</p>
+            <p data-i18n="hero.founder_intro">Mening ismim Abdulloh, Cryptospot 3% asoschisiman.</p>
+            <p class="muted" data-i18n="about.p1">4 yil oldin bu sohaga kirib kelganimda...</p>
+            <p class="muted" data-i18n="about.p2">Brendimiz nomidagi 3% raqami...</p>
+            <div class="hero-visual-foot">
+              <div class="hero-social-row">
+                <a href="#" target="_blank" data-link="telegram" aria-label="Telegram"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M9.04 15.47l-.38 5.34c.54 0 .78-.23 1.06-.51l2.55-2.44 5.29 3.87c.97.54 1.66.26 1.92-.9l3.48-16.3c.31-1.45-.52-2.02-1.47-1.67L1.16 9.5c-1.41.55-1.39 1.34-.24 1.69l5.28 1.64L18.4 5.28c.58-.38 1.11-.17.67.21z"/></svg></a>
+                <a href="#" target="_blank" data-link="instagram" aria-label="Instagram"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
+                <a href="#" target="_blank" data-link="youtube" aria-label="YouTube"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M23 7.5a3 3 0 0 0-2.11-2.12C19.02 5 12 5 12 5s-7.02 0-8.89.38A3 3 0 0 0 1 7.5 31.3 31.3 0 0 0 .62 12 31.3 31.3 0 0 0 1 16.5a3 3 0 0 0 2.11 2.12C4.98 19 12 19 12 19s7.02 0 8.89-.38A3 3 0 0 0 23 16.5 31.3 31.3 0 0 0 23.38 12 31.3 31.3 0 0 0 23 7.5zM9.75 15.5v-7l6 3.5z"/></svg></a>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   </div>
-</section>
 
-<!-- MAIN CHANNEL -->
-<section class="section" id="channel" style="background:var(--bg-alt)">
-  <div class="container">
-    <div class="section-head center reveal">
-      <span class="eyebrow" data-i18n="channel.eyebrow">Asosiy kanal</span>
-      <h2 data-i18n="channel.title">Cryptospot 3% — bizning asosiy Telegram kanalimiz</h2>
-      <p data-i18n="channel.lead">Bozorni kuzatib borish uchun birinchi manba — kundalik tahlil, signal va yangiliklar shu yerda.</p>
-    </div>
-    <div class="card reveal" style="max-width:720px;margin:0 auto;overflow:hidden">
-      <div class="channel-poster" style="margin:0;border-radius:0;border:none;border-bottom:1px solid var(--border)">
-        <span class="poster-watermark">CRYPTOSPOT 3%</span>
-        <div class="poster-content">
-          <span class="poster-tagline" data-i18n="channel.tag">Rasmiy kanal</span>
-          <div class="poster-list">
-            <div class="poster-row"><div class="poster-icon">📊</div><div><b data-i18n="channel.i1_t">Kunlik tahlillar</b><span class="desc" data-i18n="channel.i1_d">Har kuni bozordagi o'zgarishlar va qisqa muddatli imkoniyatlar tahlili.</span></div></div>
-            <div class="poster-row"><div class="poster-icon">📈</div><div><b data-i18n="channel.i2_t">Haftalik umumiy bozor tahlillari</b><span class="desc" data-i18n="channel.i2_d">Global tendensiyalar va yirik haftalik trendlar sharhi.</span></div></div>
-            <div class="poster-row"><div class="poster-icon">🎯</div><div><b data-i18n="channel.i3_t">Bozor holatiga qarab signallar</b><span class="desc" data-i18n="channel.i3_d">Aniq va o'ylangan nuqtalardan foydali kirish nuqtalari.</span></div></div>
-            <div class="poster-row"><div class="poster-icon">📰</div><div><b data-i18n="channel.i4_t">Kripto olamdagi yangiliklar</b><span class="desc" data-i18n="channel.i4_d">Dunyo miqyosidagi eng muhim va ta'sirli xabarlar bilan bo'lishish.</span></div></div>
-          </div>
+  <!-- Xabarlar (kanal postlari) -->
+  <div class="app-subpanel" data-group="home" data-sub="xabarlar">
+    <section class="section" style="padding-top:18px">
+      <div class="container" style="max-width:720px">
+        <div class="section-head center" style="max-width:640px">
+          <span class="eyebrow">Xabarlar</span>
+          <h2 style="font-size:24px">Maqolalar va e'lonlar</h2>
+          <p class="muted">Tradingga oid xabarlar, rasm, video va audio. Izoh yozish uchun Telegram orqali kiring.</p>
+        </div>
+        <div id="postsWrap" style="margin-top:22px"></div>
+        <div id="postsEmpty" class="card" style="margin-top:16px;text-align:center;padding:36px 22px">
+          <div style="font-size:36px;margin-bottom:10px">📰</div>
+          <h3 style="margin:0 0 6px">Xabarlar tez orada</h3>
+          <p class="muted" style="max-width:440px;margin:0 auto">Hozircha yangi xabar yo'q.</p>
         </div>
       </div>
-      <div style="padding:24px">
-        <div class="notice" style="margin-bottom:18px">⚠️ <span data-i18n="footer.reminder">Eslatma: faqat SPOT yo'nalishida. Qolgan barcha yo'nalishlar shariatga ko'ra harom hisoblanadi.</span></div>
-        <a href="#" target="_blank" data-link="telegram" class="btn btn-primary btn-block" data-i18n="channel.cta">Asosiy kanalga qo'shilish</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- SOCIAL FOLLOW -->
-<section class="section" id="social" style="padding:44px 0">
-  <div class="container">
-    <div class="center reveal" style="margin-bottom:28px">
-      <h2 style="font-size:clamp(22px,2.6vw,30px)" data-i18n="social.title">Bizni ijtimoiy tarmoqlarda kuzatib boring</h2>
-    </div>
-    <div class="grid-3 reveal social-grid">
-      <a href="#" target="_blank" data-link="telegram" class="card social-card" aria-label="Telegram">
-        <div class="social-ic tg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.04 15.47l-.38 5.34c.54 0 .78-.23 1.06-.51l2.55-2.44 5.29 3.87c.97.54 1.66.26 1.92-.9l3.48-16.3c.31-1.45-.52-2.02-1.47-1.67L1.16 9.5c-1.41.55-1.39 1.34-.24 1.69l5.28 1.64L18.4 5.28c.58-.38 1.11-.17.67.21z"/></svg></div>
-        <div class="social-tx"><b>Telegram</b><span data-i18n="social.tg">Asosiy kanal</span></div>
-      </a>
-      <a href="#" target="_blank" data-link="instagram" class="card social-card" aria-label="Instagram">
-        <div class="social-ic ig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></div>
-        <div class="social-tx"><b>Instagram</b><span data-i18n="social.ig">Rasmiy sahifa</span></div>
-      </a>
-      <a href="#" target="_blank" data-link="youtube" class="card social-card" aria-label="YouTube">
-        <div class="social-ic yt"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23 7.5a3 3 0 0 0-2.11-2.12C19.02 5 12 5 12 5s-7.02 0-8.89.38A3 3 0 0 0 1 7.5 31.3 31.3 0 0 0 .62 12 31.3 31.3 0 0 0 1 16.5a3 3 0 0 0 2.11 2.12C4.98 19 12 19 12 19s7.02 0 8.89-.38A3 3 0 0 0 23 16.5 31.3 31.3 0 0 0 23.38 12 31.3 31.3 0 0 0 23 7.5zM9.75 15.5v-7l6 3.5z"/></svg></div>
-        <div class="social-tx"><b>YouTube</b><span data-i18n="social.yt">YouTube kanal</span></div>
-      </a>
-    </div>
-  </div>
-</section>
-
-<!-- TESTIMONIALS -->
-<section class="section" id="testimonials">
-  <div class="container">
-    <div class="section-head center reveal">
-      <span class="eyebrow" data-i18n="testimonials.eyebrow">Fikrlar</span>
-      <h2 data-i18n="testimonials.title">Shogirdlarning real fikrlari</h2>
-      <p data-i18n="testimonials.lead">Jamoamiz a'zolarining o'z so'zlari bilan yozgan mulohazalari.</p>
-    </div>
-    <div class="tgrid reveal">
-      <div class="card tcard"><p data-i18n="testimonials.t1"></p><footer><div class="tavatar">S</div><div><div class="tname">Sardor A.</div><div class="trole">@sardor_trades</div></div></footer></div>
-      <div class="card tcard"><p data-i18n="testimonials.t2"></p><footer><div class="tavatar">J</div><div><div class="tname">Jasurbek</div><div class="trole">@jasurbek_98</div></div></footer></div>
-      <div class="card tcard"><p data-i18n="testimonials.t3"></p><footer><div class="tavatar">O</div><div><div class="tname">Otabek M.</div><div class="trole">@otabek_m</div></div></footer></div>
-      <div class="card tcard"><p data-i18n="testimonials.t4"></p><footer><div class="tavatar">B</div><div><div class="tname">Bekzod T.</div><div class="trole">@bekzod_trader</div></div></footer></div>
-      <div class="card tcard"><p data-i18n="testimonials.t5"></p><footer><div class="tavatar">Sh</div><div><div class="tname">Shohruxbek</div><div class="trole">@shohruxbek_fx</div></div></footer></div>
-      <div class="card tcard"><p data-i18n="testimonials.t6"></p><footer><div class="tavatar">I</div><div><div class="tname">Islombek R.</div><div class="trole">@i.rustamov</div></div></footer></div>
-    </div>
-  </div>
-</section>
-
-<!-- FAQ -->
-<section class="section" id="faq">
-  <div class="container" style="max-width:820px">
-    <div class="section-head center reveal">
-      <span class="eyebrow" data-i18n="faq.eyebrow">Savollar</span>
-      <h2 data-i18n="faq.title">Ko'p beriladigan savollar</h2>
-    </div>
-    <div class="reveal">
-      <details class="faq-item"><summary data-i18n="faq.q1">Tajribam yo'q, dasturga qo'shila olamanmi?</summary><p data-i18n="faq.a1"></p></details>
-      <details class="faq-item"><summary data-i18n="faq.q2">Faqat SPOT yo'nalishida ishlaysizmi?</summary><p data-i18n="faq.a2"></p></details>
-      <details class="faq-item"><summary data-i18n="faq.q3">LIVE sessiyalar qanday o'tadi?</summary><p data-i18n="faq.a3"></p></details>
-      <details class="faq-item"><summary data-i18n="faq.q4">To'lovdan keyin nima bo'ladi?</summary><p data-i18n="faq.a4"></p></details>
-      <details class="faq-item"><summary>To'lovni bo'lib to'lash mumkinmi?</summary><p>Ha. Agar bir martada to'lash noqulay bo'lsa, 4 oy davomida oyiga $100 dan bo'lib to'lash imkoniyati ham mavjud (bu variant "Qolgan o'rinlar" tarifida ishlaydi).</p></details>
-    </div>
-  </div>
-</section>
-
-
+    </section>
   </div>
 
+  <!-- Eslatmalar -->
   <div class="app-subpanel" data-group="home" data-sub="eslatmalar">
-
-<section class="section" style="padding-top:110px">
-  <div class="container">
-    <div class="section-head center reveal" style="max-width:640px">
-      <span class="eyebrow">🕌 Eslatmalar</span>
-      <h2>Savdo va rizq haqida Qur'on va hadislardan</h2>
-      <p class="muted">Halol savdo yo'lida qalbimizga eslatma bo'lsin.</p>
-    </div>
-
-    <div class="grid-2 reveal" id="remindersGrid">
-      <div class="card" style="padding:26px">
-        <p class="pill" style="margin-bottom:16px">Qur'oni Karim</p>
-        <p class="dua-arabic" dir="rtl" lang="ar" style="font-size:19px;line-height:1.9;margin-bottom:14px">يَا أَيُّهَا الَّذِينَ آمَنُوا لَا تَأْكُلُوا أَمْوَالَكُمْ بَيْنَكُمْ بِالْبَاطِلِ إِلَّا أَنْ تَكُونَ تِجَارَةً عَنْ تَرَاضٍ مِّنكُمْ</p>
-        <p class="muted" style="font-style:italic;margin-bottom:10px">"Ey iymon keltirganlar! Mol-mulkingizni öz aro noto'g'ri (harom) yo'l bilan yemang, magar öz roziligingiz bilan bo'ladigan tijorat (savdo) bo'lsa, mayli."</p>
-        <p class="muted" style="font-size:12.5px">— An-Niso surasi, 29-oyat</p>
+    <section class="section" style="padding-top:18px">
+      <div class="container">
+        <div class="section-head center" style="max-width:640px">
+          <span class="eyebrow">🕌 Eslatmalar</span>
+          <h2>Savdo va rizq haqida</h2>
+          <p class="muted">Halol savdo yo'lida qalbimizga eslatma.</p>
+        </div>
+        <div class="grid-2" id="remindersGrid">
+          <div class="card" style="padding:24px">
+            <p class="pill" style="margin-bottom:14px">Qur'oni Karim</p>
+            <p dir="rtl" lang="ar" style="font-size:18px;line-height:1.9;margin-bottom:12px">وَأَحَلَّ اللَّهُ الْبَيْعَ وَحَرَّمَ الرِّبَا</p>
+            <p class="muted" style="font-style:italic;margin-bottom:8px">"...Alloh savdo-sotiqni halol, ribo (foiz)ni harom qilgan..."</p>
+            <p class="muted" style="font-size:12.5px">— Al-Baqara, 275</p>
+          </div>
+          <div class="card" style="padding:24px">
+            <p class="pill" style="margin-bottom:14px">Hadis</p>
+            <p dir="rtl" lang="ar" style="font-size:18px;line-height:1.9;margin-bottom:12px">التَّاجِرُ الصَّدُوقُ الأَمِينُ مَعَ النَّبِيِّينَ وَالصِّدِّيقِينَ وَالشُّهَدَاءِ</p>
+            <p class="muted" style="font-style:italic;margin-bottom:8px">"Rostgo'y va ishonchli savdogar payg'ambarlar, siddiqlar va shahidlar bilan birga bo'ladi."</p>
+            <p class="muted" style="font-size:12.5px">— Imom Termiziy</p>
+          </div>
+        </div>
+        <div class="notice" style="max-width:640px;margin:24px auto 0">⚠️ <span>Faqat SPOT yo'nalishida savdo qiling. Fyuchers, margin va shunga o'xshashlar shariatga ko'ra harom.</span></div>
       </div>
-
-      <div class="card" style="padding:26px">
-        <p class="pill" style="margin-bottom:16px">Qur'oni Karim</p>
-        <p class="dua-arabic" dir="rtl" lang="ar" style="font-size:19px;line-height:1.9;margin-bottom:14px">وَأَحَلَّ اللَّهُ الْبَيْعَ وَحَرَّمَ الرِّبَا</p>
-        <p class="muted" style="font-style:italic;margin-bottom:10px">"...Alloh savdo-sotiqni halol, ribo (foizni)ni harom qilgan..."</p>
-        <p class="muted" style="font-size:12.5px">— Al-Baqara surasi, 275-oyat</p>
-      </div>
-
-      <div class="card" style="padding:26px">
-        <p class="pill" style="margin-bottom:16px">Qur'oni Karim</p>
-        <p class="dua-arabic" dir="rtl" lang="ar" style="font-size:19px;line-height:1.9;margin-bottom:14px">وَيْلٌ لِّلْمُطَفِّفِينَ ﴿١﴾ الَّذِينَ إِذَا اكْتَالُوا عَلَى النَّاسِ يَسْتَوْفُونَ ﴿٢﴾ وَإِذَا كَالُوهُمْ أَو وَّزَنُوهُمْ يُخْسِرُونَ</p>
-        <p class="muted" style="font-style:italic;margin-bottom:10px">"O'lchov va tarozida kam beruvchilarga voy bo'lsin! Ular odamlardan o'lchab olganda, to'liq oladilar. Ammo o'zlari o'lchab yoki tortib berganda kamaytiradilar."</p>
-        <p class="muted" style="font-size:12.5px">— Al-Mutaffifin surasi, 1–3-oyatlar</p>
-      </div>
-
-      <div class="card" style="padding:26px">
-        <p class="pill" style="margin-bottom:16px">Hadis</p>
-        <p class="dua-arabic" dir="rtl" lang="ar" style="font-size:19px;line-height:1.9;margin-bottom:14px">التَّاجِرُ الصَّدُوقُ الأَمِينُ مَعَ النَّبِيِّينَ وَالصِّدِّيقِينَ وَالشُّهَدَاءِ</p>
-        <p class="muted" style="font-style:italic;margin-bottom:10px">"Rostgo'y va ishonchli savdogar (Qiyomat kunida) payg'ambarlar, siddiqlar va shahidlar bilan birga bo'ladi."</p>
-        <p class="muted" style="font-size:12.5px">— Imom Termiziy rivoyati</p>
-      </div>
-    </div>
-
-    <div class="notice reveal" style="max-width:640px;margin:32px auto 0">
-      ⚠️ <span>Eslatma: faqat SPOT yo'nalishida savdo qiling. Fyuches, margin va shunga o'xshash boshqa yo'nalishlar shariatga ko'ra harom hisoblanadi.</span>
-    </div>
-  </div>
-</section>
-
-
+    </section>
   </div>
 
+  <!-- Ijtimoiy -->
   <div class="app-subpanel" data-group="home" data-sub="social">
-
-<section class="section" style="padding-top:110px">
-  <div class="container">
-    <div class="section-head center reveal" style="max-width:640px">
-      <span class="eyebrow">Ijtimoiy tarmoqlar</span>
-      <h2>Bizni qayerdan kuzatib borish mumkin</h2>
-      <p class="muted">Barcha rasmiy sahifalarimiz — soxta akkauntlardan ehtiyot bo'ling.</p>
-    </div>
-
-    <div class="grid-3 reveal">
-      <div class="card feature-card">
-        <div class="feature-icon">✈️</div>
-        <h3>Telegram</h3>
-        <p>Kunlik tahlillar, signal va yangiliklar — asosiy rasmiy kanalimiz.</p>
-        <a href="https://t.me/cryptospot3" target="_blank" class="btn btn-outline btn-block" style="margin-top:14px">@cryptospot3</a>
+    <section class="section" style="padding-top:18px">
+      <div class="container">
+        <div class="section-head center" style="max-width:640px">
+          <span class="eyebrow">Ijtimoiy tarmoqlar</span>
+          <h2>Bizni kuzatib boring</h2>
+          <p class="muted">Barcha rasmiy sahifalarimiz — soxta akkauntlardan ehtiyot bo'ling.</p>
+        </div>
+        <div class="grid-3">
+          <div class="card feature-card"><div class="feature-icon">✈️</div><h3>Telegram</h3><p>Kunlik tahlil, signal va yangiliklar.</p><a href="https://t.me/cryptospot3" target="_blank" class="btn btn-outline btn-block" style="margin-top:14px">@cryptospot3</a></div>
+          <div class="card feature-card"><div class="feature-icon">📷</div><h3>Instagram</h3><p>Qisqa video va maslahatlar.</p><a href="https://www.instagram.com/cryptospot3" target="_blank" class="btn btn-outline btn-block" style="margin-top:14px">@cryptospot3</a></div>
+          <div class="card feature-card"><div class="feature-icon">▶️</div><h3>YouTube</h3><p>To'liq video darslar va tahlillar.</p><a href="https://youtube.com/@cryptospot3-m4e" target="_blank" class="btn btn-outline btn-block" style="margin-top:14px">Cryptospot 3%</a></div>
+        </div>
       </div>
-      <div class="card feature-card">
-        <div class="feature-icon">📷</div>
-        <h3>Instagram</h3>
-        <p>Qisqa video va foydali maslahatlar, jamoa hayotidan lavhalar.</p>
-        <a href="https://www.instagram.com/cryptospot3" target="_blank" class="btn btn-outline btn-block" style="margin-top:14px">@cryptospot3</a>
-      </div>
-      <div class="card feature-card">
-        <div class="feature-icon">▶️</div>
-        <h3>YouTube</h3>
-        <p>To'liq video darslar, tahlillar va suhbatlar.</p>
-        <a href="https://youtube.com/@cryptospot3-m4e" target="_blank" class="btn btn-outline btn-block" style="margin-top:14px">Cryptospot 3%</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-
+    </section>
   </div>
 </div>
 
+<!-- ============================ 2) BOZOR HOLATI ============================ -->
+<div class="app-page" data-tab="market">
+  <section class="section" style="padding-top:18px">
+    <div class="container">
+      <div class="section-head center" style="max-width:640px">
+        <span class="eyebrow">Bozor holati</span>
+        <h2 style="font-size:24px">Jonli bozor</h2>
+        <p class="muted">Market cap, narxlar va grafiklar — real vaqtда.</p>
+      </div>
+
+      <div class="card" style="padding:6px;overflow:hidden;margin-bottom:16px">
+        <div class="tradingview-widget-container">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+          {"symbols":[{"proName":"BINANCE:BTCUSDT","title":"BTC"},{"proName":"BINANCE:ETHUSDT","title":"ETH"},{"proName":"BINANCE:SOLUSDT","title":"SOL"},{"proName":"BINANCE:BNBUSDT","title":"BNB"},{"proName":"BINANCE:XRPUSDT","title":"XRP"}],"showSymbolLogo":true,"colorTheme":"dark","isTransparent":true,"displayMode":"adaptive","locale":"en"}
+          </script>
+        </div>
+      </div>
+
+      <div class="card" style="padding:6px;overflow:hidden;margin-bottom:16px">
+        <div class="tradingview-widget-container">
+          <div id="tv_market_chart"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+          <script type="text/javascript">
+            new TradingView.widget({"width":"100%","height":420,"symbol":"BINANCE:BTCUSDT","interval":"60","timezone":"Etc/UTC","theme":"dark","style":"1","locale":"en","toolbar_bg":"#0a0a0d","enable_publishing":false,"allow_symbol_change":true,"hide_side_toolbar":true,"container_id":"tv_market_chart"});
+          </script>
+        </div>
+      </div>
+
+      <div class="card" style="padding:6px;overflow:hidden">
+        <div class="tradingview-widget-container">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-screener.js" async>
+          {"width":"100%","height":520,"defaultColumn":"overview","screener_type":"crypto_mkt","displayCurrency":"USD","colorTheme":"dark","isTransparent":true,"locale":"en"}
+          </script>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============================ 3) AKADEMIYA ============================ -->
+<div class="app-page" data-tab="academy">
+  <div class="app-subtabs">
+    <button class="app-subtab-btn active" data-group="academy" data-sub="video">Video darslar</button>
+    <button class="app-subtab-btn" data-group="academy" data-sub="strategiya">Strategiyalar</button>
+    <button class="app-subtab-btn" data-group="academy" data-sub="kurs">Onlayn kurs</button>
+  </div>
+
+  <div class="app-subpanel active" data-group="academy" data-sub="video">
+    <section class="section" style="padding-top:18px">
+      <div class="container" style="max-width:720px">
+        <div class="section-head center" style="max-width:640px">
+          <span class="eyebrow">Video darslar</span>
+          <h2 style="font-size:24px">Bepul video darslar</h2>
+          <p class="muted">Barcha darslar hozircha ochiq va bepul.</p>
+        </div>
+        <div class="grid-2" id="videoGrid" style="margin-top:22px"></div>
+        <div id="videoEmpty" class="card" style="margin-top:16px;text-align:center;padding:36px 22px">
+          <div style="font-size:34px;margin-bottom:10px">🎬</div>
+          <h3 style="margin:0 0 6px">Darslar tez orada</h3>
+          <p class="muted">Hozircha yangi dars yo'q.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="app-subpanel" data-group="academy" data-sub="strategiya">
+    <section class="section" style="padding-top:18px">
+      <div class="container" style="max-width:720px">
+        <div class="section-head center" style="max-width:640px">
+          <span class="eyebrow">Strategiyalar</span>
+          <h2 style="font-size:24px">Savdo strategiyalari</h2>
+          <p class="muted">Risk menejmenti va amaliy strategiyalar.</p>
+        </div>
+        <div id="strategyGrid" style="margin-top:22px"></div>
+        <div id="strategyEmpty" class="card" style="margin-top:16px;text-align:center;padding:36px 22px">
+          <div style="font-size:34px;margin-bottom:10px">🧠</div>
+          <h3 style="margin:0 0 6px">Strategiyalar tez orada</h3>
+          <p class="muted">Hozircha joylanmagan.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="app-subpanel" data-group="academy" data-sub="kurs">
+    <section class="section" style="padding-top:18px">
+      <div class="container" style="max-width:640px">
+        <div class="card" style="text-align:center;padding:44px 24px">
+          <div style="font-size:44px;margin-bottom:14px">🎓</div>
+          <h2 style="margin:0 0 10px">Onlayn kurs</h2>
+          <p class="pill" style="display:inline-block;margin-bottom:16px">Tez kunda</p>
+          <p class="muted" style="max-width:460px;margin:0 auto">To'liq onlayn kurs hozircha tayyorlanmoqda. Ochilishi bilan shu yerда e'lon qilinadi — kuzatib boring.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ============================ 4) SIGNAL ============================ -->
 <div class="app-page" data-tab="signal">
-
-<section class="section" style="padding-top:110px;padding-bottom:20px">
-  <div class="container">
-    <div class="section-head center reveal" style="max-width:640px">
-      <span class="eyebrow">Signal</span>
-      <h2>Jonli narx grafigi va signallar</h2>
-      <p class="muted">Haqiqiy vaqtdagi narx grafigi — istalgan coinni qidirib topishingiz mumkin. Faqat SPOT / USDT juftliklari.</p>
-    </div>
-
-    <div class="card reveal" style="padding:8px;overflow:hidden">
-      <div class="tradingview-widget-container">
-        <div id="tv_chart_main"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-        <script type="text/javascript">
-          new TradingView.widget({
-            "width": "100%",
-            "height": 520,
-            "symbol": "BINANCE:BTCUSDT",
-            "interval": "60",
-            "timezone": "Etc/UTC",
-            "theme": "dark",
-            "style": "1",
-            "locale": "en",
-            "toolbar_bg": "#0a0a0d",
-            "enable_publishing": false,
-            "allow_symbol_change": true,
-            "hide_side_toolbar": false,
-            "container_id": "tv_chart_main"
-          });
-        </script>
+  <section class="section" style="padding-top:18px;padding-bottom:14px">
+    <div class="container">
+      <div class="section-head center" style="max-width:640px">
+        <span class="eyebrow">Signal</span>
+        <h2 style="font-size:24px">Jonli grafik va signallar</h2>
+        <p class="muted">Faqat SPOT / USDT juftliklari.</p>
+      </div>
+      <div class="card" style="padding:6px;overflow:hidden">
+        <div class="tradingview-widget-container">
+          <div id="tv_signal_chart"></div>
+          <script type="text/javascript">
+            (function(){ function mk(){ if(!window.TradingView){ setTimeout(mk,400); return; } new TradingView.widget({"width":"100%","height":460,"symbol":"BINANCE:BTCUSDT","interval":"60","timezone":"Etc/UTC","theme":"dark","style":"1","locale":"en","toolbar_bg":"#0a0a0d","enable_publishing":false,"allow_symbol_change":true,"hide_side_toolbar":true,"container_id":"tv_signal_chart"}); } mk(); })();
+          </script>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="section" style="padding-top:20px">
-  <div class="container">
-    <div class="section-head center reveal" style="max-width:640px">
-      <span class="eyebrow">Top coinlar</span>
-      <h2 style="font-size:24px">Top 25 — SPOT / USDT</h2>
-      <p class="muted">Yuqoridagi qidiruv orqali ro'yxatda yo'q coinni ham topishingiz mumkin.</p>
-    </div>
-    <div class="card reveal" style="padding:8px;overflow:hidden">
-      <div class="tradingview-widget-container">
-        <div class="tradingview-widget-container__widget"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-screener.js" async>
-        {
-          "width": "100%",
-          "height": 500,
-          "defaultColumn": "overview",
-          "screener_type": "crypto_mkt",
-          "displayCurrency": "USD",
-          "colorTheme": "dark",
-          "locale": "en"
-        }
-        </script>
+  <!-- Trading kalkulyator -->
+  <section class="section" style="padding-top:6px;padding-bottom:14px">
+    <div class="container" style="max-width:760px">
+      <div class="section-head center" style="max-width:600px">
+        <span class="eyebrow">Kalkulyator</span>
+        <h2 style="font-size:22px">Trading kalkulyator</h2>
+        <p class="muted">Sarmoya, entry, stop va TP'larни kiriting — foyda/zararni hisoblaydi (SPOT long).</p>
+      </div>
+      <div class="card" style="padding:20px">
+        <div class="calc-grid">
+          <div><label class="calc-lbl" for="cSize">Sarmoya ($)</label><input class="calc-in" id="cSize" inputmode="decimal" placeholder="1000"></div>
+          <div><label class="calc-lbl" for="cEntry">Kirish (Entry)</label><input class="calc-in" id="cEntry" inputmode="decimal" placeholder="60000"></div>
+          <div><label class="calc-lbl" for="cStop">Stop</label><input class="calc-in" id="cStop" inputmode="decimal" placeholder="58000"></div>
+        </div>
+        <div style="margin-top:16px">
+          <div class="calc-tp-head"><span>TP</span><span>TP narxi</span><span>Ulush (%)</span></div>
+          <div class="calc-tp-row"><span class="calc-tp-name">TP1</span><input class="calc-in" id="cTp1" inputmode="decimal" placeholder="62000"><input class="calc-in" id="cTp1p" inputmode="decimal" placeholder="50"></div>
+          <div class="calc-tp-row"><span class="calc-tp-name">TP2</span><input class="calc-in" id="cTp2" inputmode="decimal" placeholder="64000"><input class="calc-in" id="cTp2p" inputmode="decimal" placeholder="30"></div>
+          <div class="calc-tp-row"><span class="calc-tp-name">TP3</span><input class="calc-in" id="cTp3" inputmode="decimal" placeholder="66000"><input class="calc-in" id="cTp3p" inputmode="decimal" placeholder="20"></div>
+          <p class="muted" style="font-size:12px;margin:8px 0 0">Ulushlar yig'indisi 100% bo'lgani ma'qul. Ishlatmaydigan TP'ni bo'sh qoldiring.</p>
+        </div>
+        <button class="btn btn-primary" id="cCalc" style="margin-top:16px;width:100%">Hisoblash</button>
+        <p id="cErr" style="color:#e6484f;font-size:13px;margin:10px 0 0;min-height:16px"></p>
+        <div id="cResult" style="display:none;margin-top:16px">
+          <div class="calc-stat-grid" id="cStats"></div>
+          <div id="cBreak" style="margin-top:14px"></div>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="section">
-  <div class="container">
-    <div class="section-head center reveal" style="max-width:640px">
-      <span class="eyebrow">So'nggi signallar</span>
-      <h2 style="font-size:24px">Jamoa signallari</h2>
-      <p class="muted">Admin tomonidan joylangan so'nggi savdo signallari.</p>
-    </div>
-    <div id="signalsList" class="grid-3 reveal">
-      <div class="card feature-card">
-        <p class="pill" style="margin-bottom:12px">Yuklanmoqda...</p>
-        <p class="muted" style="font-size:13.5px">Signallar tez orada shu yerda ko'rinadi.</p>
+  <!-- Signallar ro'yxati -->
+  <section class="section" style="padding-top:6px">
+    <div class="container">
+      <div class="section-head center" style="max-width:640px">
+        <span class="eyebrow">So'nggi signallar</span>
+        <h2 style="font-size:22px">Jamoa signallari</h2>
       </div>
+      <div id="signalsList" class="grid-3"></div>
     </div>
-  </div>
-</section>
-
-<script>
-(function(){
-  var cfg = window.SITE_CONFIG || {};
-  var base = cfg.apiBaseUrl;
-  var list = document.getElementById("signalsList");
-  if(!base || base.indexOf("YOUR-BACKEND-URL") !== -1 || !list) return;
-
-  fetch(base + "/api/signals")
-    .then(function(r){ return r.json(); })
-    .then(function(data){
-      if(!data.signals || !data.signals.length) return;
-      list.innerHTML = "";
-      data.signals.forEach(function(s){
-        var dirColor = s.direction === "LONG" ? "#3ddc97" : "#e6484f";
-        var card = document.createElement("div");
-        card.className = "card feature-card";
-        card.innerHTML =
-          '<p class="pill" style="margin-bottom:10px;color:' + dirColor + ';border-color:' + dirColor + '">' + s.symbol + ' · ' + s.direction + '</p>' +
-          '<p style="margin:0 0 6px;font-size:13.5px"><b>Entry:</b> ' + s.entry + '</p>' +
-          '<p style="margin:0 0 6px;font-size:13.5px"><b>TP:</b> ' + s.tp + '</p>' +
-          '<p style="margin:0 0 6px;font-size:13.5px"><b>SL:</b> ' + s.sl + '</p>' +
-          (s.note ? '<p class="muted" style="font-size:12.5px;margin-top:10px">' + s.note + '</p>' : '');
-        list.appendChild(card);
-      });
-    })
-    .catch(function(){});
-})();
-</script>
-
-
+  </section>
 </div>
 
-<div class="app-page" data-tab="kurs">
-  <div class="app-subtabs">
-    <button class="app-subtab-btn active" data-group="kurs" data-sub="mentorlik">Mentorlik</button>
-    <button class="app-subtab-btn" data-group="kurs" data-sub="video">Video darslar</button>
-  </div>
-  <div class="app-subpanel active" data-group="kurs" data-sub="mentorlik">
+<!-- ============================ 5) KABINET ============================ -->
+<div class="app-page" data-tab="kabinet">
+  <section class="section" style="padding-top:18px">
+    <div class="container" style="max-width:720px">
+      <div id="kabProfile"></div>
 
-<!-- SAVDODAGI BARAKA DUOLARI: VAROQLANADIGAN KITOB -->
-<section class="section" id="dua-book" style="padding-bottom:20px">
-  <div class="container">
-    <div class="section-head center reveal" style="max-width:560px">
-      <span class="eyebrow">🤲 Loyihamiz duosi</span>
-      <h2 style="margin:16px 0 10px;font-size:clamp(22px,3vw,30px)">Savdodagi baraka duolari</h2>
-      <p class="muted">Yangi loyihamizni shu duolar bilan boshlaymiz.</p>
-    </div>
+      <div class="section-head center" style="max-width:600px;margin-top:10px">
+        <span class="eyebrow">Obunalar</span>
+        <h2 style="font-size:24px">Tariflar</h2>
+        <p class="muted" id="kabTariffLead">Lite / Pro / Premium — o'zingizga mos darajani tanlang.</p>
+      </div>
+      <div id="tariffWrap" style="margin-top:18px"></div>
 
-    <div class="dua-book-wrap reveal">
-      <div class="dua-book" id="duaBook">
-        <div class="dua-page dua-cover" id="duaCover">
-          <div class="dua-cover-inner">
-            <div class="dua-cover-icon">📖</div>
-            <h3>SAVDODAGI<br>BARAKA<br>DUOLARI</h3>
-            <span class="dua-cover-line"></span>
-            <p>Halol rizq va barakali savdo uchun</p>
-          </div>
-        </div>
-
-        <div class="dua-page dua-leaf" id="duaLeaf1">
-          <div class="dua-page-inner">
-            <span class="dua-page-num">1</span>
-            <p class="dua-arabic" dir="rtl" lang="ar">اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا، وَرِزْقًا طَيِّبًا، وَعَمَلًا مُتَقَبَّلًا</p>
-            <p class="dua-translation">"Ey Alloh! Sendan foydali ilm, halol va pok rizq hamda qabul qilinadigan amal so'rayman."</p>
-          </div>
-        </div>
-
-        <div class="dua-page dua-leaf" id="duaLeaf2">
-          <div class="dua-page-inner">
-            <span class="dua-page-num">2</span>
-            <p class="dua-arabic" dir="rtl" lang="ar">اللَّهُمَّ اكْفِنِي بِحَلَالِكَ عَنْ حَرَامِكَ، وَأَغْنِنِي بِفَضْلِكَ عَمَّنْ سِوَاكَ</p>
-            <p class="dua-translation">"Ey Alloh! Meni halolung bilan haromingdan behojat qil, O'z fazling bilan O'zingdan boshqalarga muhtoj qilma."</p>
-          </div>
-        </div>
-
-        <div class="dua-page dua-leaf" id="duaLeaf3">
-          <div class="dua-page-inner">
-            <span class="dua-page-num">3</span>
-            <p class="dua-arabic" dir="rtl" lang="ar">اللَّهُمَّ بَارِكْ لِي فِيمَا رَزَقْتَنِي</p>
-            <p class="dua-translation">"Ey Alloh! Menga ato etgan rizqingni barakali qil."</p>
-          </div>
-        </div>
-
-        <div class="dua-page dua-back" id="duaBack">
-          <div class="dua-page-inner">
-            <div class="dua-cover-icon">🤲</div>
-            <p class="dua-translation" style="margin:0">Omin.</p>
-          </div>
+      <div id="paymentWrap" style="margin-top:24px;display:none">
+        <div class="card" style="padding:20px">
+          <h3 style="margin:0 0 6px">To'lov</h3>
+          <p class="muted" style="font-size:13px;margin-bottom:14px">Quyidagi hamyonga to'lov qiling va chek (skrinshot)ни yuklang. Admin tasdiqlagach obunangiz faollashadi.</p>
+          <div id="walletBox" class="card" style="background:var(--bg-alt);padding:14px;margin-bottom:14px"></div>
+          <label class="calc-lbl" for="payTariff">Tarif</label>
+          <select class="calc-in" id="payTariff"></select>
+          <label class="calc-lbl" for="payPeriod" style="margin-top:10px">Muddat</label>
+          <select class="calc-in" id="payPeriod"></select>
+          <label class="calc-lbl" for="payReceipt" style="margin-top:10px">Chek (skrinshot)</label>
+          <input class="calc-in" id="payReceipt" type="file" accept="image/*">
+          <button class="btn btn-primary" id="paySubmit" style="margin-top:14px;width:100%">Chekni yuborish</button>
+          <p id="payStatus" style="font-size:13px;margin:10px 0 0;min-height:16px"></p>
         </div>
       </div>
     </div>
-  </div>
-</section>
-
-<style>
-.dua-book-wrap{
-  display:flex;justify-content:center;perspective:2200px;margin-top:10px;
-}
-.dua-book{
-  position:relative;width:280px;height:380px;
-}
-.dua-page{
-  position:absolute;inset:0;
-  border-radius:6px 14px 14px 6px;
-  transform-style:preserve-3d;
-  transform-origin:left center;
-  transition:transform 1.4s cubic-bezier(.65,.05,.36,1);
-  box-shadow:2px 6px 22px rgba(0,0,0,.45);
-  backface-visibility:hidden;
-  border:1px solid var(--gold);
-  display:flex;align-items:center;justify-content:center;
-}
-#duaCover{ background:linear-gradient(160deg,#151016,#0b0b0d 70%); z-index:5; }
-#duaLeaf1{ background:linear-gradient(180deg,var(--card),var(--bg-alt)); z-index:4; }
-#duaLeaf2{ background:linear-gradient(180deg,var(--card),var(--bg-alt)); z-index:3; }
-#duaLeaf3{ background:linear-gradient(180deg,var(--card),var(--bg-alt)); z-index:2; }
-#duaBack{ background:linear-gradient(160deg,#151016,#0b0b0d 70%); z-index:1; }
-
-.dua-cover-inner{text-align:center;padding:26px}
-.dua-cover-icon{font-size:34px;margin-bottom:10px}
-.dua-cover h3{
-  font-family:'Space Grotesk',sans-serif;color:var(--gold-2);
-  font-size:20px;line-height:1.3;letter-spacing:.02em;margin:0 0 14px;
-}
-.dua-cover-line{display:block;width:46px;height:2px;background:var(--gold);margin:0 auto 14px;border-radius:2px}
-.dua-cover-inner p{color:var(--muted);font-size:12.5px;margin:0}
-.dua-page-inner{padding:30px 22px;text-align:center}
-.dua-page-num{
-  display:inline-block;margin-bottom:16px;width:26px;height:26px;line-height:26px;
-  border-radius:50%;border:1px solid var(--gold);color:var(--gold-2);font-size:12px;font-weight:700;
-}
-.dua-arabic{
-  font-size:19px;line-height:1.9;color:var(--fg);margin:0 0 18px;
-  font-family:'Traditional Arabic','Scheherazade New','Amiri',serif;
-}
-.dua-translation{color:var(--muted);font-size:13px;line-height:1.6;margin:0;font-style:italic}
-.dua-back .dua-page-inner{display:flex;flex-direction:column;align-items:center;gap:10px}
-
-/* Varoqlanish holati: har bosqichda mos sahifalar chapdan burilib, keyingisini ochadi */
-.dua-book.step-1 #duaCover{ transform:rotateY(-160deg) }
-
-.dua-book.step-2 #duaCover{ transform:rotateY(-160deg) }
-.dua-book.step-2 #duaLeaf1{ transform:rotateY(-160deg) }
-
-.dua-book.step-3 #duaCover{ transform:rotateY(-160deg) }
-.dua-book.step-3 #duaLeaf1{ transform:rotateY(-160deg) }
-.dua-book.step-3 #duaLeaf2{ transform:rotateY(-160deg) }
-
-.dua-book.step-4 #duaCover{ transform:rotateY(-160deg) }
-.dua-book.step-4 #duaLeaf1{ transform:rotateY(-160deg) }
-.dua-book.step-4 #duaLeaf2{ transform:rotateY(-160deg) }
-.dua-book.step-4 #duaLeaf3{ transform:rotateY(-160deg) }
-
-@media(max-width:480px){
-  .dua-book{width:230px;height:320px}
-  .dua-arabic{font-size:16px}
-}
-</style>
-
-<script>
-(function(){
-  var book = document.getElementById("duaBook");
-  if(!book) return;
-  var steps = ["step-0","step-1","step-2","step-3","step-4"];
-  var i = 0;
-  function render(){
-    steps.forEach(function(s){ book.classList.remove(s); });
-    book.classList.add(steps[i]);
-  }
-  render();
-  setInterval(function(){
-    i = (i + 1) % steps.length;
-    render();
-  }, 2600);
-})();
-</script>
-
-
-<!-- MENTORLIK: INTRO / 4 MODEL -->
-<section class="section" id="program" style="background:var(--bg-alt)">
-  <div class="container">
-    <div class="section-head center reveal" style="max-width:720px">
-      <span class="eyebrow">CS3% MENTORLIK · EXECUTION LAB</span>
-      <h2 style="margin:16px 0 14px">Tradingni o'rganmang, uni tushuning va ustasi bo'ling!</h2>
-      <p class="muted">Tradingni 0 dan boshlab tizimli ravishda o'rganamiz va o'rgangan bilimlarimizni real bozorda amaliyotga tatbiq qilamiz.</p>
-    </div>
-
-    <div class="center reveal" style="margin-bottom:28px">
-      <span class="pill" style="font-size:13px;padding:8px 18px">4 TA ASOSIY MODEL</span>
-    </div>
-
-    <div class="card reveal" style="max-width:820px;margin:0 auto;padding:8px 28px">
-      <div style="display:flex;gap:18px;align-items:flex-start;padding:22px 0;border-bottom:1px solid var(--border)">
-        <div class="step-num" style="font-size:18px">1</div>
-        <div>
-          <h3 style="margin:0 0 6px;font-size:16.5px">🌐 FUNDAMENTAL &amp; MACRO ANALYSIS</h3>
-          <p class="muted" style="margin:0;font-size:14px;line-height:1.6">Bozorga ta'sir qiluvchi fundamental omillar, makroiqtisodiy jarayonlar va ularning kripto bozoriga ta'sirini o'rganamiz.</p>
-        </div>
-      </div>
-      <div style="display:flex;gap:18px;align-items:flex-start;padding:22px 0;border-bottom:1px solid var(--border)">
-        <div class="step-num" style="font-size:18px">2</div>
-        <div>
-          <h3 style="margin:0 0 6px;font-size:16.5px">📊 TECHNICAL ANALYSIS</h3>
-          <p class="muted" style="margin:0;font-size:14px;line-height:1.6">Grafikni professional tahlil qilish, market structure, price action va boshqa muhim texnik analiz bilimlarini o'rganamiz.</p>
-        </div>
-      </div>
-      <div style="display:flex;gap:18px;align-items:flex-start;padding:22px 0;border-bottom:1px solid var(--border)">
-        <div class="step-num" style="font-size:18px">3</div>
-        <div>
-          <h3 style="margin:0 0 6px;font-size:16.5px">🎯 TRADING STRATEGIYALAR</h3>
-          <p class="muted" style="margin:0;font-size:14px;line-height:1.6">Turli xil trading strategiyalarini o'rganamiz, ularni qaysi vaziyatda va qanday qo'llash kerakligini ko'rib chiqamiz.</p>
-        </div>
-      </div>
-      <div style="display:flex;gap:18px;align-items:flex-start;padding:22px 0">
-        <div class="step-num" style="font-size:18px">4</div>
-        <div>
-          <h3 style="margin:0 0 6px;font-size:16.5px">📈 EXECUTION &amp; LIVE TRADING</h3>
-          <p class="muted" style="margin:0;font-size:14px;line-height:1.6">Barcha o'rgangan bilimlarimizni birlashtirib, bozorni mentor bilan birgalikda kuzatamiz va real bozorda savdolarni tahlil qilamiz.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid-4 reveal" style="margin-top:32px">
-      <div class="card feature-card" style="text-align:center;padding:22px 16px">
-        <div class="feature-icon" style="margin:0 auto 12px">📚</div>
-        <p style="margin:0;font-size:13.5px;font-weight:600">40 ga yaqin darslar</p>
-      </div>
-      <div class="card feature-card" style="text-align:center;padding:22px 16px">
-        <div class="feature-icon" style="margin:0 auto 12px">🎥</div>
-        <p style="margin:0;font-size:13.5px;font-weight:600">Darslar online, zapisi guruhda qoladi</p>
-      </div>
-      <div class="card feature-card" style="text-align:center;padding:22px 16px">
-        <div class="feature-icon" style="margin:0 auto 12px">📅</div>
-        <p style="margin:0;font-size:13.5px;font-weight:600">Haftasiga 2 kun</p>
-      </div>
-      <div class="card feature-card" style="text-align:center;padding:22px 16px">
-        <div class="feature-icon" style="margin:0 auto 12px">👥</div>
-        <p style="margin:0;font-size:13.5px;font-weight:600">40 ta ishtirokchi</p>
-      </div>
-    </div>
-
-    <div class="center reveal" style="margin-top:32px">
-      <span class="eyebrow" style="font-size:15px;padding:10px 22px">🚀 BILIM + AMALIYOT = <span class="grad-text">NATIJA</span></span>
-    </div>
-  </div>
-</section>
-
-
-<!-- MENTORLIK: TARIFLAR -->
-<section class="section" id="pricing">
-  <div class="container">
-    <div class="section-head center reveal" style="max-width:680px">
-      <span class="eyebrow">Mentorlikka qabul boshlandi</span>
-      <h2 style="margin:16px 0 10px">Asl narx: <span style="text-decoration:line-through;color:var(--muted);font-weight:400">$400</span></h2>
-      <p class="muted">Erta qo'shilganlar uchun maxsus narxlar mavjud — joylar cheklangan, jami 40 ta ishtirokchi qabul qilinadi.</p>
-      <p id="seatsCounter" class="pill" style="margin-top:14px;font-size:13.5px"></p>
-    </div>
-
-    <div class="grid-3 reveal" style="align-items:stretch">
-      <div class="card price-card" style="border-color:#1c8a5c;box-shadow:0 0 0 1px #1c8a5c, var(--shadow)">
-        <div class="pill" style="border-color:#1c8a5c;color:#3ddc97">1–10-o'rinlar · 20-avgustgacha</div>
-        <div style="margin:16px 0 4px"><span class="price-new" style="color:#3ddc97">$200</span></div>
-        <ul class="price-list">
-          <li><span class="check" style="color:#3ddc97">✓</span><b>3 oylik VIP guruh — BONUS</b></li>
-          <li><span class="check" style="color:#3ddc97">✓</span><b>My Community'ga oldindan kirish</b></li>
-          <li><span class="check" style="color:#3ddc97">✓</span><b>Mening indikatorimga kirish</b></li>
-        </ul>
-        <p id="tier1Label" style="color:#3ddc97;font-weight:700;font-size:13.5px;margin:6px 0 16px">🔥 Faqat 10 ta o'rin!</p>
-        <a href="https://t.me/cryptospotadmin3" target="_blank" class="btn btn-block" style="background:linear-gradient(90deg,#b9e6ff,#38bdf8);color:#062018;box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 8px 22px -8px rgba(56,189,248,.55)">💎 Joyimni band qilish</a>
-      </div>
-
-      <div class="card price-card" style="border-color:var(--blue);box-shadow:0 0 0 1px var(--blue), var(--shadow)">
-        <div class="pill" style="border-color:var(--blue);color:var(--blue-2)">11–20-o'rinlar</div>
-        <div style="margin:16px 0 4px"><span class="price-new" style="color:var(--blue-2)">$225</span></div>
-        <ul class="price-list">
-          <li><span class="check" style="color:var(--blue-2)">✓</span><b>3 oylik VIP guruh — BONUS</b></li>
-          <li><span class="check" style="color:var(--blue-2)">✓</span><b>My Community'ga oldindan kirish</b></li>
-          <li><span class="check" style="color:var(--blue-2)">✓</span><b>Mening indikatorimga kirish</b></li>
-        </ul>
-        <p id="tier2Label" style="color:var(--blue-2);font-weight:700;font-size:13.5px;margin:6px 0 16px">Keyingi 10 ta o'rin</p>
-        <a href="https://t.me/cryptospotadmin3" target="_blank" class="btn btn-block" style="background:linear-gradient(90deg,var(--gold),var(--gold-2));color:#1a1204;box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 8px 22px -8px rgba(232,184,75,.55)">Joyimni band qilish</a>
-      </div>
-
-      <div class="card price-card featured">
-        <div class="pill">Qolgan o'rinlar</div>
-        <div style="margin:16px 0 4px"><span class="price-new">$300</span></div>
-        <ul class="price-list">
-          <li><span class="check">✓</span><b>1 martalik to'lov</b></li>
-          <li><span class="check">✓</span><b>Yoki 4 oyga bo'lib to'lash</b></li>
-          <li><span class="check">✓</span><b>Oyiga $100 dan</b></li>
-        </ul>
-        <p id="tier3Label" style="color:var(--gold-2);font-weight:700;font-size:13.5px;margin:6px 0 16px">40 ta o'rindan qolgani</p>
-        <a href="https://t.me/cryptospotadmin3" target="_blank" class="btn btn-primary btn-block">Joyimni band qilish</a>
-      </div>
-    </div>
-
-    <div class="cta-band reveal" style="margin-top:32px;text-align:center">
-      <p id="seatsBanner" style="margin:0;font-size:18px;font-weight:700">🎯 Faqat 40 ta o'rin! Joyingizni hozirdan band qiling.</p>
-    </div>
-
-    <div class="grid-3 reveal" style="margin-top:28px">
-      <div class="card feature-card" style="text-align:center;padding:20px 14px">
-        <div class="feature-icon" style="margin:0 auto 10px">🎓</div>
-        <p style="margin:0;font-size:13.5px;font-weight:600">Tizimli bilim</p>
-      </div>
-      <div class="card feature-card" style="text-align:center;padding:20px 14px">
-        <div class="feature-icon" style="margin:0 auto 10px">📈</div>
-        <p style="margin:0;font-size:13.5px;font-weight:600">Amaliyot</p>
-      </div>
-      <div class="card feature-card" style="text-align:center;padding:20px 14px">
-        <div class="feature-icon" style="margin:0 auto 10px">🏆</div>
-        <p style="margin:0;font-size:13.5px;font-weight:600">Natija</p>
-      </div>
-    </div>
-
-    <div class="reveal" style="max-width:560px;margin:28px auto 0;text-align:center">
-      <p class="muted" style="font-size:14.5px;margin-bottom:14px">Mentorlikka qo'shilish va joyingizni band qilish uchun admin bilan bog'laning.</p>
-      <a href="https://t.me/cryptospotadmin3" target="_blank" class="btn btn-outline btn-block">@cryptospotadmin3 bilan bog'lanish</a>
-    </div>
-  </div>
-</section>
-
-<!-- MENTORLIK: JONLI O'RINLAR HISOBLAGICHI -->
-<script>
-(function(){
-  var cfg = window.SITE_CONFIG || {};
-  var base = cfg.apiBaseUrl;
-  if(!base || base.indexOf("YOUR-BACKEND-URL") !== -1) return; // backend hali ulanmagan bo'lsa, statik matn qoladi
-
-  fetch(base + "/api/mentorlik-seats")
-    .then(function(r){ return r.json(); })
-    .then(function(data){
-      var taken = data.taken || 0;
-      var total = data.total || 40;
-      var remaining = Math.max(0, total - taken);
-
-      var counterEl = document.getElementById("seatsCounter");
-      if(counterEl) counterEl.textContent = taken + " / " + total + " o'rin band qilindi — " + remaining + " ta o'rin qoldi";
-
-      var bannerEl = document.getElementById("seatsBanner");
-      if(bannerEl) bannerEl.textContent = "🎯 Faqat " + remaining + " ta o'rin qoldi! Joyingizni hozirdan band qiling.";
-
-      var t1 = Math.max(0, 10 - taken);
-      var t2 = taken >= 10 ? Math.max(0, 20 - taken) : 10;
-      var t3 = remaining;
-
-      var t1El = document.getElementById("tier1Label");
-      if(t1El) t1El.textContent = t1 > 0 ? ("🔥 Faqat " + t1 + " ta o'rin qoldi!") : "To'liq band qilindi";
-
-      var t2El = document.getElementById("tier2Label");
-      if(t2El) t2El.textContent = t2 > 0 ? (t2 + " ta o'rin qoldi") : "To'liq band qilindi";
-
-      var t3El = document.getElementById("tier3Label");
-      if(t3El) t3El.textContent = t3 > 0 ? (t3 + " ta o'rindan qolgani") : "O'rinlar tugadi";
-    })
-    .catch(function(){ /* backend javob bermasa, statik matn o'z holicha qoladi */ });
-})();
-</script>
-
-
-<!-- FAQ -->
-<section class="section" id="faq">
-  <div class="container" style="max-width:820px">
-    <div class="section-head center reveal">
-      <span class="eyebrow" data-i18n="faq.eyebrow">Savollar</span>
-      <h2 data-i18n="faq.title">Ko'p beriladigan savollar</h2>
-    </div>
-    <div class="reveal">
-      <details class="faq-item"><summary data-i18n="faq.q1">Tajribam yo'q, dasturga qo'shila olamanmi?</summary><p data-i18n="faq.a1"></p></details>
-      <details class="faq-item"><summary data-i18n="faq.q2">Faqat SPOT yo'nalishida ishlaysizmi?</summary><p data-i18n="faq.a2"></p></details>
-      <details class="faq-item"><summary data-i18n="faq.q3">LIVE sessiyalar qanday o'tadi?</summary><p data-i18n="faq.a3"></p></details>
-      <details class="faq-item"><summary data-i18n="faq.q4">To'lovdan keyin nima bo'ladi?</summary><p data-i18n="faq.a4"></p></details>
-      <details class="faq-item"><summary>To'lovni bo'lib to'lash mumkinmi?</summary><p>Ha. Agar bir martada to'lash noqulay bo'lsa, 4 oy davomida oyiga $100 dan bo'lib to'lash imkoniyati ham mavjud (bu variant "Qolgan o'rinlar" tarifida ishlaydi).</p></details>
-    </div>
-  </div>
-</section>
-
-
-
-  </div>
-  <div class="app-subpanel" data-group="kurs" data-sub="video">
-
-<section class="section" style="padding-top:110px">
-  <div class="container">
-    <div class="section-head center reveal" style="max-width:640px">
-      <span class="eyebrow">Video darsliklar</span>
-      <h2>Mentorlik dasturi darslari</h2>
-      <p class="muted">40 ga yaqin video dars, 4 ta asosiy model bo'yicha tartiblangan. Darslar mentorlikka qo'shilgan a'zolar uchun ochiladi.</p>
-    </div>
-
-    <div class="grid-2 reveal" id="modulesGrid">
-      <div class="card feature-card">
-        <div class="feature-icon">🌐</div>
-        <h3>1-modul: Fundamental &amp; Macro</h3>
-        <p>Bozorga ta'sir qiluvchi fundamental omillar va makroiqtisodiy tahlil bo'yicha darslar.</p>
-        <p class="pill" style="margin-top:14px">🔒 Mentorlikka qo'shilgach ochiladi</p>
-      </div>
-      <div class="card feature-card">
-        <div class="feature-icon">📊</div>
-        <h3>2-modul: Technical Analysis</h3>
-        <p>Grafik tahlili, market structure, price action darslari.</p>
-        <p class="pill" style="margin-top:14px">🔒 Mentorlikka qo'shilgach ochiladi</p>
-      </div>
-      <div class="card feature-card">
-        <div class="feature-icon">🎯</div>
-        <h3>3-modul: Trading Strategiyalar</h3>
-        <p>Turli strategiyalar va ularni qo'llash bo'yicha amaliy darslar.</p>
-        <p class="pill" style="margin-top:14px">🔒 Mentorlikka qo'shilgach ochiladi</p>
-      </div>
-      <div class="card feature-card">
-        <div class="feature-icon">📈</div>
-        <h3>4-modul: Execution &amp; Live Trading</h3>
-        <p>Mentor bilan birga real bozorni kuzatish va savdolarni tahlil qilish.</p>
-        <p class="pill" style="margin-top:14px">🔒 Mentorlikka qo'shilgach ochiladi</p>
-      </div>
-    </div>
-
-    <div class="cta-band reveal" style="margin-top:32px;text-align:center">
-      <h2 style="font-size:22px;margin:0 0 14px">Darslarga kirish uchun mentorlikka qo'shiling</h2>
-      <a href="#" data-goto-tab="kurs" data-goto-sub="mentorlik" class="btn btn-primary">Kurs va tariflarni ko'rish</a>
-    </div>
-
-    <div id="lessonsWrap" style="margin-top:40px;display:none">
-      <div class="section-head center reveal" style="max-width:560px">
-        <span class="eyebrow">Joylangan darslar</span>
-        <h2 style="font-size:24px">So'nggi video darslar</h2>
-      </div>
-      <div class="grid-2 reveal" id="lessonsGrid"></div>
-    </div>
-  </div>
-</section>
-
-
-  </div>
+  </section>
 </div>
 
-<div class="app-page" data-tab="jamoa">
-  <div class="app-subtabs">
-    <button class="app-subtab-btn active" data-group="jamoa" data-sub="community">My Community</button>
-    <button class="app-subtab-btn" data-group="jamoa" data-sub="vip3">VIP 3%</button>
-  </div>
-  <div class="app-subpanel active" data-group="jamoa" data-sub="community">
-
-<!-- MY COMMUNITY -->
-<section class="section" id="my-community">
-  <div class="container">
-    <div class="grid-2 reveal" style="align-items:center">
-      <div>
-        <span class="eyebrow" data-i18n="community.my_eyebrow">Jamoa</span>
-        <h2 style="font-size:clamp(24px,3vw,36px);margin:16px 0 14px" data-i18n="community.my_title">My Community</h2>
-        <p class="muted" style="margin-bottom:20px" data-i18n="community.my_desc">Kurs va strategiya asosida qurilgan umumiy jamoa — istalgan kishi qo'shilib, video darslar va strategiyalardan foydalanishi mumkin.</p>
-        <div class="comm-head" style="padding:0;margin-bottom:22px">
-          <img src="assets/img/logo-mycommunity.png" alt="My Community">
-          <div><h3 style="margin:0;font-size:16px" data-i18n="community.my_title">My Community</h3><span data-i18n="community.my_sub">148 a'zo · Umumiy jamoa</span></div>
-        </div>
-        <div class="notice" style="margin-bottom:0">
-          🔒 <span>My Community'ga to'g'ridan-to'g'ri qo'shilish mavjud emas — bu jamoa faqat <b>Mentorlik dasturiga erta qo'shilganlar</b> (birinchi 20 o'rin) uchun bonus sifatida ochiladi.</span>
-        </div>
-        <a href="#" data-goto-tab="kurs" data-goto-sub="mentorlik" class="btn btn-outline" style="margin-top:16px">Qabul holatini ko'rish</a>
-      </div>
-      <div class="channel-poster" style="margin:0">
-        <span class="poster-watermark">MY COMMUNITY</span>
-        <div class="poster-content">
-          <span class="poster-tagline" data-i18n="community.my_sub">148 a'zo · Umumiy jamoa</span>
-          <div class="poster-list">
-            <div class="poster-row"><div class="poster-icon">💬</div><div><b data-i18n="community.my1_t">CHAT</b><span class="desc" data-i18n="community.my1_d">Erkin muloqot maydoni.</span></div></div>
-            <div class="poster-row"><div class="poster-icon">🪙</div><div><b data-i18n="community.my2_t">BTC ETH SOL</b><span class="desc" data-i18n="community.my2_d">Asosiy kriptovalyutalar tahlili.</span></div></div>
-            <div class="poster-row"><div class="poster-icon">📊</div><div><b data-i18n="community.my3_t">ANALIZ</b><span class="desc" data-i18n="community.my3_d">Texnik va fundamental tahlillar.</span></div></div>
-            <div class="poster-row"><div class="poster-icon">🎯</div><div><b data-i18n="community.my4_t">JAMOA SIGNALLAR</b><span class="desc" data-i18n="community.my4_d">Jamoaviy savdo signallari.</span></div></div>
-            <div class="poster-row"><div class="poster-icon">🎁</div><div><b data-i18n="community.my5_t">AKSIYALAR</b><span class="desc" data-i18n="community.my5_d">Maxsus takliflar va bonuslar.</span></div></div>
-            <div class="poster-row"><div class="poster-icon">🎓</div><div><b data-i18n="community.my6_t">DARSLAR & STRATEGIYALAR</b><span class="desc" data-i18n="community.my6_d">Risk menejmenti va strategiyalar.</span></div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-
-  </div>
-  <div class="app-subpanel" data-group="jamoa" data-sub="vip3">
-
-<!-- VIP 3% -->
-<section class="section" id="vip3" style="background:var(--bg-alt)">
-  <div class="container">
-    <div class="grid-2 reveal" style="align-items:center">
-      <div class="channel-poster" style="margin:0;order:2">
-        <span class="poster-watermark">VIP 3%</span>
-        <div class="poster-content">
-          <span class="poster-tagline" data-i18n="community.vip_sub">159 a'zo · Signal va strategiya kanali</span>
-          <div class="poster-list">
-            <div class="poster-row"><div class="poster-icon">📈</div><div><b data-i18n="community.vip1_t">SIGNAL</b><span class="desc" data-i18n="community.vip1_d">Aniq kirish nuqtasi va target darajalari.</span></div></div>
-            <div class="poster-row"><div class="poster-icon">⚡</div><div><b data-i18n="community.vip2_t">SCALP</b><span class="desc" data-i18n="community.vip2_d">Qisqa muddatli tezkor imkoniyatlar.</span></div></div>
-            <div class="poster-row"><div class="poster-icon">🧩</div><div><b data-i18n="community.vip3_t">STRATEGIYA</b><span class="desc" data-i18n="community.vip3_d">Sinovdan o'tgan strategiyalar.</span></div></div>
-            <div class="poster-row"><div class="poster-icon">💎</div><div><b data-i18n="community.vip4_t">DARSLIKLAR</b><span class="desc" data-i18n="community.vip4_d">Yangilanadigan video darslar.</span></div></div>
-          </div>
-        </div>
-      </div>
-      <div style="order:1">
-        <span class="eyebrow" data-i18n="community.vip_eyebrow">VIP kanal</span>
-        <h2 style="font-size:clamp(24px,3vw,36px);margin:16px 0 14px" data-i18n="community.vip_title">VIP 3%</h2>
-        <p class="muted" style="margin-bottom:20px" data-i18n="community.vip_desc">Savdo signallariga qurilgan yopiq kanal — aniq kirish nuqtalari va tezkor tahlillar shu yerda.</p>
-        <div style="display:flex;gap:12px;margin-bottom:22px">
-          <div class="card" style="padding:16px 18px;flex:1">
-            <div class="pill" style="margin-bottom:8px" data-i18n="community.vip_1m_label">1 oylik obuna</div>
-            <div style="font-size:24px;font-weight:700;font-family:'Space Grotesk',sans-serif">$10</div>
-          </div>
-          <div class="card" style="padding:16px 18px;flex:1;border-color:var(--gold)">
-            <div class="pill" style="margin-bottom:8px" data-i18n="community.vip_3m_label">3 oylik obuna</div>
-            <div style="font-size:24px;font-weight:700;font-family:'Space Grotesk',sans-serif">$25</div>
-          </div>
-        </div>
-        <div class="comm-head" style="padding:0;margin-bottom:22px">
-          <img src="assets/img/logo-vip3.png" alt="VIP 3%">
-          <div><h3 style="margin:0;font-size:16px" data-i18n="community.vip_title">VIP 3%</h3><span data-i18n="community.vip_sub">159 a'zo · Signal va strategiya kanali</span></div>
-        </div>
-        <a href="#" target="_blank" data-link="manager" class="btn btn-outline" data-i18n="community.vip_cta">VIP 3%ga qo'shilish</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-  
-<!-- ================= VIP 3% OYLIK NATIJALAR — shu blokni qo'shing ================= -->
-<section id="vip3-natijalar" style="padding:60px 20px;background:#0d1526;">
-  <style>
-    .vipres-wrap{max-width:1100px;margin:0 auto;}
-    .vipres-head{text-align:center;margin-bottom:36px;}
-    .vipres-eyebrow{color:#D4A83C;font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;}
-    .vipres-title{color:#fff;font-size:32px;font-weight:800;margin:0 0 10px;font-family:Arial,Helvetica,sans-serif;}
-    .vipres-sub{color:#9aa3b8;font-size:15px;max-width:560px;margin:0 auto;line-height:1.5;}
-    .vipres-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px;}
-    .vipres-card{background:#131c30;border:1px solid #232f47;border-radius:16px;overflow:hidden;transition:transform .2s;}
-    .vipres-card:hover{transform:translateY(-4px);}
-    .vipres-card-head{background:linear-gradient(135deg,#D4A83C,#a97f1f);color:#0d1526;text-align:center;font-weight:800;font-size:16px;padding:14px 10px;font-family:Arial,Helvetica,sans-serif;}
-    .vipres-row{display:flex;justify-content:space-between;align-items:center;padding:9px 16px;font-size:13.5px;font-family:Arial,Helvetica,sans-serif;border-bottom:1px solid #1c2740;}
-    .vipres-row:last-child{border-bottom:none;}
-    .vipres-label{color:#aeb6c9;}
-    .vipres-val{font-weight:700;}
-    .vipres-yellow{background:#3a3312;}
-    .vipres-yellow .vipres-val{color:#f2d060;}
-    .vipres-green{background:#122b1a;}
-    .vipres-green .vipres-val{color:#4ade80;}
-    .vipres-red{background:#331515;}
-    .vipres-red .vipres-val{color:#f87171;}
-    .vipres-blue{background:#132436;}
-    .vipres-blue .vipres-val{color:#60a5fa;}
-    .vipres-purple{background:#241a36;}
-    .vipres-purple .vipres-val{color:#c084fc;}
-    .vipres-total{background:#163a24 !important;padding:14px 16px;}
-    .vipres-total .vipres-label{color:#e5e9f2;font-weight:700;font-size:14px;}
-    .vipres-total .vipres-val{color:#4ade80;font-size:17px;}
-  </style>
-
-  <div class="vipres-wrap">
-    <div class="vipres-head">
-      <div class="vipres-eyebrow">VIP 3% · Real natijalar</div>
-      <h2 class="vipres-title">Oylik signal statistikasi</h2>
-      <p class="vipres-sub">Har oy yakunida VIP 3% kanalidagi barcha signallar ochiq statistika sifatida e'lon qilinadi — hech narsa yashirilmaydi.</p>
-    </div>
-
-    <div class="vipres-grid">
-
-      <!-- APREL 2026 -->
-      <div class="vipres-card">
-        <div class="vipres-card-head">VIP 3% — Aprel 2026</div>
-        <div class="vipres-row vipres-yellow"><span class="vipres-label">Jami signallar</span><span class="vipres-val">170</span></div>
-        <div class="vipres-row vipres-green"><span class="vipres-label">Profit soni</span><span class="vipres-val">97</span></div>
-        <div class="vipres-row vipres-green"><span class="vipres-label">Profit foizi</span><span class="vipres-val">1290,4%</span></div>
-        <div class="vipres-row vipres-red"><span class="vipres-label">Loss soni</span><span class="vipres-val">44</span></div>
-        <div class="vipres-row vipres-red"><span class="vipres-label">Loss foizi</span><span class="vipres-val">141,6%</span></div>
-        <div class="vipres-row vipres-blue"><span class="vipres-label">Active</span><span class="vipres-val">11</span></div>
-        <div class="vipres-row vipres-purple"><span class="vipres-label">Otmen</span><span class="vipres-val">18</span></div>
-        <div class="vipres-row vipres-total"><span class="vipres-label">Sof foyda</span><span class="vipres-val">1148,8%</span></div>
-      </div>
-
-      <!-- MAY 2026 -->
-      <div class="vipres-card">
-        <div class="vipres-card-head">VIP 3% — May 2026</div>
-        <div class="vipres-row vipres-yellow"><span class="vipres-label">Jami signallar</span><span class="vipres-val">88</span></div>
-        <div class="vipres-row vipres-yellow"><span class="vipres-label">Swing soni</span><span class="vipres-val">13</span></div>
-        <div class="vipres-row vipres-yellow"><span class="vipres-label">Scalp soni</span><span class="vipres-val">14</span></div>
-        <div class="vipres-row vipres-green"><span class="vipres-label">Profit soni</span><span class="vipres-val">35</span></div>
-        <div class="vipres-row vipres-green"><span class="vipres-label">Profit foizi</span><span class="vipres-val">509,9%</span></div>
-        <div class="vipres-row vipres-red"><span class="vipres-label">Loss soni</span><span class="vipres-val">23</span></div>
-        <div class="vipres-row vipres-red"><span class="vipres-label">Loss foizi</span><span class="vipres-val">78,0%</span></div>
-        <div class="vipres-row vipres-blue"><span class="vipres-label">Active</span><span class="vipres-val">10</span></div>
-        <div class="vipres-row vipres-purple"><span class="vipres-label">Otmen</span><span class="vipres-val">20</span></div>
-        <div class="vipres-row vipres-total"><span class="vipres-label">Sof foyda</span><span class="vipres-val">431,9%</span></div>
-      </div>
-
-      <!-- IYUN 2026 -->
-      <div class="vipres-card">
-        <div class="vipres-card-head">VIP 3% — Iyun 2026</div>
-        <div class="vipres-row vipres-yellow"><span class="vipres-label">Jami signallar</span><span class="vipres-val">137</span></div>
-        <div class="vipres-row vipres-yellow"><span class="vipres-label">Swing soni</span><span class="vipres-val">51</span></div>
-        <div class="vipres-row vipres-yellow"><span class="vipres-label">Scalp soni</span><span class="vipres-val">86</span></div>
-        <div class="vipres-row vipres-green"><span class="vipres-label">Profit soni</span><span class="vipres-val">49</span></div>
-        <div class="vipres-row vipres-green"><span class="vipres-label">Profit foizi</span><span class="vipres-val">725,9%</span></div>
-        <div class="vipres-row vipres-red"><span class="vipres-label">Loss soni</span><span class="vipres-val">28</span></div>
-        <div class="vipres-row vipres-red"><span class="vipres-label">Loss foizi</span><span class="vipres-val">58,8%</span></div>
-        <div class="vipres-row vipres-blue"><span class="vipres-label">Active</span><span class="vipres-val">51</span></div>
-        <div class="vipres-row vipres-purple"><span class="vipres-label">Otmen</span><span class="vipres-val">9</span></div>
-        <div class="vipres-row vipres-total"><span class="vipres-label">Sof foyda</span><span class="vipres-val">667,1%</span></div>
-      </div>
-
-      <!-- IYUL 2026 -->
-      <div class="vipres-card">
-        <div class="vipres-card-head">VIP 3% — Iyul 2026</div>
-        <div class="vipres-row vipres-yellow"><span class="vipres-label">Jami signallar</span><span class="vipres-val">61</span></div>
-        <div class="vipres-row vipres-yellow"><span class="vipres-label">Swing soni</span><span class="vipres-val">45</span></div>
-        <div class="vipres-row vipres-yellow"><span class="vipres-label">Scalp soni</span><span class="vipres-val">16</span></div>
-        <div class="vipres-row vipres-green"><span class="vipres-label">Profit soni</span><span class="vipres-val">32</span></div>
-        <div class="vipres-row vipres-green"><span class="vipres-label">Profit foizi</span><span class="vipres-val">351,2%</span></div>
-        <div class="vipres-row vipres-red"><span class="vipres-label">Loss soni</span><span class="vipres-val">15</span></div>
-        <div class="vipres-row vipres-red"><span class="vipres-label">Loss foizi</span><span class="vipres-val">58,3%</span></div>
-        <div class="vipres-row vipres-blue"><span class="vipres-label">Active</span><span class="vipres-val">11</span></div>
-        <div class="vipres-row vipres-purple"><span class="vipres-label">Otmen</span><span class="vipres-val">3</span></div>
-        <div class="vipres-row vipres-total"><span class="vipres-label">Sof foyda</span><span class="vipres-val">292,9%</span></div>
-      </div>
-    </div>
-  </div>
-</section>
-<!-- ================= VIP 3% OYLIK NATIJALAR — blok shu yerda tugaydi ================= -->
-  
-
-
-  </div>
-</div>
-
+<!-- ============================ PASTKI PANEL ============================ -->
 <div class="app-bottom-tabs">
   <button class="app-tab-btn active" data-tab="home"><span class="icon">🏠</span>Bosh sahifa</button>
+  <button class="app-tab-btn" data-tab="market"><span class="icon">📊</span>Bozor</button>
+  <button class="app-tab-btn" data-tab="academy"><span class="icon">🎓</span>Akademiya</button>
   <button class="app-tab-btn" data-tab="signal"><span class="icon">📈</span>Signal</button>
-  <button class="app-tab-btn" data-tab="kurs"><span class="icon">🎓</span>Kurs</button>
-  <button class="app-tab-btn" data-tab="jamoa"><span class="icon">👥</span>Jamoa</button>
+  <button class="app-tab-btn" data-tab="kabinet"><span class="icon">👤</span>Kabinet</button>
 </div>
 
-<script src="assets/js/config.js"></script>
-<script src="assets/js/auth.js"></script>
 <script src="assets/js/main.js"></script>
 <script src="assets/js/app.js"></script>
+<script src="assets/js/appdata.js"></script>
 </body>
 </html>
