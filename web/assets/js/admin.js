@@ -276,6 +276,20 @@
       CS3.api("/api/admin/posts/" + delp.getAttribute("data-delp"), { method: "DELETE" })
         .then(function () { loadPosts(); })
         .catch(function (err) { alert(err.message); });
+      return;
+    }
+    var cp = e.target.closest("[data-copy]");
+    if (cp) {
+      var code = cp.getAttribute("data-copy");
+      if (navigator.clipboard) navigator.clipboard.writeText(code).then(function () { cp.textContent = "✓"; setTimeout(function () { cp.textContent = "Nusxa"; }, 1200); }).catch(function () {});
+      return;
+    }
+    var dk = e.target.closest("[data-delkey]");
+    if (dk) {
+      if (!confirm("Kalit o'chirilsinmi?")) return;
+      CS3.api("/api/admin/community/keys/" + dk.getAttribute("data-delkey"), { method: "DELETE" })
+        .then(function () { loadKeys(); })
+        .catch(function (err) { alert(err.message); });
     }
   });
 
@@ -354,6 +368,47 @@
     }).catch(function (e) { box.innerHTML = '<p class="muted">' + esc(e.message) + '</p>'; });
   }
 
+  // ---------- jamoa kalitlari ----------
+  var keyGenBtn = $("keyGen");
+  if (keyGenBtn) {
+    keyGenBtn.addEventListener("click", function () {
+      var count = parseInt(($("keyCount").value || "1"), 10) || 1;
+      var label = ($("keyLabel").value || "").trim();
+      keyGenBtn.disabled = true;
+      status("keyStatus", "Yaratilmoqda…");
+      CS3.api("/api/admin/community/keys", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ count: count, label: label }),
+      }).then(function (r) {
+        status("keyStatus", "✅ " + (r.codes || []).length + " ta kalit yaratildi.", "ok");
+        $("keyNew").innerHTML = (r.codes || []).map(function (c) {
+          return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--bg-alt);border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:8px">' +
+            '<b style="font-family:\'Courier New\',monospace;font-size:15px">' + esc(c) + '</b>' +
+            '<button class="btn-del" data-copy="' + esc(c) + '" style="color:var(--gold);border-color:var(--gold)">Nusxa</button></div>';
+        }).join("");
+        $("keyLabel").value = "";
+        loadKeys();
+      }).catch(function (e) { status("keyStatus", e.message, "err"); })
+        .then(function () { keyGenBtn.disabled = false; });
+    });
+  }
+
+  function loadKeys() {
+    var box = $("keyList");
+    if (!box) return;
+    CS3.api("/api/admin/community/keys").then(function (rows) {
+      if (!rows.length) { box.innerHTML = '<p class="muted">Hozircha kalit yo\'q.</p>'; return; }
+      box.innerHTML = rows.map(function (k) {
+        var used = k.used_by ? ('<span style="color:var(--muted)">ishlatilgan · ' + esc(String(k.used_by)) + '</span>') : '<span style="color:var(--green-2)">bo\'sh</span>';
+        return '<div class="row-item"><div><b style="font-family:\'Courier New\',monospace">' + esc(k.code) + '</b>' +
+          (k.label ? '<div class="meta">' + esc(k.label) + '</div>' : '') +
+          '<div class="meta">' + used + '</div></div>' +
+          '<div style="display:flex;gap:6px"><button class="btn-del" data-copy="' + esc(k.code) + '" style="color:var(--gold);border-color:var(--gold)">Nusxa</button>' +
+          '<button class="btn-del" data-delkey="' + k.id + '">O\'chirish</button></div></div>';
+      }).join("");
+    }).catch(function (e) { box.innerHTML = '<p class="muted">' + esc(e.message) + '</p>'; });
+  }
+
   // ---------- statistika ----------
   function loadStats() {
     Promise.all([
@@ -381,6 +436,7 @@
       loadSignals("scalping");
       Object.keys(CONTENT_FORMS).forEach(loadContent);
       loadPosts();
+      loadKeys();
       CS3.api("/api/admin/seats").then(function (s) {
         $("seatTaken").value = s.taken; $("seatTotal").value = s.total;
       });

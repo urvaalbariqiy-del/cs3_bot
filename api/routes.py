@@ -385,3 +385,58 @@ async def _notify_admins_with_photo(content: bytes, filename: str, caption: str)
                 # Bitta admin qo'lga kirmasa ham to'lov yozib qo'yiladi
                 pass
     return file_id
+
+
+# ==================== JAMOA (COMMUNITY) ====================
+
+async def _is_member(user) -> bool:
+    """Admin doim a'zo; qolganlar kalit ishlatgan bo'lsa a'zo."""
+    if user["telegram_id"] in ADMIN_IDS:
+        return True
+    return await db.is_community_member(user["telegram_id"])
+
+
+@router.get("/community/status")
+async def community_status(user=Depends(current_user)):
+    return {"member": await _is_member(user), "is_admin": user["telegram_id"] in ADMIN_IDS}
+
+
+@router.post("/community/redeem")
+async def community_redeem(payload: dict, user=Depends(current_user)):
+    code = (payload.get("code") or "").strip().upper()
+    if not code:
+        raise HTTPException(status_code=400, detail="Kalitni kiriting.")
+    res = await db.redeem_community_key(code, user["telegram_id"])
+    if res == "not_found":
+        raise HTTPException(status_code=404, detail="Bunday kalit topilmadi.")
+    if res == "used":
+        raise HTTPException(status_code=409, detail="Bu kalit allaqachon ishlatilgan.")
+    return {"ok": True, "member": True}
+
+
+@router.get("/community/messages")
+async def community_messages(user=Depends(current_user)):
+    if not await _is_member(user):
+        raise HTTPException(status_code=403, detail="Jamoaga faqat kalit orqali kiriladi.")
+    rows = await db.get_community_messages(limit=200)
+    admin_ids = ADMIN_IDS
+    return {"messages": [{
+        "id": m["id"],
+        "name": m["full_name"] or "A'zo",
+        "text": m["text"],
+        "is_admin": m["telegram_id"] in admin_ids,
+        "mine": m["telegram_id"] == user["telegram_id"],
+        "created_at": m["created_at"],
+    } for m in rows]}
+
+
+@router.post("/community/messages")
+async def community_post_message(payload: dict, user=Depends(current_user)):
+    if not await _is_member(user):
+        raise HTTPException(status_code=403, detail="Jamoaga faqat kalit orqali kiriladi.")
+    text = (payload.get("text") or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Xabar bo'sh bo'lmasin.")
+    text = text[:2000]
+    mid = await db.add_community_message(user["telegram_id"], user["full_name"], text)
+    return {"ok": True, "id": mid}

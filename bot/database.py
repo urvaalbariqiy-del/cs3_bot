@@ -144,6 +144,25 @@ CREATE TABLE IF NOT EXISTS post_comments (
     created_at TEXT NOT NULL,
     FOREIGN KEY(post_id) REFERENCES posts(id)
 );
+
+-- Yopiq "Jamoa" — bir martalik kalitlar. Admin yaratadi, obunachi kiritadi.
+CREATE TABLE IF NOT EXISTS community_keys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT UNIQUE NOT NULL,
+    label TEXT,                 -- kim uchun (ixtiyoriy izoh)
+    used_by INTEGER,            -- telegram_id (ishlatilgan bo'lsa)
+    used_at TEXT,
+    created_at TEXT NOT NULL
+);
+
+-- Jamoa ichidagi yozishmalar (faqat a'zolar ko'radi/yozadi).
+CREATE TABLE IF NOT EXISTS community_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    telegram_id INTEGER NOT NULL,
+    full_name TEXT,
+    text TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
 """
 
 DEFAULT_PRICES = [
@@ -731,3 +750,90 @@ async def count_comments(post_id: int) -> int:
         )
         (n,) = await cur.fetchone()
         return n
+
+
+# ---------- JAMOA (COMMUNITY) ----------
+
+async def add_community_keys(codes, label: str = None):
+    async with aiosqlite.connect(DB_PATH) as db:
+        for code in codes:
+            await db.execute(
+                "INSERT OR IGNORE INTO community_keys (code, label, created_at) VALUES (?, ?, ?)",
+                (code, label, now_str()),
+            )
+        await db.commit()
+
+
+async def get_community_keys(limit: int = 300):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT * FROM community_keys ORDER BY (used_by IS NOT NULL), created_at DESC, id DESC LIMIT ?",
+            (limit,),
+        )
+        return await cur.fetchall()
+
+
+async def delete_community_key(key_id: int):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("DELETE FROM community_keys WHERE id = ?", (key_id,))
+        await db.commit()
+
+
+async def redeem_community_key(code: str, telegram_id: int) -> str:
+    """Kalitni ishlatadi. Natija: 'ok' | 'not_found' | 'used'.
+
+    Bir martalik: agar allaqachon ishlatilgan bo'lsa, boshqa hech kim
+    ishlatolmaydi. Foydalanuvchi allaqachon a'zo bo'lsa ham 'ok'.
+    """
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute(
+            "SELECT id, used_by FROM community_keys WHERE code = ?", (code,)
+        )
+        row = await cur.fetchone()
+        if not row:
+            return "not_found"
+        key_id, used_by = row[0], row[1]
+        if used_by is not None:
+            return "ok" if int(used_by) == int(telegram_id) else "used"
+        # Atomar: faqat hali ishlatilmagan bo'lsa biriktiramiz.
+        await db.execute(
+            "UPDATE community_keys SET used_by = ?, used_at = ? WHERE id = ? AND used_by IS NULL",
+            (int(telegram_id), now_str(), key_id),
+        )
+        await db.commit()
+        return "ok"
+
+
+async def is_community_member(telegram_id: int) -> bool:
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute(
+            "SELECT 1 FROM community_keys WHERE used_by = ? LIMIT 1", (int(telegram_id),)
+        )
+        return await cur.fetchone() is not None
+
+
+async def add_community_message(telegram_id: int, full_name: str, text: str) -> int:
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute(
+            "INSERT INTO community_messages (telegram_id, full_name, text, created_at) "
+            "VALUES (?, ?, ?, ?)",
+            (int(telegram_id), full_name, text, now_str()),
+        )
+        await db.commit()
+        return cur.lastrowid
+
+
+async def get_community_messages(limit: int = 200):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT * FROM community_messages ORDER BY created_at ASC, id ASC LIMIT ?", (limit,)
+        )
+        return await cur.fetchall()
+
+
+async def delete_community_message(msg_id: int):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("DELETE FROM community_messages WHERE id = ?", (msg_id,))
+        await db.commit()

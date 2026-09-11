@@ -105,6 +105,7 @@
       <button class="tab" data-panel="pReminders">🕌 Eslatmalar</button>
       <button class="tab" data-panel="pStrategies">🧠 Strategiyalar</button>
       <button class="tab" data-panel="pPosts">📰 Kanal</button>
+      <button class="tab" data-panel="pKeys">🔐 Jamoa</button>
       <button class="tab" data-panel="pSeats">📊 O'rinlar va hamyon</button>
     </div>
 
@@ -246,6 +247,28 @@
       <div class="card admin-card">
         <h3 style="margin-top:0">Joylangan maqolalar</h3>
         <div id="poList"><p class="muted">Yuklanmoqda…</p></div>
+      </div>
+    </div>
+
+    <!-- JAMOA KALITLARI -->
+    <div class="panel" id="pKeys">
+      <div class="card admin-card">
+        <h3 style="margin-top:0">Jamoa kalitlari</h3>
+        <p class="muted" style="font-size:12.5px;margin-bottom:12px">
+          Bir martalik kalit yarating va Premium obunachiga bering. Har bir kalit
+          faqat bitta odam uchun ishlaydi — u kalitni ilovadagi "Jamoa" bo'limiga kiritib guruhga qo'shiladi.
+        </p>
+        <div class="admin-row">
+          <div style="flex:1"><label for="keyCount">Nechta</label><input id="keyCount" inputmode="numeric" value="1" /></div>
+          <div style="flex:2"><label for="keyLabel">Izoh (ixtiyoriy)</label><input id="keyLabel" placeholder="masalan: Sardor" /></div>
+        </div>
+        <button class="btn btn-primary" id="keyGen" style="margin-top:12px">Kalit yaratish</button>
+        <p class="form-status" id="keyStatus"></p>
+        <div id="keyNew" style="margin-top:12px"></div>
+      </div>
+      <div class="card admin-card">
+        <h3 style="margin-top:0">Kalitlar ro'yxati</h3>
+        <div id="keyList"><p class="muted">Yuklanmoqda…</p></div>
       </div>
     </div>
 

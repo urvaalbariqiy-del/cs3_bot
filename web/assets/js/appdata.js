@@ -23,11 +23,100 @@
       loadStrategies();
       loadSignals();
       loadKabinet();
+      loadCommunity();
     }
     setupCalculator();
     loadMarket();            // CoinGecko — backendсиз ham ishlaydi
     setInterval(loadMarket, 60000);
   });
+
+  // ---------------- JAMOA (yopiq guruh, kalit bilan) ----------------
+  var _jamoaTimer = null;
+  function loadCommunity() {
+    var gate = $("jamoaGate"), feed = $("jamoaFeed");
+    if (!gate || !feed) return;
+    if (!(window.CS3 && CS3.isLoggedIn())) {
+      feed.style.display = "none";
+      gate.innerHTML = '<div class="card" style="padding:22px;text-align:center"><div style="font-size:34px;margin-bottom:10px">🔒</div>' +
+        '<h3 style="margin:0 0 6px">Avval kiring</h3><p class="muted" style="font-size:13px;margin-bottom:14px">Jamoaga kirish uchun Telegram orqali kiring.</p>' +
+        '<button class="btn btn-primary" id="jamoaLogin">Telegram orqali kirish</button></div>';
+      var lb = $("jamoaLogin"); if (lb) lb.addEventListener("click", function () { CS3.connect(function () { location.reload(); }); });
+      return;
+    }
+    CS3.api("/api/community/status").then(function (s) {
+      window.__cs3IsAdmin = !!s.is_admin;
+      if (s.member) { gate.innerHTML = ""; feed.style.display = "block"; renderCompose(); loadMessages(); startJamoaPoll(); }
+      else { showKeyGate(gate, feed); }
+    }).catch(function () { showKeyGate(gate, feed); });
+  }
+
+  function showKeyGate(gate, feed) {
+    feed.style.display = "none";
+    gate.innerHTML = '<div class="card" style="padding:22px;text-align:center"><div style="font-size:34px;margin-bottom:10px">🔐</div>' +
+      '<h3 style="margin:0 0 6px">Kalitni kiriting</h3>' +
+      '<p class="muted" style="font-size:13px;margin-bottom:14px">Jamoaga kirish uchun admin bergan bir martalik kalitni kiriting.</p>' +
+      '<input class="calc-in" id="jamoaKey" placeholder="CS3-XXXX-XXXX" style="text-align:center;text-transform:uppercase">' +
+      '<button class="btn btn-primary" id="jamoaRedeem" style="margin-top:12px;width:100%">Kirish</button>' +
+      '<p id="jamoaKeyErr" style="font-size:13px;margin:10px 0 0;min-height:16px"></p></div>';
+    var btn = $("jamoaRedeem");
+    if (btn) btn.addEventListener("click", function () {
+      var err = $("jamoaKeyErr"), code = ($("jamoaKey").value || "").trim().toUpperCase();
+      if (!code) { err.textContent = "Kalitni kiriting."; err.style.color = "#e6484f"; return; }
+      btn.disabled = true; err.textContent = "Tekshirilmoqda…"; err.style.color = "var(--muted)";
+      CS3.api("/api/community/redeem", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: code }) })
+        .then(function () { loadCommunity(); })
+        .catch(function (e) { err.textContent = e.message; err.style.color = "#e6484f"; })
+        .then(function () { btn.disabled = false; });
+    });
+  }
+
+  function renderCompose() {
+    var box = $("jamoaCompose");
+    if (!box) return;
+    box.innerHTML = '<textarea id="jamoaText" placeholder="Fikringizni yozing…" style="width:100%;background:var(--bg-alt);border:1px solid var(--border);color:var(--fg);border-radius:10px;padding:11px;font:inherit;font-size:14px;min-height:64px"></textarea>' +
+      '<button class="btn btn-primary" id="jamoaSend" style="margin-top:8px;width:100%">Yuborish</button><p id="jamoaSendErr" style="font-size:12px;margin:6px 0 0;min-height:14px"></p>';
+    var s = $("jamoaSend");
+    if (s) s.addEventListener("click", function () {
+      var err = $("jamoaSendErr"), t = ($("jamoaText").value || "").trim();
+      if (!t) { err.textContent = "Xabar bo'sh."; err.style.color = "#e6484f"; return; }
+      s.disabled = true;
+      CS3.api("/api/community/messages", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: t }) })
+        .then(function () { $("jamoaText").value = ""; err.textContent = ""; loadMessages(); })
+        .catch(function (e) { err.textContent = e.message; err.style.color = "#e6484f"; })
+        .then(function () { s.disabled = false; });
+    });
+  }
+
+  function loadMessages() {
+    var box = $("jamoaMessages");
+    if (!box) return;
+    CS3.api("/api/community/messages").then(function (d) {
+      var msgs = d.messages || [];
+      if (!msgs.length) { box.innerHTML = '<p class="muted" style="text-align:center;font-size:13px;padding:20px 0">Hali xabar yo\'q. Birinchi bo\'lib yozing!</p>'; return; }
+      box.innerHTML = msgs.map(function (m) {
+        var side = m.mine ? "margin-left:auto;background:linear-gradient(90deg,var(--gold),var(--gold-2));color:#1a1204" : "background:var(--card)";
+        var del = window.__cs3IsAdmin ? '<button data-delmsg="' + m.id + '" style="background:none;border:none;color:#e6484f;cursor:pointer;font-size:12px;float:right">✕</button>' : '';
+        return '<div style="max-width:85%;' + side + ';border:1px solid var(--border);border-radius:14px;padding:10px 13px;margin-bottom:10px">' +
+          del + '<div style="font-size:12px;font-weight:700;opacity:.85">' + (m.is_admin ? "⚙ " : "") + esc(m.name) + '</div>' +
+          '<div style="font-size:14px;white-space:pre-wrap;margin-top:3px">' + esc(m.text) + '</div></div>';
+      }).join("");
+      if (window.__cs3IsAdmin) box.querySelectorAll("[data-delmsg]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          if (!confirm("Xabar o'chirilsinmi?")) return;
+          CS3.api("/api/admin/community/messages/" + b.getAttribute("data-delmsg"), { method: "DELETE" }).then(loadMessages).catch(function (e) { alert(e.message); });
+        });
+      });
+    }).catch(function () {});
+  }
+
+  function startJamoaPoll() {
+    if (_jamoaTimer) return;
+    _jamoaTimer = setInterval(function () {
+      var p = document.querySelector('.app-subpanel[data-group="academy"][data-sub="jamoa"]');
+      var academyActive = document.querySelector('.app-page[data-tab="academy"]');
+      if (p && p.classList.contains("active") && academyActive && academyActive.classList.contains("active")) loadMessages();
+    }, 15000);
+  }
 
   // ---------------- BOZOR (CoinGecko kartalari) ----------------
   function fmtPrice(n) {

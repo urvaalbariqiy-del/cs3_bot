@@ -15,8 +15,16 @@ ID ni bilish yetarli emas: o'sha hisobga kira olish kerak.
 """
 import os
 import uuid
+import secrets
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+
+
+def _gen_key() -> str:
+    """O'qish oson bir martalik kalit: CS3-XXXX-XXXX (chalkash belgilarsiz)."""
+    alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    part = lambda: "".join(secrets.choice(alphabet) for _ in range(4))
+    return "CS3-" + part() + "-" + part()
 
 from bot import database as db
 from bot import sections as sec
@@ -367,4 +375,41 @@ async def remove_post(post_id: int, admin=Depends(admin_user)):
     if not await db.get_post(post_id):
         raise HTTPException(status_code=404, detail="Maqola topilmadi.")
     await db.delete_post(post_id)
+    return {"ok": True}
+
+
+# ==================== JAMOA (COMMUNITY) — ADMIN ====================
+
+@router.post("/community/keys")
+async def gen_community_keys(payload: dict, admin=Depends(admin_user)):
+    """Bir martalik kalitlar yaratadi. {count, label?} -> yaratilgan kalitlar."""
+    try:
+        count = int(payload.get("count") or 1)
+    except (TypeError, ValueError):
+        count = 1
+    count = max(1, min(count, 100))
+    label = (payload.get("label") or "").strip() or None
+    codes = [_gen_key() for _ in range(count)]
+    await db.add_community_keys(codes, label)
+    return {"ok": True, "codes": codes}
+
+
+@router.get("/community/keys")
+async def list_community_keys(admin=Depends(admin_user)):
+    rows = await db.get_community_keys(limit=300)
+    return [{
+        "id": r["id"], "code": r["code"], "label": r["label"],
+        "used_by": r["used_by"], "used_at": r["used_at"], "created_at": r["created_at"],
+    } for r in rows]
+
+
+@router.delete("/community/keys/{key_id}")
+async def del_community_key(key_id: int, admin=Depends(admin_user)):
+    await db.delete_community_key(key_id)
+    return {"ok": True}
+
+
+@router.delete("/community/messages/{msg_id}")
+async def del_community_message(msg_id: int, admin=Depends(admin_user)):
+    await db.delete_community_message(msg_id)
     return {"ok": True}
