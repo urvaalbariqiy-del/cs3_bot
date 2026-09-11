@@ -2,7 +2,7 @@
   "name": "Cryptospot 3% — CS3% Mentorlik",
   "short_name": "Cryptospot 3%",
   "description": "VIP 3% signallari, kanal, video darslar, jonli bozor grafigi va trading kalkulyator — bitta ilovada.",
-  "start_url": "/",
+  "start_url": "/app.html",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

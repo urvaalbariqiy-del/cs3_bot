@@ -9,11 +9,13 @@ const CACHE = "cs3-v1";
 const CORE = [
   "/",
   "/index.html",
+  "/app.html",
   "/manifest.json",
   "/assets/css/main.css",
   "/assets/js/config.js",
   "/assets/js/auth.js",
   "/assets/js/main.js",
+  "/assets/js/app.js",
   "/assets/js/pwa.js",
   "/assets/img/logo-main.png",
 ];
