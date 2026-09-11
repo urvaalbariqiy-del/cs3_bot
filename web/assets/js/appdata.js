@@ -25,7 +25,44 @@
       loadKabinet();
     }
     setupCalculator();
+    loadMarket();            // CoinGecko — backendсиз ham ishlaydi
+    setInterval(loadMarket, 60000);
   });
+
+  // ---------------- BOZOR (CoinGecko kartalari) ----------------
+  function fmtPrice(n) {
+    n = Number(n);
+    if (n >= 1) return n.toLocaleString("en-US", { maximumFractionDigits: 2 });
+    return n.toLocaleString("en-US", { maximumFractionDigits: 6 });
+  }
+  function fmtCap(n) {
+    n = Number(n);
+    if (n >= 1e12) return (n / 1e12).toFixed(2) + " T";
+    if (n >= 1e9) return (n / 1e9).toFixed(2) + " B";
+    if (n >= 1e6) return (n / 1e6).toFixed(2) + " M";
+    return n.toLocaleString("en-US");
+  }
+  var _marketLoaded = false;
+  function loadMarket() {
+    var grid = $("marketGrid");
+    if (!grid) return;
+    if (!_marketLoaded) grid.innerHTML = '<p class="muted" style="grid-column:1/-1;text-align:center">Yuklanmoqda…</p>';
+    fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=30&page=1&price_change_percentage=24h")
+      .then(function (r) { return r.json(); })
+      .then(function (rows) {
+        if (!Array.isArray(rows) || !rows.length) { if (!_marketLoaded) grid.innerHTML = '<p class="muted" style="grid-column:1/-1;text-align:center">Ma\'lumot yuklanmadi.</p>'; return; }
+        _marketLoaded = true;
+        grid.innerHTML = rows.map(function (c) {
+          var chg = c.price_change_percentage_24h || 0;
+          var cls = chg >= 0 ? "mc-up" : "mc-down";
+          return '<div class="market-card"><div class="mc-top"><img src="' + esc(c.image) + '" alt=""><div><div class="mc-name">' + esc(c.name) + '</div><div class="mc-sym">' + esc(c.symbol) + '</div></div></div>' +
+            '<div class="mc-price">$' + fmtPrice(c.current_price) + '</div>' +
+            '<div class="mc-chg ' + cls + '">' + (chg >= 0 ? "+" : "") + chg.toFixed(2) + '%</div>' +
+            '<div class="mc-cap">MCap: $' + fmtCap(c.market_cap) + '</div></div>';
+        }).join("");
+      })
+      .catch(function () { if (!_marketLoaded) grid.innerHTML = '<p class="muted" style="grid-column:1/-1;text-align:center">Bozor ma\'lumotini yuklab bo\'lmadi.</p>'; });
+  }
 
   // ---------------- XABARLAR (kanal postlari) ----------------
   function loadPosts() {
@@ -263,16 +300,22 @@
       fetch(base + "/api/config").then(function (r) { return r.json(); }).catch(function () { return {}; }),
     ]).then(function (res) {
       var tariffs = res[0] || [], cfg = res[1] || {};
+      // Har bir obuna nima ochishini aniq ko'rsatamiz.
+      var FEATURES = {
+        lite: ["✅ Signallar"],
+        pro: ["✅ Signallar", "✅ Video darsliklar"],
+        premium: ["✅ Video darsliklar", "✅ Strategiyalar", "✅ Jamoa (yopiq guruh)"],
+      };
       if (!tariffs.length) { wrap.innerHTML = '<p class="muted">Tariflar tez orada.</p>'; }
       else {
         wrap.innerHTML = tariffs.map(function (t) {
           var per = (t.periods || []).map(function (p) {
             return '<div style="display:flex;justify-content:space-between;font-size:13.5px;margin-top:6px"><span class="muted">' + esc(PERIOD_UZ[p.period] || p.name) + '</span><b>' + esc(p.price) + ' ' + esc(p.currency) + '</b></div>';
           }).join("");
-          var secs = (t.sections || []).slice(0, 6).map(function (s) { return '<li>' + esc(s) + '</li>'; }).join("");
-          return '<div class="tier' + (t.code === "pro" ? " pop" : "") + '"><h3>' + esc(t.name) + '</h3>' +
+          var feats = (FEATURES[t.code] || t.sections || []).map(function (s) { return '<li>' + esc(s) + '</li>'; }).join("");
+          return '<div class="tier' + (t.code === "premium" ? " pop" : "") + '"><h3>' + esc(t.name) + '</h3>' +
             (t.coming_soon ? '<p class="pill" style="display:inline-block;margin-bottom:6px">Tez kunda</p>' : '') +
-            per + (secs ? '<ul>' + secs + '</ul>' : '') + '</div>';
+            per + (feats ? '<ul style="list-style:none;padding-left:0">' + feats + '</ul>' : '') + '</div>';
         }).join("");
       }
       var lead = $("kabTariffLead");
