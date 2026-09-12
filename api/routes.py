@@ -75,17 +75,14 @@ async def auth_start():
     Bir martalik havola yaratadi. Foydalanuvchi shu havola bilan botni
     ochib /start bosadi — boshqa hech narsa qilmaydi.
     """
-    if not BOT_USERNAME:
-        raise HTTPException(
-            status_code=503,
-            detail="Bot nomi sozlanmagan (.env ichida BOT_USERNAME).",
-        )
     token = secrets.token_urlsafe(24)
     await db.create_login_token(token)
     await db.cleanup_login_tokens(LOGIN_TOKEN_TTL_SECONDS * 12)
+    # BOT_USERNAME sozlanmagan bo'lsa ham havolani berish mumkin — sayt uni
+    # o'zining config.js'idagi bot nomi bilan to'ldiradi.
     return {
         "login_token": token,
-        "bot_url": f"https://t.me/{BOT_USERNAME}?start={token}",
+        "bot_url": f"https://t.me/{BOT_USERNAME}?start={token}" if BOT_USERNAME else None,
         "expires_in": LOGIN_TOKEN_TTL_SECONDS,
     }
 

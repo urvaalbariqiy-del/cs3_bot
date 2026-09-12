@@ -24,9 +24,39 @@
         gate.style.display = "none";
       } else {
         gate.style.display = "flex";
-        // 1) Telegram tugmasini to'g'ridan-to'g'ri darvozaga joylaymiz (bitta bosish).
         var holder = document.getElementById("appGateWidget");
         var hint = document.getElementById("appGateHint");
+        var gb = document.getElementById("appGateLogin");
+
+        // Havola uchun joy (bot ochilmasa qo'lda bosish uchun).
+        var linkWrap = document.getElementById("appGateLink");
+        if (!linkWrap && gb) {
+          linkWrap = document.createElement("div");
+          linkWrap.id = "appGateLink";
+          linkWrap.style.cssText = "margin-top:12px;width:100%;max-width:320px";
+          gb.parentNode.insertBefore(linkWrap, gb.nextSibling);
+        }
+
+        // 1) Asosiy yo'l — bot orqali kirish. O'rnatilgan ilova (APK) ichida
+        //    Telegram Login Widget oxirigacha ishlamaydi, shuning uchun bu birinchi.
+        //    Havolani oldindan olib qo'yamiz — tugma bosilishi bilan Telegram ochiladi.
+        var preLink = null;
+        if (ready) {
+          CS3.prepareBotLogin().then(function (d) { preLink = d; }).catch(function () {});
+        }
+        if (gb) {
+          gb.addEventListener("click", function () {
+            if (preLink) {
+              CS3.beginBotLogin(preLink, function () { location.reload(); }, hint, linkWrap);
+              preLink = null;                       // havola bir martalik
+              CS3.prepareBotLogin().then(function (d) { preLink = d; }).catch(function () {});
+            } else {
+              CS3.botLogin(function () { location.reload(); }, hint, linkWrap);
+            }
+          });
+        }
+
+        // 2) Qo'shimcha yo'l — brauzerda ishlaydigan rasmiy Telegram tugmasi.
         var uname = ((window.SITE_CONFIG || {}).telegramBotUsername || "").replace(/^@/, "");
         if (holder && uname) {
           var s = document.createElement("script");
@@ -37,12 +67,9 @@
           s.setAttribute("data-userpic", "false");
           s.setAttribute("data-request-access", "write");
           s.setAttribute("data-onauth", "cs3OnTelegramAuth(user)");
-          s.onerror = function () { if (hint) hint.textContent = "Telegram tugmasi yuklanmadi — pastdagi tugmani bosing."; };
+          s.onerror = function () { holder.style.display = "none"; };
           holder.appendChild(s);
         }
-        // 2) Zaxira: tugma bosilsa kirish oynasini ochadi.
-        var gb = document.getElementById("appGateLogin");
-        if (gb) gb.addEventListener("click", function () { CS3.connect(function () { location.reload(); }); });
       }
     }
     if (ready) {

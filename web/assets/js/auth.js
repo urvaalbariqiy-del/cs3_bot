@@ -20,6 +20,7 @@
   var TOKEN_KEY = "cs3_token";
 
   var pollTimer = null;
+  var pollVis = null;
 
   function getToken() {
     try { return localStorage.getItem(TOKEN_KEY); } catch (e) { return null; }
@@ -64,8 +65,13 @@
       '<div class="cs3-modal-card">' +
         '<button class="cs3-modal-x" type="button" aria-label="Yopish">&times;</button>' +
         '<h3>Telegram orqali kirish</h3>' +
-        '<p class="cs3-muted">Pastdagi <b>Telegram</b> tugmasini bosib hisobingizni tasdiqlang — tamom. Botga o\'tib qaytish shart emas.</p>' +
+        '<p class="cs3-muted">Quyidagi <b>Telegram</b> tugmasi bilan tasdiqlang. Agar u ishlamasa, pastdagi <b>bot orqali kirish</b> tugmasidan foydalaning.</p>' +
         '<div id="cs3TgWidget" style="display:flex;justify-content:center;margin:16px 0 6px;min-height:48px"></div>' +
+        '<div style="display:flex;align-items:center;gap:10px;margin:12px 0;color:var(--muted);font-size:12px">' +
+          '<span style="flex:1;height:1px;background:var(--border)"></span>yoki<span style="flex:1;height:1px;background:var(--border)"></span>' +
+        '</div>' +
+        '<button type="button" class="btn btn-primary" id="cs3BotLogin" style="width:100%">Botni ochib kirish</button>' +
+        '<div id="cs3BotWrap" style="margin-top:10px"></div>' +
         '<p class="cs3-muted cs3-small" id="cs3AuthHint"></p>' +
       '</div>';
     document.body.appendChild(el);
@@ -78,10 +84,132 @@
   function closeModal() {
     var el = document.getElementById("cs3AuthModal");
     if (el) el.classList.add("hidden");
-    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    stopPolling();
   }
 
-  /** Ulanishni boshlaydi — Telegram Login Widget orqali (bir tugma). */
+  function stopPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    if (pollVis) { document.removeEventListener("visibilitychange", pollVis); pollVis = null; }
+  }
+
+  /** Kirish muvaffaqiyatli tugadi — tokenni saqlab, oynani yopamiz. */
+  function finishLogin(r, onDone) {
+    setToken(r.token);
+    clearPending();
+    stopPolling();
+    closeModal();
+    var cb = (typeof onDone === "function") ? onDone : window.__cs3AuthDone;
+    if (typeof cb === "function") cb(r.user);
+    else location.reload();
+  }
+
+  var PENDING_KEY = "cs3_login_pending";
+
+  function savePending(t) {
+    try { localStorage.setItem(PENDING_KEY, JSON.stringify({ t: t, at: Date.now() })); } catch (e) {}
+  }
+  function readPending() {
+    try {
+      var raw = localStorage.getItem(PENDING_KEY);
+      if (!raw) return null;
+      var o = JSON.parse(raw);
+      if (!o || !o.t || (Date.now() - o.at) > 5 * 60 * 1000) { clearPending(); return null; }
+      return o.t;
+    } catch (e) { return null; }
+  }
+  function clearPending() {
+    try { localStorage.removeItem(PENDING_KEY); } catch (e) {}
+  }
+
+  /** Bir martalik havolani oldindan olib qo'yadi (tugma bosilishi bilan ochilsin). */
+  function prepareBotLogin() {
+    return api("/api/auth/start", { method: "POST" });
+  }
+
+  /**
+   * Tayyor havola bilan kirishni boshlaydi.
+   * MUHIM: bu funksiya tugma bosilishi bilan bir zumda chaqirilishi kerak —
+   * shundagina brauzer Telegramni ochishga ruxsat beradi.
+   */
+  function beginBotLogin(d, onDone, hintEl, holderEl) {
+    var hint = hintEl || document.getElementById("cs3AuthHint");
+    var holder = holderEl || document.getElementById("cs3BotWrap");
+    if (!d || !d.login_token) { if (hint) hint.textContent = "Ulanib bo'lmadi — qaytadan urinib ko'ring."; return; }
+    // Server bot nomini bermasa, config.js'dagi nom bilan havolani o'zimiz yig'amiz.
+    var url = d.bot_url;
+    if (!url) {
+      var u = (CFG.telegramBotUsername || "").replace(/^@/, "");
+      if (!u) { if (hint) hint.textContent = "Bot nomi sozlanmagan (config.js)."; return; }
+      url = "https://t.me/" + u + "?start=" + encodeURIComponent(d.login_token);
+    }
+
+    savePending(d.login_token);
+    startPolling(d.login_token, onDone, hint);
+
+    if (holder) {
+      holder.innerHTML =
+        '<a class="btn btn-primary" style="display:block;text-align:center;width:100%" ' +
+        'href="' + url + '" target="_blank" rel="noopener">Telegramni ochish</a>';
+    }
+    if (hint) hint.textContent = "Telegramda «Start» tugmasini bosing, so'ng shu yerga qayting.";
+
+    var opened = null;
+    try { opened = window.open(url, "_blank"); } catch (e) {}
+    if (!opened) { try { location.href = url; } catch (e2) {} }
+  }
+
+  /* ----------------------------------------------------------
+     BOT ORQALI KIRISH (ishonchli yo'l — o'rnatilgan ilova ichida ham ishlaydi)
+     1) server bir martalik havola beradi
+     2) Telegram ochiladi, foydalanuvchi "Start" bosadi
+     3) sayt serverdan so'rab turadi va tokenni oladi
+     ---------------------------------------------------------- */
+  function botLogin(onDone, hintEl, holderEl) {
+    var hint = hintEl || document.getElementById("cs3AuthHint");
+    function say(t) { if (hint) hint.textContent = t; }
+    stopPolling();
+    say("Telegram tayyorlanmoqda…");
+    return prepareBotLogin()
+      .then(function (d) { beginBotLogin(d, onDone, hintEl, holderEl); })
+      .catch(function (e) { say((e && e.message) || "Ulanib bo'lmadi."); });
+  }
+
+  /** Telegramdan qaytilganda: boshlangan kirish bo'lsa, jimgina davom ettiramiz. */
+  function resumePendingLogin() {
+    if (getToken()) { clearPending(); return; }
+    var t = readPending();
+    if (t) startPolling(t, null, null);
+  }
+
+  function startPolling(loginToken, onDone, hint) {
+    var deadline = Date.now() + 5 * 60 * 1000; // 5 daqiqa
+    var busy = false;
+
+    function tick() {
+      if (busy) return;
+      if (Date.now() > deadline) {
+        stopPolling();
+        clearPending();
+        if (hint) hint.textContent = "Vaqt tugadi — qaytadan urinib ko'ring.";
+        return;
+      }
+      busy = true;
+      api("/api/auth/poll/" + encodeURIComponent(loginToken))
+        .then(function (r) {
+          busy = false;
+          if (r && r.ready && r.token) finishLogin(r, onDone);
+        })
+        .catch(function () { busy = false; });
+    }
+
+    pollTimer = setInterval(tick, 2000);
+    // Telegramdan qaytganda darhol tekshiramiz (kutib o'tirmaydi).
+    pollVis = function () { if (!document.hidden) tick(); };
+    document.addEventListener("visibilitychange", pollVis);
+    tick();
+  }
+
+  /** Ulanishni boshlaydi — Telegram Login Widget + bot orqali kirish. */
   function connect(onDone) {
     var modal = ensureModal();
     modal.classList.remove("hidden");
@@ -89,8 +217,10 @@
 
     var holder = document.getElementById("cs3TgWidget");
     var hint = document.getElementById("cs3AuthHint");
+    var botBtn = document.getElementById("cs3BotLogin");
     var uname = (CFG.telegramBotUsername || "").replace(/^@/, "");
     if (hint) hint.textContent = "";
+    if (botBtn) botBtn.onclick = function () { botLogin(onDone); };
     if (!uname) { if (hint) hint.textContent = "Bot nomi sozlanmagan (config.js)."; return; }
 
     // Telegram tugmasini har ochilganda qayta joylaymiz.
@@ -103,7 +233,7 @@
     s.setAttribute("data-userpic", "false");
     s.setAttribute("data-request-access", "write");
     s.setAttribute("data-onauth", "cs3OnTelegramAuth(user)");
-    s.onerror = function () { if (hint) hint.textContent = "Telegram tugmasini yuklab bo'lmadi."; };
+    s.onerror = function () { if (hint) hint.textContent = "Telegram tugmasi yuklanmadi — pastdagi tugmani bosing."; };
     holder.appendChild(s);
   }
 
@@ -116,10 +246,7 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(user),
     }).then(function (r) {
-      setToken(r.token);
-      closeModal();
-      if (typeof window.__cs3AuthDone === "function") window.__cs3AuthDone(r.user);
-      else location.reload();
+      finishLogin(r);
     }).catch(function (e) {
       if (hint) hint.textContent = e.message || "Kirishda xatolik.";
     });
@@ -141,6 +268,10 @@
   global.CS3 = {
     api: api,
     connect: connect,
+    botLogin: botLogin,
+    prepareBotLogin: prepareBotLogin,
+    beginBotLogin: beginBotLogin,
+    resumePendingLogin: resumePendingLogin,
     logout: logout,
     me: me,
     getToken: getToken,
@@ -149,6 +280,11 @@
     isLoggedIn: function () { return !!getToken(); },
   };
 })(window);
+
+/* Telegramdan qaytganda boshlangan kirishni davom ettiramiz. */
+document.addEventListener("DOMContentLoaded", function () {
+  try { CS3.resumePendingLogin(); } catch (e) {}
+});
 
 /* ----------------------------------------------------------
    Navbar "Kirish" tugmasi + chap tomondagi hamburger (hisob paneli).
