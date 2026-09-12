@@ -65,10 +65,10 @@ async def _drop_old_keyboard(message: Message):
 
 @router.message(CommandStart(deep_link=True))
 async def cmd_start_deeplink(message: Message, command: CommandObject):
-    """Saytdan kelgan ulanish havolasi: /start <token>.
+    """Ilovadan kelgan ulanish havolasi: /start <token>.
 
-    Foydalanuvchi saytda "Telegram orqali ulanish" bosadi, bot ochiladi,
-    /start bosadi — va sayt o'zi kirgizadi. Boshqa hech narsa qilmaydi.
+    Foydalanuvchi ilovada "Telegram orqali kirish" bosadi, bot ochiladi,
+    /start bosadi — va ilova o'zi kirgizadi. Boshqa hech narsa qilmaydi.
     """
     token = (command.args or "").strip()
     await _ensure_user(message)
@@ -76,7 +76,7 @@ async def cmd_start_deeplink(message: Message, command: CommandObject):
     if token and await db.bind_login_token(token, message.from_user.id):
         await message.answer(
             "✅ <b>Tayyor!</b>\n\n"
-            "Saytga qaytishingiz mumkin — u sizni o'zi tanidi.\n"
+            "Ilovaga qaytishingiz mumkin — u sizni o'zi tanidi.\n"
             "Bu oynani yopsangiz ham bo'ladi.",
             parse_mode="HTML",
         )
@@ -85,7 +85,7 @@ async def cmd_start_deeplink(message: Message, command: CommandObject):
     if token:
         await message.answer(
             "⏳ Bu havolaning muddati tugagan yoki allaqachon ishlatilgan.\n\n"
-            "Saytga qaytib, \"Telegram orqali ulanish\" tugmasini qaytadan bosing."
+            "Ilovaga qaytib, \"Telegram orqali kirish\" tugmasini qaytadan bosing."
         )
         return
 

@@ -24,51 +24,38 @@
         gate.style.display = "none";
       } else {
         gate.style.display = "flex";
-        var holder = document.getElementById("appGateWidget");
         var hint = document.getElementById("appGateHint");
         var gb = document.getElementById("appGateLogin");
 
-        // Havola uchun joy (bot ochilmasa qo'lda bosish uchun).
-        var linkWrap = document.getElementById("appGateLink");
-        if (!linkWrap && gb) {
-          linkWrap = document.createElement("div");
-          linkWrap.id = "appGateLink";
-          linkWrap.style.cssText = "margin-top:12px;width:100%;max-width:320px";
-          gb.parentNode.insertBefore(linkWrap, gb.nextSibling);
-        }
+        // Bitta tugma, bitta yo'l: bot orqali kirish.
+        // Havolani oldindan olib qo'yamiz — tugma bosilishi bilan Telegram ochiladi.
+        var preLink = null, botUrl = null;
+        if (ready) CS3.prepareBotLogin().then(function (d) { preLink = d; }).catch(function () {});
 
-        // 1) Asosiy yo'l — bot orqali kirish. O'rnatilgan ilova (APK) ichida
-        //    Telegram Login Widget oxirigacha ishlamaydi, shuning uchun bu birinchi.
-        //    Havolani oldindan olib qo'yamiz — tugma bosilishi bilan Telegram ochiladi.
-        var preLink = null;
-        if (ready) {
-          CS3.prepareBotLogin().then(function (d) { preLink = d; }).catch(function () {});
+        function afterStart() {
+          if (!gb) return;
+          var t = gb.lastChild;
+          if (t && t.nodeType === 3) t.nodeValue = "Telegramni ochish";
         }
+        function done() { location.reload(); }
+
         if (gb) {
           gb.addEventListener("click", function () {
+            if (botUrl) { CS3.openTelegram(botUrl); return; }   // qayta ochish
             if (preLink) {
-              CS3.beginBotLogin(preLink, function () { location.reload(); }, hint, linkWrap);
-              preLink = null;                       // havola bir martalik
-              CS3.prepareBotLogin().then(function (d) { preLink = d; }).catch(function () {});
-            } else {
-              CS3.botLogin(function () { location.reload(); }, hint, linkWrap);
+              botUrl = CS3.beginBotLogin(preLink, done, hint, null);
+              preLink = null;
+              afterStart();
+              return;
             }
+            if (hint) hint.textContent = "Tayyorlanmoqda…";
+            CS3.prepareBotLogin().then(function (d) {
+              botUrl = CS3.beginBotLogin(d, done, hint, null);
+              afterStart();
+            }).catch(function () {
+              if (hint) hint.textContent = "Ulanib bo'lmadi — internetni tekshiring.";
+            });
           });
-        }
-
-        // 2) Qo'shimcha yo'l — brauzerda ishlaydigan rasmiy Telegram tugmasi.
-        var uname = ((window.SITE_CONFIG || {}).telegramBotUsername || "").replace(/^@/, "");
-        if (holder && uname) {
-          var s = document.createElement("script");
-          s.async = true;
-          s.src = "https://telegram.org/js/telegram-widget.js?22";
-          s.setAttribute("data-telegram-login", uname);
-          s.setAttribute("data-size", "large");
-          s.setAttribute("data-userpic", "false");
-          s.setAttribute("data-request-access", "write");
-          s.setAttribute("data-onauth", "cs3OnTelegramAuth(user)");
-          s.onerror = function () { holder.style.display = "none"; };
-          holder.appendChild(s);
         }
       }
     }

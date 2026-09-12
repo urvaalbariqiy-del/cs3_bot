@@ -5,7 +5,7 @@
 // Strategiya: "avval tarmoq, bo'lmasa kesh" (network-first). Shunda kontent
 // doim yangi bo'ladi, internet bo'lmaganda oxirgi kesh ko'rsatiladi.
 
-const CACHE = "cs3-v10";
+const CACHE = "cs3-v11";
 const CORE = [
   "/",
   "/index.html",
@@ -48,6 +48,8 @@ self.addEventListener("fetch", (event) => {
   // Faqat o'z domenimiz. API (Railway), TradingView, tashqi CDN'larga tegmaymiz.
   if (url.origin !== self.location.origin) return;
   if (url.pathname.indexOf("/api/") !== -1) return;
+  // Katta fayllar (APK) — keshlamaymiz.
+  if (url.pathname.indexOf("/downloads/") === 0) return;
 
   event.respondWith(
     fetch(req)

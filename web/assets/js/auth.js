@@ -65,13 +65,8 @@
       '<div class="cs3-modal-card">' +
         '<button class="cs3-modal-x" type="button" aria-label="Yopish">&times;</button>' +
         '<h3>Telegram orqali kirish</h3>' +
-        '<p class="cs3-muted">Quyidagi <b>Telegram</b> tugmasi bilan tasdiqlang. Agar u ishlamasa, pastdagi <b>bot orqali kirish</b> tugmasidan foydalaning.</p>' +
-        '<div id="cs3TgWidget" style="display:flex;justify-content:center;margin:16px 0 6px;min-height:48px"></div>' +
-        '<div style="display:flex;align-items:center;gap:10px;margin:12px 0;color:var(--muted);font-size:12px">' +
-          '<span style="flex:1;height:1px;background:var(--border)"></span>yoki<span style="flex:1;height:1px;background:var(--border)"></span>' +
-        '</div>' +
-        '<button type="button" class="btn btn-primary" id="cs3BotLogin" style="width:100%">Botni ochib kirish</button>' +
-        '<div id="cs3BotWrap" style="margin-top:10px"></div>' +
+        '<p class="cs3-muted">Tugmani bosing — Telegram ochiladi, u yerda <b>Start</b> bosasiz va shu yerga qaytasiz. Tamom.</p>' +
+        '<div id="cs3BotWrap" style="margin-top:14px"></div>' +
         '<p class="cs3-muted cs3-small" id="cs3AuthHint"></p>' +
       '</div>';
     document.body.appendChild(el);
@@ -153,6 +148,12 @@
     }
     if (hint) hint.textContent = "Telegramda «Start» tugmasini bosing, so'ng shu yerga qayting.";
 
+    openTelegram(url);
+    return url;
+  }
+
+  /** Telegramni ochadi: avval yangi oyna, bo'lmasa shu oynada. */
+  function openTelegram(url) {
     var opened = null;
     try { opened = window.open(url, "_blank"); } catch (e) {}
     if (!opened) { try { location.href = url; } catch (e2) {} }
@@ -209,32 +210,33 @@
     tick();
   }
 
-  /** Ulanishni boshlaydi — Telegram Login Widget + bot orqali kirish. */
+  /** Ulanishni boshlaydi — bitta yo'l: bot orqali kirish. */
   function connect(onDone) {
     var modal = ensureModal();
     modal.classList.remove("hidden");
     window.__cs3AuthDone = (typeof onDone === "function") ? onDone : null;
 
-    var holder = document.getElementById("cs3TgWidget");
+    var wrap = document.getElementById("cs3BotWrap");
     var hint = document.getElementById("cs3AuthHint");
-    var botBtn = document.getElementById("cs3BotLogin");
-    var uname = (CFG.telegramBotUsername || "").replace(/^@/, "");
-    if (hint) hint.textContent = "";
-    if (botBtn) botBtn.onclick = function () { botLogin(onDone); };
-    if (!uname) { if (hint) hint.textContent = "Bot nomi sozlanmagan (config.js)."; return; }
+    if (hint) hint.textContent = "Tayyorlanmoqda…";
+    if (wrap) {
+      wrap.innerHTML =
+        '<button type="button" class="btn btn-primary" id="cs3BotOpen" style="width:100%" disabled>Telegramni ochish</button>';
+    }
 
-    // Telegram tugmasini har ochilganda qayta joylaymiz.
-    holder.innerHTML = "";
-    var s = document.createElement("script");
-    s.async = true;
-    s.src = "https://telegram.org/js/telegram-widget.js?22";
-    s.setAttribute("data-telegram-login", uname);
-    s.setAttribute("data-size", "large");
-    s.setAttribute("data-userpic", "false");
-    s.setAttribute("data-request-access", "write");
-    s.setAttribute("data-onauth", "cs3OnTelegramAuth(user)");
-    s.onerror = function () { if (hint) hint.textContent = "Telegram tugmasi yuklanmadi — pastdagi tugmani bosing."; };
-    holder.appendChild(s);
+    prepareBotLogin().then(function (d) {
+      var btn = document.getElementById("cs3BotOpen");
+      if (hint) hint.textContent = "";
+      if (!btn) return;
+      btn.disabled = false;
+      var url = null;
+      btn.onclick = function () {
+        if (url) { openTelegram(url); return; }
+        url = beginBotLogin(d, onDone, hint, null);
+      };
+    }).catch(function (e) {
+      if (hint) hint.textContent = (e && e.message) || "Ulanib bo'lmadi.";
+    });
   }
 
   // Telegram Login Widget muvaffaqiyatli bo'lganda chaqiriladi (global).
@@ -269,6 +271,7 @@
     api: api,
     connect: connect,
     botLogin: botLogin,
+    openTelegram: openTelegram,
     prepareBotLogin: prepareBotLogin,
     beginBotLogin: beginBotLogin,
     resumePendingLogin: resumePendingLogin,
